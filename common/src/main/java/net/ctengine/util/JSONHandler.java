@@ -19,6 +19,8 @@ import java.util.stream.Stream;
 
 public class JSONHandler {
 
+    // Folder handler will build the whole directory tree of folders
+    // if they are missing, this way there can't be any invalid directory errors
     public static void folderHandler(Path directory){
         if (!Files.exists(directory)) {
             try {
@@ -29,6 +31,7 @@ public class JSONHandler {
         }
     }
 
+    // Gets all JSON files in a given folder
     public static List<Path> getAllJsonFiles(Path directory) throws IOException {
         folderHandler(directory);
         try (Stream<Path> stream = Files.walk(directory)) {
@@ -39,6 +42,8 @@ public class JSONHandler {
         }
     }
 
+    // Reads in JSON using Gson and converts into a Map<String, Object>
+    // I use String and Object as I am from Python and that's how dictionaries work
     public static Map<String, Object> readJSON(Path filePath){
         Gson gson = new Gson();
         folderHandler(filePath.getParent());
@@ -48,10 +53,12 @@ public class JSONHandler {
 
             return gson.fromJson(reader, dataType);
         } catch (IOException e) {
+            // If there's no JSON file then just return an empty Map so there's no values to load in
             return new HashMap<>();
         }
     }
 
+    // Write a Map to JSON using Gson
     public static void writeJSON(Map<String, Object> jsonContent, Path filePath){
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         folderHandler(filePath.getParent());
