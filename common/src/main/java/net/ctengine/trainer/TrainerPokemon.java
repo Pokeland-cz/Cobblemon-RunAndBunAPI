@@ -13,13 +13,19 @@ import net.minecraft.util.Identifier;
 
 import java.util.*;
 
+// TODO - Add more attributes (i.e IVs, gender, ability etc.)
+
 public class TrainerPokemon extends Pokemon {
 
     public TrainerPokemon(){
         this.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
+        // Set a random UUID on initialisation otherwise the mc entity manager will
+        // throw an error on server startup.
         this.setUuid(UUID.randomUUID());
     }
 
+    // A lot of the if statements here are to check for safe casts.
+    // Probably more efficient ways but good enough for now.
     public void initFromJSONContent(Map<String, Object> JSONContent){
 
         // Set Species
@@ -52,6 +58,7 @@ public class TrainerPokemon extends Pokemon {
         }
     }
 
+    // Convert the attributes into a JSON format, used when saving a trainer and their team.
     public Map<String, Object> getJSONContent(){
         Map<String, Object> JSONContent = new HashMap<>();
 
@@ -66,10 +73,15 @@ public class TrainerPokemon extends Pokemon {
 
     }
 
-    public Pokemon toPokemon(){
+    // Return a new instance of a Pokemon here as this is used for the battle team.
+    // If you don't make a new instance then the trainer's pokemon will stay fainted
+    // across battles.
+    public Pokemon toNewPokemon(){
         return new Pokemon().copyFrom(this);
     }
 
+    // Cast singular Pokemon object to a Trainer Pokemon.
+    // There might be a more efficient way??
     public static TrainerPokemon of(Pokemon pokemon){
         TrainerPokemon trainerPokemon = new TrainerPokemon();
         trainerPokemon.setSpecies(pokemon.getSpecies());
@@ -79,6 +91,7 @@ public class TrainerPokemon extends Pokemon {
         return trainerPokemon;
     }
 
+    // Cast list of Pokemon objects to Trainer Pokemon
     public static List<TrainerPokemon> of(List<Pokemon> pokemonList){
         List<TrainerPokemon> trainerPokemonList = new ArrayList<>();
         for (Pokemon pokemon : pokemonList){

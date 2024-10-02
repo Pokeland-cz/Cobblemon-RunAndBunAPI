@@ -17,6 +17,9 @@ import java.util.UUID;
 
 import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 
+// According to selfdot, trainer battle actors will not work if they are not backed by an entity
+// This class will assign an entity to a battle actor
+// "Borrowed" from selfdot's code
 public class EntityBackerTrainerBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
     private final String name;
     private final LivingEntity entity;

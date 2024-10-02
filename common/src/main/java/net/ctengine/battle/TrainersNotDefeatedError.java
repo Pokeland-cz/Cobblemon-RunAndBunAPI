@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+// Error for when checking the win registry and player has not beaten the requirements
+// "Borrowed" from selfdot's code
 public class TrainersNotDefeatedError implements BattleStartError {
 
     private final List<String> trainersNotDefeatedIdList;

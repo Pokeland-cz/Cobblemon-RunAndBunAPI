@@ -19,6 +19,9 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+// "Borrowed" entirely from selfdot's code.
+// Seems very confusing
+
 public class Gen5AI implements BattleAI {
 
     private static final Random RANDOM = new Random();

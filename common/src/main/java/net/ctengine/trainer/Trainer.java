@@ -17,11 +17,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// TODO - add more attributes (i.e. Win command, Loss command etc.)
+
 public class Trainer {
     private final String id;
-    private List<TrainerPokemon> team = new ArrayList<>();
+    private final List<TrainerPokemon> team = new ArrayList<>();
     private String displayName = null;
-    private List<String> defeatRequirements = new ArrayList<>();
+    private final List<String> defeatRequirements = new ArrayList<>();
 
     // Trainer is protected so people have to use the TrainerRegistry to create a trainer.
     // This way trainers will always be loaded into the TrainerRegistry rather than having to manually add
@@ -33,6 +35,7 @@ public class Trainer {
         return this.id;
     }
 
+    // Display name used for battling, if it has not been initialised then just return ID
     public String getDisplayName(){
         return  (this.displayName == null) ? this.id : this.displayName;
     }
@@ -41,13 +44,15 @@ public class Trainer {
         this.displayName = displayName;
     }
 
+    // getBattleTeam is used when initiating a battle. We convert Trainer Pokemon to
+    // Pokemon, then to BattlePokemon and build a team from that.
     public List<BattlePokemon> getBattleTeam() {
         List<BattlePokemon> battlePokemonList = new ArrayList<>();
         for (TrainerPokemon teamMember : this.team){
-            Pokemon pokemon = teamMember.toPokemon();
+            Pokemon pokemon = teamMember.toNewPokemon();
             battlePokemonList.add(new BattlePokemon(pokemon, pokemon, (pokemonEntity -> {
-                // we discard pokemonEntity here because if not then a pokemon wild pokemon will be left over
-                // if the player forfeits the battle
+                // We discard pokemonEntity here because if not then a pokemon wild pokemon will be left over
+                // If the player forfeits the battle
                 pokemonEntity.discard();
                 return Unit.INSTANCE;
             })));
@@ -61,6 +66,7 @@ public class Trainer {
         }
     }
 
+    // Used to add multiple Pokemon at a time in case you just want to pass in a List
     public void addMultipleTrainerPokemon(List<TrainerPokemon> trainerPokemonList){
         for (TrainerPokemon trainerPokemon : trainerPokemonList){
             if (trainerPokemon != null){
@@ -81,10 +87,21 @@ public class Trainer {
         }
     }
 
+    // Load the attributes from the read in JSON content
     public void initFromJSONContent(Map<String, Object> JSONContent){
+        // Set display name
         String displayName = CastingUtil.safeCast(JSONContent.get("species"), String.class, true);
         this.displayName = (displayName != null) ? displayName : this.id;
 
+        // Set defeat requirements
+        if (JSONContent.get("defeatRequirements") instanceof List<?> defeatRequirementsList){
+            for (Object defeatRequirementObj : defeatRequirementsList){
+                String defeatRequirement = CastingUtil.safeCast(defeatRequirementObj, String.class, true);
+                if(defeatRequirement != null) this.defeatRequirements.add(defeatRequirement);
+            }
+        }
+
+        // Set and build pokemon team
         if (JSONContent.get("team") instanceof List<?> trainerTeam){
             CTEngine.LOGGER.info("initialising team for trainer: "+this.id);
             for (Object teamMember : trainerTeam){
@@ -109,6 +126,7 @@ public class Trainer {
             Map<String, Object> JSONContent = new HashMap<>();
 
             JSONContent.put("displayName", this.displayName);
+            JSONContent.put("defeatRequirements",this.defeatRequirements);
 
             List<Map<String, Object>> parsedTeam = new ArrayList<>();
             for (TrainerPokemon teamMember : this.team){
@@ -122,16 +140,20 @@ public class Trainer {
         }
     }
 
+    // When the trainer is removed from the Trainer Registry this is called, hence the protected,
+    // as Creation/Deletion of trainers should only be done through the TrainerRegistry
     protected void deleteJSONFile(){
         Path JSONPath = Paths.get(CTEngine.runServer.getSavePath(WorldSavePath.PLAYERDATA).getParent().toString(),
                 "ctengine", "trainers", this.id+".json");
         try {
             Files.delete(JSONPath);
         } catch (IOException e) {
+            // Probably don't need to log anything here
             //CTEngine.LOGGER.info(e.toString());
         }
     }
 
+    // Used when deciding if a player can battle a trainer
     public void addDefeatRequirement(String defeatRequirementTrainerId){
         this.defeatRequirements.add(defeatRequirementTrainerId);
     }

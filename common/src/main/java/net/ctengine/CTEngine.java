@@ -23,11 +23,13 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public final class CTEngine {
     public static final String MOD_ID = "ctengine";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    // Initialise as null so we can make sure it's been initialised properly later
     public static MinecraftServer runServer = null;
 
     public static void init() {
@@ -49,9 +51,12 @@ public final class CTEngine {
 
         LifecycleEvent.SERVER_STOPPING.register(server -> {
             server.execute(() -> {
-                for (Trainer trainer : TrainerRegistry.getTrainers()){
-                    trainer.save();
-                    WinRegistry.save();
+                List<Trainer> trainers = TrainerRegistry.getTrainers();
+                if (trainers != null){
+                    for (Trainer trainer : TrainerRegistry.getTrainers()){
+                        trainer.save();
+                        WinRegistry.save();
+                    }
                 }
             });
         });
@@ -67,6 +72,7 @@ public final class CTEngine {
     public static class Client {
         @Environment(EnvType.CLIENT)
         public static void initializeClient() {
+            // temp
             EntityRendererRegistry.register(ModEntityRegistry.TRAINER_VILLAGER, VillagerEntityRenderer::new);
         }
     }

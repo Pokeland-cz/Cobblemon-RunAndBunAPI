@@ -12,9 +12,11 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.HashMap;
 import java.util.Map;
 
+// Tracks who is in what battle, will add to WinRegistry if the player wins
+// TODO - implement win/loss commands
 public class TrainerBattleListener {
-    private static Map<PokemonBattle, Trainer> onBattleVictoryMapper = new HashMap<>();
-    private static Map<PokemonBattle, Trainer> onBattleLossMapper = new HashMap<>();
+    private static final Map<PokemonBattle, Trainer> onBattleVictoryMapper = new HashMap<>();
+    private static final Map<PokemonBattle, Trainer> onBattleLossMapper = new HashMap<>();
 
     public static void addOnBattleVictory(PokemonBattle battle, Trainer trainer){
         onBattleVictoryMapper.put(battle, trainer);
@@ -27,6 +29,8 @@ public class TrainerBattleListener {
     public static void registerListeners(){
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, battleVictoryEvent -> {
             PokemonBattle battle = battleVictoryEvent.getBattle();
+
+            // When a battle is won check if it is a player winning before running a win command
             if (onBattleVictoryMapper.containsKey(battle) && CTEngine.runServer != null) {
                 Trainer trainer = onBattleVictoryMapper.get(battle);
 
@@ -35,11 +39,14 @@ public class TrainerBattleListener {
                     ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
                     if (serverPlayer == null) return;
                     CTEngine.LOGGER.info(serverPlayer.getName().toString()+" won the battle");
+                    // TODO - HERE
                     //String winCommand = trainer.getWinCommand();
                     //if (winCommand != null && !winCommand.isEmpty()) runCommand(winCommand, serverPlayer);
                 }));
                 onBattleVictoryMapper.remove(battle);
             }
+
+            // When a battle is lost check if it is a player losing before running a loss command
             if (onBattleLossMapper.containsKey(battle) && CTEngine.runServer != null) {
                 Trainer trainer = onBattleLossMapper.get(battle);
 
@@ -47,6 +54,7 @@ public class TrainerBattleListener {
                     ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
                     if (serverPlayer == null) return;
                     CTEngine.LOGGER.info(serverPlayer.getName().toString()+" lost the battle");
+                    // TODO - HERE
                     //String lossCommand = trainer.getWinCommand();
                     //if (lossCommand != null && !lossCommand.isEmpty()) runCommand(lossCommand, serverPlayer);
                 }));

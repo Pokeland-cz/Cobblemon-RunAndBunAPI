@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+// WinRegistry tracks what player has won against what trainer IDs
+// If a trainer is deleted then their tracked win will also be deleted
 public class WinRegistry {
     // Initialise as null in case we need to check if it has been properly initialised or not
     private static Map<String, List<String>> winMapper = null;

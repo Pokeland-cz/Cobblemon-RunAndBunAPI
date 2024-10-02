@@ -26,6 +26,9 @@ import java.util.UUID;
 public class BattleHandler {
     public static void requestTrainerBattle(ServerPlayerEntity serverPlayer, Trainer trainer, LivingEntity trainerEntity){
         PlayerPartyStore party = Cobblemon.INSTANCE.getStorage().getParty(serverPlayer);
+
+        // Get first alive pokemon in players party as the leading pokemon
+        // If none are alive then don't allow battle to go through otherwise it soft locks
         UUID leadingPokemon = null;
         for (Pokemon pokemon : party) {
             if (!pokemon.isFainted()) {
