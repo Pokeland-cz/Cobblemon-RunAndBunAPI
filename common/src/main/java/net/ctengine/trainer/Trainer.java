@@ -38,12 +38,10 @@ public class Trainer {
         List<BattlePokemon> battlePokemonList = new ArrayList<>();
         for (TrainerPokemon teamMember : this.team){
             Pokemon pokemon = teamMember.toNewPokemon();
-            battlePokemonList.add(new BattlePokemon(pokemon, pokemon, (pokemonEntity -> {
-                // We discard pokemonEntity here because if not then a pokemon wild pokemon will be left over
-                // If the player forfeits the battle
-                pokemonEntity.discard();
-                return Unit.INSTANCE;
-            })));
+            // When we get the battle team we want to register this new pokemon objects
+            // in the isTrainerOwned list.
+            TrainerPokemon.isTrainerOwned.add(pokemon.getUuid());
+            battlePokemonList.add(new BattlePokemon(pokemon, pokemon, (pokemonEntity -> Unit.INSTANCE)));
         }
         return battlePokemonList;
     }
@@ -58,19 +56,17 @@ public class Trainer {
     // Used to add multiple Pokemon at a time in case you just want to pass in a List
     public void addMultipleTrainerPokemon(List<TrainerPokemon> trainerPokemonList){
         for (TrainerPokemon trainerPokemon : trainerPokemonList){
-            if (trainerPokemon != null){
-                this.team.add(trainerPokemon);
-            }
+            this.addTrainerPokemon(trainerPokemon);
         }
     }
     public void removeTrainerPokemon(TrainerPokemon trainerPokemon){
-        this.team.remove(trainerPokemon);
+        if (trainerPokemon != null) {
+            this.team.remove(trainerPokemon);
+        }
     }
     public void removeMultipleTrainerPokemon(List<TrainerPokemon> trainerPokemonList){
         for (TrainerPokemon trainerPokemon : trainerPokemonList){
-            if (trainerPokemon != null){
-                this.team.remove(trainerPokemon);
-            }
+            this.removeTrainerPokemon(trainerPokemon);
         }
     }
 
@@ -104,7 +100,7 @@ public class Trainer {
 
                     TrainerPokemon trainerPokemon = new TrainerPokemon();
                     trainerPokemon.initFromJSONContent(teamMemberInfoParsed);
-                    this.team.add(trainerPokemon);
+                    this.addTrainerPokemon(trainerPokemon);
                 }
             }
         }

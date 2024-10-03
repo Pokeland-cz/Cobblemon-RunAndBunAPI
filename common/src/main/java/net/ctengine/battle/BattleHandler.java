@@ -25,7 +25,22 @@ import java.util.Set;
 import java.util.UUID;
 
 public class BattleHandler {
+    // Just track if they are already in a battle so they can't initiate another one
+    public static final List<UUID> inTrainerBattle = new ArrayList<>();
+
     public static void requestTrainerBattle(ServerPlayerEntity serverPlayer, Trainer trainer, LivingEntity trainerEntity){
+        if (inTrainerBattle.contains(serverPlayer.getUuid())) return;
+
+        // Check if the trainer is set to be only beatable once.
+        // If they can only be beaten once and the trainer has already beaten them
+        // then don't allow them to battle.
+        if (trainer.getCanOnlyBeatOnce() &&
+                WinRegistry.getWin(trainer.getId(), serverPlayer.getUuid())
+        ) {
+            serverPlayer.sendMessage(Text.literal(Formatting.RED + "You have already beaten this trainer!"));
+            return;
+        }
+
         PlayerPartyStore party = Cobblemon.INSTANCE.getStorage().getParty(serverPlayer);
 
         // Get first alive pokemon in players party as the leading pokemon
@@ -42,16 +57,6 @@ public class BattleHandler {
             return;
         }
 
-        // Check if the trainer is set to be only beatable once.
-        // If they can only be beaten once and the trainer has already beaten them
-        // then don't allow them to battle.
-        if (trainer.getCanOnlyBeatOnce() &&
-                WinRegistry.getWin(trainer.getId(), serverPlayer.getUuid())
-        ) {
-            serverPlayer.sendMessage(Text.literal(Formatting.RED + "You have already beaten this trainer!"));
-            return;
-        }
-
         startTrainerBattle(serverPlayer, trainer, trainerEntity, party, leadingPokemon).ifErrored(error -> {
                     error.sendTo(serverPlayer, t -> t);
                     return Unit.INSTANCE;
@@ -61,6 +66,7 @@ public class BattleHandler {
                 .ifSuccessful(battle -> {
                     TrainerBattleListener.addOnBattleVictory(battle, trainer);
                     TrainerBattleListener.addOnBattleLoss(battle, trainer);
+                    inTrainerBattle.add(serverPlayer.getUuid());
                     return Unit.INSTANCE;
                 });
     }

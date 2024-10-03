@@ -1,16 +1,17 @@
 package net.ctengine;
 
+import com.cobblemon.mod.common.api.Priority;
+import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
+import kotlin.Unit;
 import net.ctengine.battle.TrainerBattleListener;
 import net.ctengine.battle.command.CommandExecutor;
 import net.ctengine.registry.ModEntityRegistry;
-import net.ctengine.trainer.Trainer;
-import net.ctengine.trainer.TrainerInitialiser;
-import net.ctengine.trainer.TrainerRegistry;
-import net.ctengine.trainer.WinRegistry;
+import net.ctengine.trainer.*;
 import net.ctengine.trainer.ai.Gen5AI;
 import net.ctengine.util.JSONHandler;
 import net.fabricmc.api.EnvType;
@@ -52,16 +53,24 @@ public final class CTEngine {
             });
         });
 
+        // Save the registries
         LifecycleEvent.SERVER_STOPPING.register(server -> {
             server.execute(() -> {
                 List<Trainer> trainers = TrainerRegistry.getTrainers();
                 if (trainers != null){
                     for (Trainer trainer : TrainerRegistry.getTrainers()){
                         trainer.save();
-                        WinRegistry.save();
                     }
                 }
+                WinRegistry.save();
             });
+        });
+
+        // Cancel loot drop if the Pokemon is trainer owned
+        CobblemonEvents.LOOT_DROPPED.subscribe(Priority.HIGHEST, event -> {
+            if (!(event.getEntity() instanceof PokemonEntity pokemonEntity)) return Unit.INSTANCE;
+            if (TrainerPokemon.isTrainerOwned.contains(pokemonEntity.getPokemon().getUuid())) event.cancel();
+            return Unit.INSTANCE;
         });
 
         BattleTestCommand.register();

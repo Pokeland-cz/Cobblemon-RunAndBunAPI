@@ -16,12 +16,13 @@ import java.util.*;
 // TODO - Add more attributes (i.e IVs, gender, ability etc.)
 
 public class TrainerPokemon extends Pokemon {
+    // The Pokemon object itself needs to be tracked to check if it is owned by a trainer.
+    // However as we can't really set a custom attribute on the Pokemon object as it's not
+    // a Trainer Pokemon, we have to store this information in a static List.
+    public static final List<UUID> isTrainerOwned = new ArrayList<>();
 
     public TrainerPokemon(){
         this.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
-        // Set a random UUID on initialisation otherwise the mc entity manager will
-        // throw an error on server startup.
-        this.setUuid(UUID.randomUUID());
     }
 
     // A lot of the if statements here are to check for safe casts.
@@ -77,7 +78,12 @@ public class TrainerPokemon extends Pokemon {
     // If you don't make a new instance then the trainer's pokemon will stay fainted
     // across battles.
     public Pokemon toNewPokemon(){
-        return new Pokemon().copyFrom(this);
+        Pokemon pokemon = new Pokemon().copyFrom(this);
+        // We generate a random UUID here as multiple trainers
+        // might use the same Trainer Pokemon object on creation.
+        // This makes instances of the Trainer Pokemon unique when battling.
+        pokemon.setUuid(UUID.randomUUID());
+        return pokemon;
     }
 
     // Cast singular Pokemon object to a Trainer Pokemon.

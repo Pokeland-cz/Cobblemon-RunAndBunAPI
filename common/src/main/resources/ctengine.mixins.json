@@ -1,11 +1,14 @@
 {
   "required": true,
-  "package": "net.gensir.mixin",
+  "package": "net.ctengine.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
   ],
   "mixins": [
+    "PokemonBattleMixin",
+    "PokemonEntityMixin",
+    "SwitchInstructionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
