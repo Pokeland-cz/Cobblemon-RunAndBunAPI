@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 // Tracks who is in what battle, will add to WinRegistry if the player wins
-// TODO - implement win/loss commands
 public class TrainerBattleListener {
     private static final Map<PokemonBattle, Trainer> onBattleVictoryMapper = new HashMap<>();
     private static final Map<PokemonBattle, Trainer> onBattleLossMapper = new HashMap<>();
@@ -38,10 +37,10 @@ public class TrainerBattleListener {
                     WinRegistry.addWin(trainer, uuid);
                     ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
                     if (serverPlayer == null) return;
-                    CTEngine.LOGGER.info(serverPlayer.getName().toString()+" won the battle");
-                    // TODO - HERE
-                    //String winCommand = trainer.getWinCommand();
-                    //if (winCommand != null && !winCommand.isEmpty()) runCommand(winCommand, serverPlayer);
+
+                    // Execute win command
+                    String winCommand = trainer.getWinCommand();
+                    if (winCommand != null && !winCommand.isEmpty()) CommandHandler.runCommand(winCommand, serverPlayer);
                 }));
                 onBattleVictoryMapper.remove(battle);
             }
@@ -53,10 +52,10 @@ public class TrainerBattleListener {
                 battleVictoryEvent.getLosers().forEach(battleActor -> battleActor.getPlayerUUIDs().forEach(uuid -> {
                     ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
                     if (serverPlayer == null) return;
-                    CTEngine.LOGGER.info(serverPlayer.getName().toString()+" lost the battle");
-                    // TODO - HERE
-                    //String lossCommand = trainer.getWinCommand();
-                    //if (lossCommand != null && !lossCommand.isEmpty()) runCommand(lossCommand, serverPlayer);
+
+                    // Execute loss command
+                    String lossCommand = trainer.getLossCommand();
+                    if (lossCommand != null && !lossCommand.isEmpty()) CommandHandler.runCommand(lossCommand, serverPlayer);
                 }));
                 onBattleLossMapper.remove(battle);
             }

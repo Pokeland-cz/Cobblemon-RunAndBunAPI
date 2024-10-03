@@ -5,6 +5,7 @@ import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import net.ctengine.battle.TrainerBattleListener;
+import net.ctengine.battle.command.CommandExecutor;
 import net.ctengine.registry.ModEntityRegistry;
 import net.ctengine.trainer.Trainer;
 import net.ctengine.trainer.TrainerInitialiser;
@@ -31,6 +32,8 @@ public final class CTEngine {
 
     // Initialise as null so we can make sure it's been initialised properly later
     public static MinecraftServer runServer = null;
+
+    public static CommandExecutor COMMAND_EXECUTOR = CommandExecutor.CONSOLE;
 
     public static void init() {
         // Write common init code here.

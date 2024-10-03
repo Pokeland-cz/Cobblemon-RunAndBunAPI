@@ -15,7 +15,7 @@ public class CastingUtil {
     // Optional doLog to log if the object can't be cast to that type.
     public static <T> T safeCast(Object obj, Class<T> desiredClass, boolean doLog) {
         if (desiredClass.isInstance(obj)) return desiredClass.cast(obj);
-        if (doLog) CTEngine.LOGGER.info("Object: "+obj+" is not of type: "+desiredClass);
+        if (doLog && obj != null) CTEngine.LOGGER.info("Object: "+obj+" is not of type: "+desiredClass);
 
         return null;
     }

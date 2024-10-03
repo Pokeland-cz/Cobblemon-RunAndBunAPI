@@ -39,6 +39,7 @@ public class BattleTestCommand {
                 pokemon2.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier( Identifier.of("cobblemon","bulbasaur")));
                 pokemon2.setLevel(2);
                 trainer.addTrainerPokemon(pokemon2);
+                trainer.setWinCommand("give %player% minecraft:diamond 20");
 
                 trainer.save();
 
