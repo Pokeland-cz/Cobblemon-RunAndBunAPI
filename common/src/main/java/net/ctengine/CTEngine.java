@@ -43,6 +43,11 @@ public final class CTEngine {
                 runServer = server;
                 TrainerBattleListener.registerListeners();
                 Gen5AI.initialiseTypeChart();
+
+                // Ensure registries are empty
+                TrainerRegistry.resetRegistry();
+                WinRegistry.resetRegistry();
+
                 TrainerInitialiser.initialiseTrainersFromJSON();
                 TrainerInitialiser.initialiseTrainersFromDatapack();
 
@@ -56,12 +61,7 @@ public final class CTEngine {
         // Save the registries
         LifecycleEvent.SERVER_STOPPING.register(server -> {
             server.execute(() -> {
-                List<Trainer> trainers = TrainerRegistry.getTrainers();
-                if (trainers != null){
-                    for (Trainer trainer : TrainerRegistry.getTrainers()){
-                        trainer.save();
-                    }
-                }
+                TrainerRegistry.save();
                 WinRegistry.save();
             });
         });

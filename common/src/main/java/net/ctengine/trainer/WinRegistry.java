@@ -42,7 +42,6 @@ public class WinRegistry {
         } else {
             if (!playerIdList.contains(playerIdString)) playerIdList.add(playerIdString);
         }
-        save();
     }
 
     public static void removeWin(Trainer trainer, UUID playerId){
@@ -51,18 +50,16 @@ public class WinRegistry {
             List<String> playerIdList = winMapper.get(trainer.getId());
             if (playerIdList != null) playerIdList.remove(playerIdString);
         }
-        save();
     }
 
     public static void removeAllWins(Trainer trainer){
         if (winMapper != null) winMapper.remove(trainer.getId());
-        save();
     }
 
     public static void save(){
         if (CTEngine.runServer != null && winMapper != null) {
             Path JSONPath = Paths.get(CTEngine.runServer.getSavePath(WorldSavePath.PLAYERDATA).getParent().toString(),
-                    "ctengine", "trainers", "winRegistry.json");
+                    "ctengine", "winRegistry.json");
 
             JSONHandler.writeJSON(CastingUtil.rebuildMap(winMapper), JSONPath);
         }
@@ -74,5 +71,11 @@ public class WinRegistry {
             return playerIdList != null && playerIdList.contains(playerId.toString());
         }
         return false;
+    }
+
+    // This is to reset the registry to the default of null.
+    // Needed otherwise swapping between singleplayer worlds caches the data
+    public static void resetRegistry(){
+        winMapper = null;
     }
 }

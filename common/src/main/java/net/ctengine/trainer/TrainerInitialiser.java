@@ -24,6 +24,7 @@ public class TrainerInitialiser {
 
             try {
                 // Get all JSON files in the directory and try initialise them as trainers
+                int count = 0;
                 List<Path> JSONPaths = JSONHandler.getAllJsonFiles(worldSavePath);
                 for (Path JSONPath : JSONPaths){
                     String fileName = JSONPath.getFileName().toString();
@@ -32,7 +33,9 @@ public class TrainerInitialiser {
                     Trainer trainer = TrainerRegistry.createTrainer(trainerID, false);
                     Map<String, Object> JSONContent = JSONHandler.readJSON(JSONPath);
                     trainer.initFromJSONContent(JSONContent);
+                    count += 1;
                 }
+                CTEngine.LOGGER.info("Loaded "+count+" Trainers from JSON");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

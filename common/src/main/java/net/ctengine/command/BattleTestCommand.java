@@ -1,6 +1,7 @@
 package net.ctengine.command;
 
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.pokemon.Gender;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
@@ -38,6 +39,7 @@ public class BattleTestCommand {
                 TrainerPokemon pokemon2 = new TrainerPokemon();
                 pokemon2.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier( Identifier.of("cobblemon","bulbasaur")));
                 pokemon2.setLevel(2);
+                pokemon2.setGender(Gender.FEMALE);
                 trainer.addTrainerPokemon(pokemon2);
                 trainer.setWinCommand("give %player% minecraft:diamond 20");
                 trainer.setCanOnlyBeatOnce(true);

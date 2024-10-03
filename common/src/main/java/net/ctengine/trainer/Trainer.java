@@ -206,7 +206,6 @@ public class Trainer {
     public void setCanOnlyBeatOnce(boolean canOnlyBeatOnce){
         this.canOnlyBeatOnce = canOnlyBeatOnce;
     }
-
     public boolean getCanOnlyBeatOnce(){
         return this.canOnlyBeatOnce;
     }

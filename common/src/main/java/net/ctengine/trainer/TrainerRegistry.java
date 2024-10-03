@@ -1,5 +1,7 @@
 package net.ctengine.trainer;
 
+import net.ctengine.CTEngine;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +31,7 @@ public class TrainerRegistry {
             trainer.deleteJSONFile();
             trainers.remove(trainer);
             WinRegistry.removeAllWins(trainer);
+            WinRegistry.save();
         }
     }
 
@@ -57,5 +60,21 @@ public class TrainerRegistry {
 
     public static Trainer createTrainer(String id){
         return createTrainer(id, false);
+    }
+
+    public static void save(){
+        List<Trainer> registryTrainers = TrainerRegistry.getTrainers();
+        if (registryTrainers != null){
+            CTEngine.LOGGER.info("Saving: "+registryTrainers.size()+" trainers");
+            for (Trainer trainer : TrainerRegistry.getTrainers()){
+                trainer.save();
+            }
+        }
+    }
+
+    // This is to reset the registry to the default of null.
+    // Needed otherwise swapping between singleplayer worlds caches the data
+    public static void resetRegistry(){
+        trainers = null;
     }
 }

@@ -31,33 +31,38 @@ public class TrainerBattleListener {
 
             // When a battle is won check if it is a player winning before running a win command
             if (onBattleVictoryMapper.containsKey(battle) && CTEngine.runServer != null) {
-                Trainer trainer = onBattleVictoryMapper.get(battle);
+                CTEngine.runServer.execute(() -> {
+                    Trainer trainer = onBattleVictoryMapper.get(battle);
 
-                battleVictoryEvent.getWinners().forEach(battleActor -> battleActor.getPlayerUUIDs().forEach(uuid -> {
-                    WinRegistry.addWin(trainer, uuid);
-                    ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
-                    if (serverPlayer == null) return;
+                    battleVictoryEvent.getWinners().forEach(battleActor -> battleActor.getPlayerUUIDs().forEach(uuid -> {
+                        WinRegistry.addWin(trainer, uuid);
+                        WinRegistry.save();
+                        ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
+                        if (serverPlayer == null) return;
 
-                    // Execute win command
-                    String winCommand = trainer.getWinCommand();
-                    if (winCommand != null && !winCommand.isEmpty()) CommandHandler.runCommand(winCommand, serverPlayer);
-                }));
-                onBattleVictoryMapper.remove(battle);
+                        // Execute win command
+                        String winCommand = trainer.getWinCommand();
+                        if (winCommand != null && !winCommand.isEmpty()) CommandHandler.runCommand(winCommand, serverPlayer);
+                    }));
+                    onBattleVictoryMapper.remove(battle);
+                });
             }
 
             // When a battle is lost check if it is a player losing before running a loss command
             if (onBattleLossMapper.containsKey(battle) && CTEngine.runServer != null) {
-                Trainer trainer = onBattleLossMapper.get(battle);
+                CTEngine.runServer.execute(() -> {
+                    Trainer trainer = onBattleLossMapper.get(battle);
 
-                battleVictoryEvent.getLosers().forEach(battleActor -> battleActor.getPlayerUUIDs().forEach(uuid -> {
-                    ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
-                    if (serverPlayer == null) return;
+                    battleVictoryEvent.getLosers().forEach(battleActor -> battleActor.getPlayerUUIDs().forEach(uuid -> {
+                        ServerPlayerEntity serverPlayer = CTEngine.runServer.getPlayerManager().getPlayer(uuid);
+                        if (serverPlayer == null) return;
 
-                    // Execute loss command
-                    String lossCommand = trainer.getLossCommand();
-                    if (lossCommand != null && !lossCommand.isEmpty()) CommandHandler.runCommand(lossCommand, serverPlayer);
-                }));
-                onBattleLossMapper.remove(battle);
+                        // Execute loss command
+                        String lossCommand = trainer.getLossCommand();
+                        if (lossCommand != null && !lossCommand.isEmpty()) CommandHandler.runCommand(lossCommand, serverPlayer);
+                    }));
+                    onBattleLossMapper.remove(battle);
+                });
             }
             return Unit.INSTANCE;
         });

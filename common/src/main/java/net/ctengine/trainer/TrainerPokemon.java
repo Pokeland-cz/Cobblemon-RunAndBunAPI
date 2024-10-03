@@ -3,7 +3,10 @@ package net.ctengine.trainer;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
+import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.pokemon.Gender;
+import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.Species;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
@@ -57,6 +60,20 @@ public class TrainerPokemon extends Pokemon {
                 }
             }
         }
+
+        // Set Gender
+        String genderString = CastingUtil.safeCast(JSONContent.get("gender"), String.class, true);
+        if ((Objects.equals(genderString, "MALE") || Objects.equals(genderString, "FEMALE") || Objects.equals(genderString, "GENDERLESS"))){
+            this.setGender(Gender.valueOf(genderString));
+        } else {
+            // If no Gender is found in JSON then use MALE as default
+            this.setGender(Gender.MALE);
+        }
+
+        // Set nature
+        String natureString = CastingUtil.safeCast(JSONContent.get("nature"), String.class, true);
+        Nature nature = (natureString != null) ? Natures.INSTANCE.getNature(Identifier.of(natureString)) : null;
+        if (nature != null) this.setNature(nature);
     }
 
     // Convert the attributes into a JSON format, used when saving a trainer and their team.
@@ -65,6 +82,8 @@ public class TrainerPokemon extends Pokemon {
 
         JSONContent.put("species", this.getSpecies().toString());
         JSONContent.put("level", this.getLevel());
+        JSONContent.put("gender", this.getGender().asString());
+        JSONContent.put("nature", this.getNature().getName().toString());
 
         List<String> JSONMoveset = new ArrayList<>();
         this.getMoveSet().forEach(move -> JSONMoveset.add(move.getName()));
@@ -92,6 +111,8 @@ public class TrainerPokemon extends Pokemon {
         TrainerPokemon trainerPokemon = new TrainerPokemon();
         trainerPokemon.setSpecies(pokemon.getSpecies());
         trainerPokemon.setLevel(pokemon.getLevel());
+        trainerPokemon.setGender(pokemon.getGender());
+        trainerPokemon.setNature(pokemon.getNature());
         trainerPokemon.getMoveSet().copyFrom(pokemon.getMoveSet());
 
         return trainerPokemon;

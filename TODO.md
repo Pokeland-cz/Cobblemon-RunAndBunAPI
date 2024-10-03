@@ -1,0 +1,5 @@
+- TEST, TEST, TEST - a lot of stuff needs testing.
+- Datapack initialisation - trainers loaded in from a datapack do not need to be saved to JSON format so make sure saveOnCreation is false and you don't call trainer.save()
+- Do we want to add the mixin that optionally disables XP for trainers?
+- Trainer battle cooldown?
+- Player maximum level to fight trainer?

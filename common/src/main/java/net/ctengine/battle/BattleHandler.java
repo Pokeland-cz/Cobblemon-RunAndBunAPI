@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class BattleHandler {
-    // Just track if they are already in a battle so they can't initiate another one
+    // Just track if player is already in a battle so they can't initiate another one
     public static final List<UUID> inTrainerBattle = new ArrayList<>();
 
     public static void requestTrainerBattle(ServerPlayerEntity serverPlayer, Trainer trainer, LivingEntity trainerEntity){
