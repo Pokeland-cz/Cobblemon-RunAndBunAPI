@@ -1,7 +1,6 @@
 package net.ctengine.battle.command;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import lombok.extern.slf4j.Slf4j;
 import net.ctengine.CTEngine;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -10,7 +9,6 @@ import net.minecraft.server.command.ServerCommandSource;
 import org.jetbrains.annotations.Nullable;
 
 // "Borrowed" from selfdot's code
-@Slf4j
 public class CommandExecutionBuilder {
 
     private static final String PLAYER_PLACEHOLDER = "%player%";

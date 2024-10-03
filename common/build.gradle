@@ -17,7 +17,5 @@ dependencies {
 
     modApi "com.cobblemon:mod:$rootProject.cobblemon_version"
 
-    compileOnly "org.projectlombok:lombok:$lombok_version"
-    annotationProcessor "org.projectlombok:lombok:$lombok_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_stdlib_version"
 }
