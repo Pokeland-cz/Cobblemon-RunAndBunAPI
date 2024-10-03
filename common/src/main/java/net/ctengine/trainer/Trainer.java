@@ -76,21 +76,21 @@ public class Trainer {
     public void initFromJSONContent(Map<String, Object> JSONContent){
         // Set display name
         String displayName = CastingUtil.safeCast(JSONContent.get("displayName"), String.class, true);
-        this.displayName = (displayName != null) ? displayName : this.id;
+        this.setDisplayName((displayName != null) ? displayName : this.id);
 
         // Set defeat requirements
         if (JSONContent.get("defeatRequirements") instanceof List<?> defeatRequirementsList){
             for (Object defeatRequirementObj : defeatRequirementsList){
                 String defeatRequirement = CastingUtil.safeCast(defeatRequirementObj, String.class, true);
-                if(defeatRequirement != null) this.defeatRequirements.add(defeatRequirement);
+                if(defeatRequirement != null) this.addDefeatRequirement(defeatRequirement);
             }
         }
 
         Boolean canOnlyBeatOnce = CastingUtil.safeCast(JSONContent.get("canOnlyBeatOnce"), Boolean.class, true);
-        this.canOnlyBeatOnce = (canOnlyBeatOnce != null) ? canOnlyBeatOnce : false;
+        this.setCanOnlyBeatOnce((canOnlyBeatOnce != null) ? canOnlyBeatOnce : false);
 
-        this.winCommand = CastingUtil.safeCast(JSONContent.get("winCommand"), String.class, true);
-        this.lossCommand = CastingUtil.safeCast(JSONContent.get("lossCommand"), String.class, true);
+        this.setWinCommand(CastingUtil.safeCast(JSONContent.get("winCommand"), String.class, true));
+        this.setLossCommand(CastingUtil.safeCast(JSONContent.get("lossCommand"), String.class, true));
 
         // Set and build pokemon team
         if (JSONContent.get("team") instanceof List<?> trainerTeam){

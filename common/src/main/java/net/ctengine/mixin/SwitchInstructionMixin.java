@@ -11,10 +11,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+// "Borrowed" from selfdot
 // This mixin fixes a bug in cobblemon.
 // If a Pokemon has been switched in before by a trainer then their
-// willBeSwitchedIn attribute is never reset so they cannot be switched in
-// a second time.
+// willBeSwitchedIn attribute is never reset, so they cannot be switched in
+// a second time. This will cause a softlock if not fixed.
 @Mixin(SwitchInstruction.class)
 public abstract class SwitchInstructionMixin {
 

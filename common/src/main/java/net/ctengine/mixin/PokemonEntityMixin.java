@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+// "Borrowed" from selfdot
 @Mixin(PokemonEntity.class)
 public abstract class PokemonEntityMixin extends LivingEntity {
 
