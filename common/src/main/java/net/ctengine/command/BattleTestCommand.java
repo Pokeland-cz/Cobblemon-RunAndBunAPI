@@ -40,6 +40,7 @@ public class BattleTestCommand {
                 pokemon2.setLevel(2);
                 trainer.addTrainerPokemon(pokemon2);
                 trainer.setWinCommand("give %player% minecraft:diamond 20");
+                trainer.setCanOnlyBeatOnce(true);
 
                 trainer.save();
 

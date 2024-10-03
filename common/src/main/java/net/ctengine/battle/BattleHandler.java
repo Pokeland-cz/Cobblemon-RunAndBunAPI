@@ -17,6 +17,7 @@ import net.ctengine.trainer.ai.Gen5AI;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,16 @@ public class BattleHandler {
         }
         if (leadingPokemon == null) {
             serverPlayer.sendMessage(Text.of("You have no alive Pokemon to battle with"));
+            return;
+        }
+
+        // Check if the trainer is set to be only beatable once.
+        // If they can only be beaten once and the trainer has already beaten them
+        // then don't allow them to battle.
+        if (trainer.getCanOnlyBeatOnce() &&
+                WinRegistry.getWin(trainer.getId(), serverPlayer.getUuid())
+        ) {
+            serverPlayer.sendMessage(Text.literal(Formatting.RED + "You have already beaten this trainer!"));
             return;
         }
 

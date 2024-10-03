@@ -24,6 +24,7 @@ public class Trainer {
     private final List<String> defeatRequirements = new ArrayList<>();
     private String winCommand = null;
     private String lossCommand = null;
+    private boolean canOnlyBeatOnce = false;
 
     // Trainer is protected so people have to use the TrainerRegistry to create a trainer.
     // This way trainers will always be loaded into the TrainerRegistry rather than having to manually add
@@ -89,12 +90,14 @@ public class Trainer {
             }
         }
 
+        Boolean canOnlyBeatOnce = CastingUtil.safeCast(JSONContent.get("canOnlyBeatOnce"), Boolean.class, true);
+        this.canOnlyBeatOnce = (canOnlyBeatOnce != null) ? canOnlyBeatOnce : false;
+
         this.winCommand = CastingUtil.safeCast(JSONContent.get("winCommand"), String.class, true);
         this.lossCommand = CastingUtil.safeCast(JSONContent.get("lossCommand"), String.class, true);
 
         // Set and build pokemon team
         if (JSONContent.get("team") instanceof List<?> trainerTeam){
-            CTEngine.LOGGER.info("initialising team for trainer: "+this.id);
             for (Object teamMember : trainerTeam){
                 if (teamMember instanceof Map<?, ?> teamMemberInfo){
                     Map<String, Object> teamMemberInfoParsed = CastingUtil.rebuildMap(teamMemberInfo);
@@ -118,6 +121,7 @@ public class Trainer {
 
             JSONContent.put("displayName", this.displayName);
             JSONContent.put("defeatRequirements",this.defeatRequirements);
+            JSONContent.put("canOnlyBeatOnce", this.canOnlyBeatOnce);
 
             if (this.winCommand != null) JSONContent.put("winCommand", this.winCommand);
             if (this.lossCommand != null) JSONContent.put("lossCommand", this.lossCommand);
@@ -198,6 +202,17 @@ public class Trainer {
     }
     public void setDisplayName(String displayName){
         this.displayName = displayName;
+    }
+
+
+    // Will be used to check against the WinRegistry to see if the trainer
+    // can be beaten multiple times by the same player
+    public void setCanOnlyBeatOnce(boolean canOnlyBeatOnce){
+        this.canOnlyBeatOnce = canOnlyBeatOnce;
+    }
+
+    public boolean getCanOnlyBeatOnce(){
+        return this.canOnlyBeatOnce;
     }
 
 }
