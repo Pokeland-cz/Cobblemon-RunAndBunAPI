@@ -17,5 +17,6 @@ dependencies {
 
     modApi "com.cobblemon:mod:$rootProject.cobblemon_version"
 
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_stdlib_version"
 }

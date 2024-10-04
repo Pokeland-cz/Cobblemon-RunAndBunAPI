@@ -1,4 +1,5 @@
 - TEST, TEST, TEST - pretty much every feature needs testing.
+- Need to fix kotlin for forge not working
 - Datapack initialisation - trainers loaded in from a datapack do not need to be saved to JSON format so make sure saveOnCreation is false and you don't call trainer.save()
 - Do we want to add the mixin that optionally disables XP for trainers?
 - Trainer battle cooldown?
