@@ -1,15 +1,19 @@
 package net.ctengine.trainer;
 
+import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.abilities.Abilities;
+import com.cobblemon.mod.common.api.abilities.Ability;
+import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
-import com.cobblemon.mod.common.pokemon.Gender;
-import com.cobblemon.mod.common.pokemon.Nature;
-import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.cobblemon.mod.common.pokemon.Species;
+import com.cobblemon.mod.common.api.pokemon.stats.Stat;
+import com.cobblemon.mod.common.pokemon.*;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import net.ctengine.CTEngine;
 import net.ctengine.util.CastingUtil;
 import net.minecraft.util.Identifier;
@@ -72,8 +76,30 @@ public class TrainerPokemon extends Pokemon {
 
         // Set nature
         String natureString = CastingUtil.safeCast(JSONContent.get("nature"), String.class, true);
-        Nature nature = (natureString != null) ? Natures.INSTANCE.getNature(Identifier.of(natureString)) : null;
+        Nature nature = (natureString != null) ? Natures.INSTANCE.getNature(Identifier.of("cobblemon",natureString)) : null;
         if (nature != null) this.setNature(nature);
+
+        // Set Ability
+        String abilityString = CastingUtil.safeCast(JSONContent.get("ability"), String.class, true);
+        AbilityTemplate abilityTemplate = (abilityString != null) ? Abilities.INSTANCE.get(abilityString) : null;
+        Ability ability = (abilityTemplate != null) ? new Ability(abilityTemplate, false) : null;
+        if (ability != null) this.updateAbility(ability);
+
+        // Set IVs
+        // Set and build pokemon team
+        if (JSONContent.get("ivs") instanceof Map<?, ?> ivMap){
+            Map<String, Object> ivMapParsed = CastingUtil.rebuildMap(ivMap);
+            for (String statString : ivMapParsed.keySet()){
+                Double ivValue = CastingUtil.safeCast(ivMapParsed.get(statString), Double.class, true);
+                Integer ivInt = (ivValue != null) ? (int) Math.floor(ivValue) : null;
+                Stat stat = Cobblemon.INSTANCE.getStatProvider().fromIdentifier(Identifier.of("cobblemon",statString));
+                if (stat != null && ivInt != null) {
+                    this.setIV(stat, ivInt);
+                } else {
+                    CTEngine.LOGGER.info("COULD NOT SET IV FOR "+statString+" : "+ivValue);
+                }
+            }
+        }
     }
 
     // Convert the attributes into a JSON format, used when saving a trainer and their team.
@@ -83,14 +109,19 @@ public class TrainerPokemon extends Pokemon {
         JSONContent.put("species", this.getSpecies().toString());
         JSONContent.put("level", this.getLevel());
         JSONContent.put("gender", this.getGender().asString());
-        JSONContent.put("nature", this.getNature().getName().toString());
+        JSONContent.put("nature", this.getNature().getName().getPath());
+        JSONContent.put("ability", this.getAbility().getName());
 
         List<String> JSONMoveset = new ArrayList<>();
         this.getMoveSet().forEach(move -> JSONMoveset.add(move.getName()));
         JSONContent.put("moveset", JSONMoveset);
 
-        return JSONContent;
+        Map<String, Object> JSONIVs = new HashMap<>();
+        IVs ivs = this.getIvs();
+        ivs.spliterator().forEachRemaining(entry -> JSONIVs.put(entry.getKey().getIdentifier().getPath(), entry.getValue()));
+        JSONContent.put("ivs",JSONIVs);
 
+        return JSONContent;
     }
 
     // Return a new instance of a Pokemon here as this is used for the battle team.
@@ -113,7 +144,11 @@ public class TrainerPokemon extends Pokemon {
         trainerPokemon.setLevel(pokemon.getLevel());
         trainerPokemon.setGender(pokemon.getGender());
         trainerPokemon.setNature(pokemon.getNature());
+        trainerPokemon.updateAbility(pokemon.getAbility());
         trainerPokemon.getMoveSet().copyFrom(pokemon.getMoveSet());
+
+        IVs ivs = pokemon.getIvs();
+        ivs.spliterator().forEachRemaining(entry -> trainerPokemon.setIV(entry.getKey(), entry.getValue()));
 
         return trainerPokemon;
     }

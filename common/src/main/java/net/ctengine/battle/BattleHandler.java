@@ -108,13 +108,13 @@ public class BattleHandler {
         }
 
         // Check the defeat requirements and give error if they haven't defeated the proper trainers
-        List<String> trainersNotDefeatedIdList = new ArrayList<>();
-        for (String defeatRequirementTrainerId : trainer.getDefeatRequirements()){
-            if (!WinRegistry.getWin(defeatRequirementTrainerId, serverPlayer.getUuid())){
-                trainersNotDefeatedIdList.add(defeatRequirementTrainerId);
+        List<String> hasNotDefeated = new ArrayList<>();
+        for (String trainerId : trainer.getMustHaveDefeated()){
+            if (!WinRegistry.getWin(trainerId, serverPlayer.getUuid())){
+                hasNotDefeated.add(trainerId);
             }
         }
-        if (!trainersNotDefeatedIdList.isEmpty()) playerErrors.add(new TrainersNotDefeatedError(trainersNotDefeatedIdList));
+        if (!hasNotDefeated.isEmpty()) playerErrors.add(new TrainersNotDefeatedError(hasNotDefeated));
 
         // Don't let them battle if they are already in a battle.
         if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(serverPlayer) != null) {

@@ -1,6 +1,8 @@
 package net.ctengine.command;
 
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.pokemon.Gender;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -34,13 +36,20 @@ public class BattleTestCommand {
 
                 TrainerPokemon pokemon = new TrainerPokemon();
                 pokemon.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier( Identifier.of("cobblemon","charmander")));
-                trainer.addTrainerPokemon(pokemon);
+                trainer.setTeamMember(4, pokemon);
 
                 TrainerPokemon pokemon2 = new TrainerPokemon();
                 pokemon2.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier( Identifier.of("cobblemon","bulbasaur")));
                 pokemon2.setLevel(2);
                 pokemon2.setGender(Gender.FEMALE);
-                trainer.addTrainerPokemon(pokemon2);
+                Stat stat = Cobblemon.INSTANCE.getStatProvider().fromIdentifier(Identifier.of("cobblemon","defence"));
+                if (stat != null) {
+                    pokemon2.setIV(stat, 30);
+                } else {
+                    CTEngine.LOGGER.info("STAT IS NULL");
+                }
+
+                trainer.setTeamMember(0, pokemon2);
                 trainer.setWinCommand("give %player% minecraft:diamond 20");
                 trainer.setCanOnlyBeatOnce(true);
 

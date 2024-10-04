@@ -4,3 +4,4 @@
 - Do we want to add the mixin that optionally disables XP for trainers?
 - Trainer battle cooldown?
 - Player maximum level to fight trainer?
+- Do we want group functionality?

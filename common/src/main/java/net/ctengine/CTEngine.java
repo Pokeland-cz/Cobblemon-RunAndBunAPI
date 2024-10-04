@@ -79,6 +79,19 @@ public final class CTEngine {
         EnvExecutor.runInEnv(Env.CLIENT, () -> CTEngine.Client::initializeClient);
     }
 
+    // The following code is in Cobblemon Trainers but unsure why.
+    // Surely a sent out trainer owned pokemon is always in battle and therefore
+    // cannot be battled by a different player anyway.
+    // I haven't made a call to register this listener as I'll ask selfdot the reason first.
+    public static void registerPokemonSendOutListener() {
+        CobblemonEvents.POKEMON_SENT_POST.subscribe(Priority.NORMAL, event -> {
+            if (TrainerPokemon.isTrainerOwned.contains(event.getPokemon().getUuid())) {
+                event.getPokemonEntity().getDataTracker().set(PokemonEntity.getUNBATTLEABLE(), true);
+            }
+            return Unit.INSTANCE;
+        });
+    }
+
 
     @Environment(EnvType.CLIENT)
     public static class Client {

@@ -12,16 +12,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Trainer {
     private final String id;
-    private final List<TrainerPokemon> team = new ArrayList<>();
+    private final List<TrainerPokemon> team = Arrays.asList(null, null, null, null, null, null);
     private String displayName = null;
-    private final List<String> defeatRequirements = new ArrayList<>();
+    private final List<String> mustHaveDefeated = new ArrayList<>();
     private String winCommand = null;
     private String lossCommand = null;
     private boolean canOnlyBeatOnce = false;
@@ -37,39 +34,34 @@ public class Trainer {
     public List<BattlePokemon> getBattleTeam() {
         List<BattlePokemon> battlePokemonList = new ArrayList<>();
         for (TrainerPokemon teamMember : this.team){
-            Pokemon pokemon = teamMember.toNewPokemon();
-            // When we get the battle team we want to register this new pokemon objects
-            // in the isTrainerOwned list.
-            TrainerPokemon.isTrainerOwned.add(pokemon.getUuid());
-            battlePokemonList.add(new BattlePokemon(pokemon, pokemon, (pokemonEntity -> Unit.INSTANCE)));
+            if (teamMember != null) {
+                Pokemon pokemon = teamMember.toNewPokemon();
+                // When we get the battle team we want to register this new pokemon objects
+                // in the isTrainerOwned list.
+                TrainerPokemon.isTrainerOwned.add(pokemon.getUuid());
+                battlePokemonList.add(new BattlePokemon(pokemon, pokemon, (pokemonEntity -> Unit.INSTANCE)));
+            }
         }
         return battlePokemonList;
     }
 
 
 
-    public void addTrainerPokemon(TrainerPokemon trainerPokemon){
-        if (trainerPokemon != null){
-            this.team.add(trainerPokemon);
-        }
-    }
-    // Used to add multiple Pokemon at a time in case you just want to pass in a List
-    public void addMultipleTrainerPokemon(List<TrainerPokemon> trainerPokemonList){
-        for (TrainerPokemon trainerPokemon : trainerPokemonList){
-            this.addTrainerPokemon(trainerPokemon);
-        }
-    }
-    public void removeTrainerPokemon(TrainerPokemon trainerPokemon){
-        if (trainerPokemon != null) {
-            this.team.remove(trainerPokemon);
-        }
-    }
-    public void removeMultipleTrainerPokemon(List<TrainerPokemon> trainerPokemonList){
-        for (TrainerPokemon trainerPokemon : trainerPokemonList){
-            this.removeTrainerPokemon(trainerPokemon);
+    public void setTeamMember(int teamIndex, TrainerPokemon trainerPokemon){
+        if (teamIndex >= 0 && teamIndex < 6){
+            this.team.set(teamIndex, trainerPokemon);
+        } else {
+            CTEngine.LOGGER.info("team index must be between 0-6");
         }
     }
 
+    public void removeTeamMember(int teamIndex){
+        if (teamIndex >= 0 && teamIndex < 6){
+            this.team.set(teamIndex, null);
+        } else {
+            CTEngine.LOGGER.info("team index must be between 0-6");
+        }
+    }
 
 
     // Load the attributes from the read in JSON content
@@ -79,10 +71,10 @@ public class Trainer {
         this.setDisplayName((displayName != null) ? displayName : this.id);
 
         // Set defeat requirements
-        if (JSONContent.get("defeatRequirements") instanceof List<?> defeatRequirementsList){
-            for (Object defeatRequirementObj : defeatRequirementsList){
-                String defeatRequirement = CastingUtil.safeCast(defeatRequirementObj, String.class, true);
-                if(defeatRequirement != null) this.addDefeatRequirement(defeatRequirement);
+        if (JSONContent.get("mustHaveDefeated") instanceof List<?> mustHaveDefeatedList){
+            for (Object mustHaveDefeatedObj : mustHaveDefeatedList){
+                String mustHaveDefeated = CastingUtil.safeCast(mustHaveDefeatedObj, String.class, true);
+                if(mustHaveDefeated != null) this.addMustHaveDefeated(mustHaveDefeated);
             }
         }
 
@@ -93,14 +85,15 @@ public class Trainer {
         this.setLossCommand(CastingUtil.safeCast(JSONContent.get("lossCommand"), String.class, true));
 
         // Set and build pokemon team
-        if (JSONContent.get("team") instanceof List<?> trainerTeam){
-            for (Object teamMember : trainerTeam){
-                if (teamMember instanceof Map<?, ?> teamMemberInfo){
+        if (JSONContent.get("team") instanceof List<?> teamMembers){
+            for (int i = 0; i < teamMembers.size(); i++) {
+                if (teamMembers.get(i) != null && teamMembers.get(i) instanceof Map<?, ?> teamMemberInfo){
                     Map<String, Object> teamMemberInfoParsed = CastingUtil.rebuildMap(teamMemberInfo);
 
                     TrainerPokemon trainerPokemon = new TrainerPokemon();
                     trainerPokemon.initFromJSONContent(teamMemberInfoParsed);
-                    this.addTrainerPokemon(trainerPokemon);
+
+                    this.team.set(i,trainerPokemon);
                 }
             }
         }
@@ -116,15 +109,17 @@ public class Trainer {
             Map<String, Object> JSONContent = new HashMap<>();
 
             JSONContent.put("displayName", this.displayName);
-            JSONContent.put("defeatRequirements",this.defeatRequirements);
+            JSONContent.put("mustHaveDefeated",this.mustHaveDefeated);
             JSONContent.put("canOnlyBeatOnce", this.canOnlyBeatOnce);
 
             if (this.winCommand != null) JSONContent.put("winCommand", this.winCommand);
             if (this.lossCommand != null) JSONContent.put("lossCommand", this.lossCommand);
 
-            List<Map<String, Object>> parsedTeam = new ArrayList<>();
-            for (TrainerPokemon teamMember : this.team){
-                parsedTeam.add(teamMember.getJSONContent());
+            List<Map<String, Object>> parsedTeam = Arrays.asList(null, null, null, null, null, null);
+            for (int i = 0; i < this.team.size(); i++) {
+                if (this.team.get(i) != null){
+                    parsedTeam.set(i,this.team.get(i).getJSONContent());
+                }
             }
             JSONContent.put("team", parsedTeam);
 
@@ -150,14 +145,14 @@ public class Trainer {
 
 
     // Used when deciding if a player can battle a trainer
-    public void addDefeatRequirement(String defeatRequirementTrainerId){
-        this.defeatRequirements.add(defeatRequirementTrainerId);
+    public void addMustHaveDefeated(String trainerId){
+        this.mustHaveDefeated.add(trainerId);
     }
-    public void removeDefeatRequirement(String defeatRequirementTrainerId){
-        this.defeatRequirements.remove(defeatRequirementTrainerId);
+    public void removeMustHaveDefeated(String trainerId){
+        this.mustHaveDefeated.remove(trainerId);
     }
-    public List<String> getDefeatRequirements(){
-        return this.defeatRequirements;
+    public List<String> getMustHaveDefeated(){
+        return this.mustHaveDefeated;
     }
 
 
