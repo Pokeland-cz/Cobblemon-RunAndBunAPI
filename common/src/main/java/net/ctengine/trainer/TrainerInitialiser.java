@@ -30,7 +30,7 @@ public class TrainerInitialiser {
                     String fileName = JSONPath.getFileName().toString();
                     // Remove .json extension to get ID
                     String trainerID = fileName.substring(0, fileName.length() - 5);
-                    Trainer trainer = TrainerRegistry.createTrainer(trainerID, false);
+                    Trainer trainer = TrainerRegistry.createTrainer(trainerID, true);
                     Map<String, Object> JSONContent = JSONHandler.readJSON(JSONPath);
                     trainer.initFromJSONContent(JSONContent);
                     count += 1;

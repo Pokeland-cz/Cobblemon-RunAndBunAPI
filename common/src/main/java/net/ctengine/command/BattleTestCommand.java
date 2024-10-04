@@ -31,7 +31,7 @@ public class BattleTestCommand {
 
         if (serverPlayer.getWorld() instanceof ServerWorld serverWorld){
             serverPlayer.getServer().execute(() -> {
-                Trainer trainer = TrainerRegistry.createTrainer(UUID.randomUUID().toString());
+                Trainer trainer = TrainerRegistry.createTrainer(UUID.randomUUID().toString(), true);
                 trainer.setDisplayName("Trainer Test");
 
                 TrainerPokemon pokemon = new TrainerPokemon();
