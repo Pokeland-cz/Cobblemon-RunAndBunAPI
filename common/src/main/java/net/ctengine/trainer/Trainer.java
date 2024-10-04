@@ -22,11 +22,13 @@ public class Trainer {
     private String winCommand = null;
     private String lossCommand = null;
     private boolean canOnlyBeatOnce = false;
+    private boolean shouldSave;
 
     // Trainer is protected so people have to use the TrainerRegistry to create a trainer.
     // This way trainers will always be loaded into the TrainerRegistry rather than having to manually add
-    protected Trainer(String trainerID){
+    protected Trainer(String trainerID, boolean shouldSave){
         this.id = trainerID;
+        this.shouldSave = shouldSave;
     }
 
     // getBattleTeam is used when initiating a battle. We convert Trainer Pokemon to
@@ -203,6 +205,14 @@ public class Trainer {
     }
     public boolean getCanOnlyBeatOnce(){
         return this.canOnlyBeatOnce;
+    }
+
+
+    public boolean getShouldSave(){
+        return this.shouldSave;
+    }
+    public void setShouldSave(boolean shouldSave){
+        this.shouldSave = shouldSave;
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class TrainerRegistry {
     // Initialise as null in case we need to check if it has been properly initialised or not
@@ -48,23 +49,27 @@ public class TrainerRegistry {
     // Trainer class is protected so people are forced to use createTrainer()
     // This ensures that the trainer is properly loaded into the TrainerRegistry
     // Sometimes we don't need to save the trainer (i.e loading in from a datapack)
-    public static Trainer createTrainer(String id, boolean saveOnCreation){
+    public static Trainer createTrainer(String id, boolean shouldSave){
         if (trainers == null){
             trainers = new ArrayList<>();
         }
-        Trainer trainer = new Trainer(id);
+        Trainer trainer = new Trainer(id, shouldSave);
         trainers.add(trainer);
-        if(saveOnCreation) trainer.save();
         return trainer;
     }
 
     public static Trainer createTrainer(String id){
-        return createTrainer(id, false);
+        return createTrainer(id, true);
     }
 
     public static void save(){
         List<Trainer> registryTrainers = TrainerRegistry.getTrainers();
-        if (registryTrainers != null){
+        List<Trainer> shouldSaveTrainers = (registryTrainers != null) ? TrainerRegistry.getTrainers().stream()
+                .filter(Trainer::getShouldSave)
+                .toList()
+                : null;
+
+        if (shouldSaveTrainers != null){
             CTEngine.LOGGER.info("Saving: "+registryTrainers.size()+" trainers");
             for (Trainer trainer : TrainerRegistry.getTrainers()){
                 trainer.save();
