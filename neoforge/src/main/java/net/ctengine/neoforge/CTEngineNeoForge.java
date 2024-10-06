@@ -2,12 +2,12 @@ package net.ctengine.neoforge;
 
 import net.neoforged.fml.common.Mod;
 
-import net.ctengine.CTEngine;
+import net.ctengine.CTEngineMod;
 
-@Mod(CTEngine.MOD_ID)
+@Mod(CTEngineMod.MOD_ID)
 public final class CTEngineNeoForge {
     public CTEngineNeoForge() {
         // Run our common setup.
-        CTEngine.init();
+        CTEngineMod.init();
     }
 }
