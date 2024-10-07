@@ -20,6 +20,7 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
+import net.ctengine.CTEngineMod;
 import net.ctengine.api.trainer.TrainerPlayer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.text.MutableText;
@@ -51,13 +52,22 @@ public class BattleManager {
     }
 
     private static BattleSide toBattleSide(List<BattleParticipant> participants) {
-        var battleActors = new BattleActor[participants.size()];
+        var battleActors = new ArrayList<BattleActor>();
 
-        for(int i = 0, s = participants.size(); i < s; i++) {
-            battleActors[i] = toBattleActor(participants.get(i));
+        for(var participant : participants) {
+            if(participant instanceof TrainerPlayer trainerPlayer) {
+                battleActors.add(toBattleActor(trainerPlayer));
+            } else if(participant instanceof AIBattleParticipant aiParticipant) {
+                battleActors.add(toBattleActor(aiParticipant));
+            } else {
+                // note: registering trainers with the TrainerRegistry will already check if battle
+                // participants extend from TrainerPlayer or implement AIBattleParticipant and
+                // throw an exception if not. This check is just and additional security measure.
+                CTEngineMod.LOG.error(String.format("invalid participant '%s', must extend from %s or implement %s, skipped", participant.getName(), TrainerPlayer.class.getName(), AIBattleParticipant.class.getName()));
+            }
         }
 
-        return new BattleSide(battleActors);
+        return new BattleSide(battleActors.toArray(new BattleActor[battleActors.size()]));
     }
 
     private static List<BattlePokemon> toBattlePokemons(Pokemon... pokemons) {
@@ -73,12 +83,14 @@ public class BattleManager {
         return battlePokemons;
     }
 
-    private static BattleActor toBattleActor(BattleParticipant participant) {
-        return (participant instanceof TrainerPlayer)
-            ? new PlayerBattleActor(getParticipantUUID(participant), toBattlePokemons(participant.getTeam()))
-            : participant.getSourceEntity() != null
-                ? new TrainerEntityBattleActor(participant.getName(), participant.getSourceEntity(), participant.getSourceEntity().getUuid(), toBattlePokemons(participant.getTeam()), participant.getBattleAI())
-                : new TrainerBattleActor(participant.getName(), getParticipantUUID(participant), toBattlePokemons(participant.getTeam()), participant.getBattleAI());
+    private static BattleActor toBattleActor(TrainerPlayer participant) {
+        return new PlayerBattleActor(participant.getPlayer().getUuid(), toBattlePokemons(participant.getTeam()));
+    }
+
+    private static BattleActor toBattleActor(AIBattleParticipant participant) {
+        return participant.getSourceEntity() != null
+            ? new TrainerEntityBattleActor(participant.getName(), participant.getSourceEntity(), participant.getSourceEntity().getUuid(), toBattlePokemons(participant.getTeam()), participant.getBattleAI())
+            : new TrainerBattleActor(participant.getName(), getParticipantUUID(participant), toBattlePokemons(participant.getTeam()), participant.getBattleAI());
     }
 
     private static UUID getParticipantUUID(BattleParticipant participant) {
@@ -91,12 +103,12 @@ public class BattleManager {
         private final LivingEntity entity;
 
         public TrainerEntityBattleActor(
-                String name,
-                LivingEntity entity,
-                UUID uuid,
-                List<BattlePokemon> pokemonList,
-                BattleAI artificialDecider
-        ) {
+            String name,
+            LivingEntity entity,
+            UUID uuid,
+            List<BattlePokemon> pokemonList,
+            BattleAI artificialDecider)
+        {
             super(uuid, pokemonList, artificialDecider);
             this.name = name;
             this.entity = entity;
@@ -107,26 +119,22 @@ public class BattleManager {
             return this.entity;
         }
 
-        @NotNull
-        @Override
+        @Override @NotNull
         public ActorType getType() {
             return ActorType.NPC;
         }
 
-        @NotNull
-        @Override
+        @Override @NotNull
         public MutableText getName() {
             return Text.literal(this.name);
         }
 
-        @NotNull
-        @Override
+        @Override @NotNull
         public MutableText nameOwned(@NotNull String s) {
             return battleLang("owned_pokemon", getName(), this.name);
         }
 
-        @Nullable
-        @Override
+        @Override @Nullable
         public Vec3d getInitialPos() {
             return this.entity.getPos();
         }

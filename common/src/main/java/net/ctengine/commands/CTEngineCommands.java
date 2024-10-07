@@ -50,24 +50,14 @@ public final class CTEngineCommands {
 
     private static ArgumentBuilder<ServerCommandSource, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide) {
         if(actor < actorsPerSide) {
-            if(actor + 1 < actorsPerSide) {
-                return RequiredArgumentBuilder
-                    .<ServerCommandSource, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                    .suggests(CTEngineCommands::get_trainer_id_suggestions)
-                    .then(builderParticipants(format, side, actor + 1, actorsPerSide));
-            }
-
-            if(side < 1) {
-                return RequiredArgumentBuilder
-                    .<ServerCommandSource, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                    .suggests(CTEngineCommands::get_trainer_id_suggestions)
-                    .then(CommandManager.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide)));
-            }
-
-            return RequiredArgumentBuilder
+            var arg = RequiredArgumentBuilder
                 .<ServerCommandSource, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                .suggests(CTEngineCommands::get_trainer_id_suggestions)
-                .executes(context -> CTEngineCommands.battle(context, format));
+                .suggests(CTEngineCommands::get_trainer_id_suggestions);
+
+            return actor + 1 < actorsPerSide
+                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide)) : side < 1
+                ? arg.then(CommandManager.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide)))
+                : arg.executes(context -> CTEngineCommands.battle(context, format));
         }
 
         throw new IllegalArgumentException("invalid battle actor index: " + actor);
@@ -83,24 +73,30 @@ public final class CTEngineCommands {
     }
 
     private static int battle(CommandContext<ServerCommandSource> context, BattleFormat format) {
-        var trainerRegistry = CTEngine.getInstance().getTrainerRegistry();
-        var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
-        List<List<BattleParticipant>> participants = List.of(new ArrayList<>(), new ArrayList<>());
+        try {
+            var trainerRegistry = CTEngine.getInstance().getTrainerRegistry();
+            var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
+            List<List<BattleParticipant>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
-        for(int side = 0; side < 2; side++) {
-            var list = participants.get(side);
+            for(int side = 0; side < 2; side++) {
+                var list = participants.get(side);
 
-            try {
-                for(int actor = 0; actor < actorsPerSide; actor++) {
-                    var trainerId = context.getArgument(getParticipantId(side, actor), String.class);
-                    list.add(trainerRegistry.getTrainer(trainerId));
+                try {
+                    for(int actor = 0; actor < actorsPerSide; actor++) {
+                        var trainerId = context.getArgument(getParticipantId(side, actor), String.class);
+                        list.add(trainerRegistry.getTrainer(trainerId));
+                    }
+                } catch(IllegalArgumentException e) {
+                    // ignore (assume mixed battle -> validation in BattleManager)
                 }
-            } catch(IllegalArgumentException e) {
-                // ignore (assume mixed battle -> validation in BattleManager)
             }
+
+            CTEngine.getInstance().getBattleManager().startBattle(participants.get(0), participants.get(1), format);
+        } catch(Exception e) {
+            CTEngineMod.LOG.error(e.getMessage(), e);
+            throw e;
         }
 
-        CTEngine.getInstance().getBattleManager().startBattle(participants.get(0), participants.get(1), format);
         return 0;
     }
 }

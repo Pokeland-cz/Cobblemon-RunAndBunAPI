@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.ctengine.api.battle.AIBattleParticipant;
 import net.ctengine.api.battle.BattleParticipant;
 
 public class TrainerRegistry {
@@ -12,6 +13,10 @@ public class TrainerRegistry {
     public void register(String trainerId, BattleParticipant participant) {
         if(this.isRegistered(trainerId)) {
             throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
+        }
+
+        if(!(participant instanceof TrainerPlayer) && !(participant instanceof AIBattleParticipant)) {
+            throw new IllegalArgumentException(String.format("invalid trainer type %s ('%s'), must extend from %s or implement %s", participant.getClass().getName(), trainerId, TrainerPlayer.class.getName(), AIBattleParticipant.class.getName()));
         }
 
         this.trainers.put(trainerId, participant);

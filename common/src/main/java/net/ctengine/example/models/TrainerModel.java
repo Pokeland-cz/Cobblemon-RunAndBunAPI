@@ -2,28 +2,30 @@ package net.ctengine.example.models;
 
 import java.util.UUID;
 
+import org.jetbrains.annotations.NotNull;
+
+import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 
-import net.ctengine.api.battle.BattleParticipant;
+import net.ctengine.api.ai.SelfdotGen5AI;
+import net.ctengine.api.battle.AIBattleParticipant;
 import net.minecraft.util.Identifier;
 
-public class TrainerModel implements BattleParticipant {
-    public final String name;
-    public final PokemonModel[] team;
+// A pojo for parsing trainers from json. Since the AIBattleParticipant interface
+// is rather simple it can be implemented right here.
+public class TrainerModel implements AIBattleParticipant {
+    private String name = "";
+    private PokemonModel[] team = new PokemonModel[0];
+    private transient BattleAI battleAI = new SelfdotGen5AI();
 
-    public TrainerModel(String name, PokemonModel... team) {
-        this.name = name;
-        this.team = team;
-    }
-
-    @Override
+    @Override @NotNull
     public String getName() {
         return this.name;
     }
 
-    @Override
+    @Override @NotNull
     public Pokemon[] getTeam() {
         var cobbleTeam = new Pokemon[this.team.length];
 
@@ -35,12 +37,17 @@ public class TrainerModel implements BattleParticipant {
     }
 
     private static Pokemon toCobblemon(PokemonModel model) {
-        var cobblemon = new com.cobblemon.mod.common.pokemon.Pokemon();
-        cobblemon.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier(Identifier.of(model.species)));
-        cobblemon.setGender(model.gender);
-        cobblemon.setLevel(model.level);
+        var cobblemon = new Pokemon();
+        cobblemon.setSpecies(PokemonSpecies.INSTANCE.getByIdentifier(Identifier.of(model.getSpecies())));
+        cobblemon.setGender(model.getGender());
+        cobblemon.setLevel(model.getLevel());
         cobblemon.setUuid(UUID.randomUUID());
         cobblemon.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
         return cobblemon;
+    }
+
+    @Override @NotNull
+    public BattleAI getBattleAI() {
+        return this.battleAI;
     }
 }

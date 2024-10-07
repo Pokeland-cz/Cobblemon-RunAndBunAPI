@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.cobblemon.mod.common.Cobblemon;
-import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import net.ctengine.api.battle.BattleParticipant;
@@ -20,29 +19,25 @@ public class TrainerPlayer implements BattleParticipant {
         this.player = player;
     }
 
+    @NotNull
     public ServerPlayerEntity getPlayer() {
         return this.player;
     }
 
-    @Override
+    @Override @NotNull
     public String getName() {
         return this.player.getDisplayName().getString();
     }
 
-    @Override
+    @Override @NotNull
     public Pokemon[] getTeam() {
         var party = new ArrayList<Pokemon>();
         Cobblemon.INSTANCE.getStorage().getParty(this.player).forEach(party::add);
         return party.toArray(new Pokemon[party.size()]);
     }
 
-    @Override
+    @Override @Nullable
     public LivingEntity getSourceEntity() {
-        return this.player;
-    }
-
-    @Override
-    public @Nullable BattleAI getBattleAI() {
-        return null;
+        return this.getPlayer();
     }
 }
