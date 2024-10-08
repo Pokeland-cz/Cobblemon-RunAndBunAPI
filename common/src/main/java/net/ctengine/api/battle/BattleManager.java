@@ -14,6 +14,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.BattleSide;
+import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.battles.actor.TrainerBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
@@ -30,25 +31,48 @@ import net.minecraft.util.math.Vec3d;
 import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 
 public class BattleManager {
+    private BattleContextValidator validator = new BattleContextValidator();
+
     public void startBattle(
         @NotNull List<BattleParticipant> participants1,
         @NotNull List<BattleParticipant> participants2,
         BattleFormat battleFormat)
     {
-        Cobblemon.INSTANCE.getBattleRegistry().startBattle(
-            battleFormat.getCobblemonBattleFormat(),
-            toBattleSide(participants1), toBattleSide(participants2),
-            false
-        ).ifErrored(error -> {
-            for(var player : error.getPlayersToBlame()) {
-                error.sendTo(player, t -> t);
-            }
+        var side1 = toBattleSide(participants1);
+        var side2 = toBattleSide(participants2);
+        var errors = validator.validate(new ErroredBattleStart(), new BattleContext(participants1, participants2, side1, side2, battleFormat));
 
-            // TODO: log on server
-            return Unit.INSTANCE;
-        }).ifSuccessful(battle -> {
-            return Unit.INSTANCE;
-        });
+        if(errors.isEmpty()) {
+            Cobblemon.INSTANCE.getBattleRegistry().startBattle(
+                battleFormat.getCobblemonBattleFormat(),
+                side1, side2, false
+            ).ifErrored(error -> {
+                for(var participants : List.of(participants1, participants2)) {
+                    for(var participant : participants) {
+                        if(participant instanceof TrainerPlayer trainerPlayer) {
+                            error.sendTo(trainerPlayer.getPlayer(), t -> t);
+                        }
+                    }
+                }
+
+                error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(null).getString()));
+                return Unit.INSTANCE;
+            }).ifSuccessful(battle -> {
+                CTEngineMod.LOG.info("BATTLE START:");
+                
+                for(var act : battle.getActors()) {
+                    CTEngineMod.LOG.info(" " + act.getName().getString());
+
+                    for(var poke : act.getPokemonList()) {
+                        CTEngineMod.LOG.info("  " + String.format("%s, %d: %d/%d", poke.getName(), poke.getOriginalPokemon().getLevel(), poke.getHealth(), poke.getMaxHealth()));
+                    }
+                }
+
+                return Unit.INSTANCE;
+            });
+        } else {
+            errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(null).getString()));
+        }
     }
 
     private static BattleSide toBattleSide(List<BattleParticipant> participants) {
@@ -62,7 +86,7 @@ public class BattleManager {
             } else {
                 // note: registering trainers with the TrainerRegistry will already check if battle
                 // participants extend from TrainerPlayer or implement AIBattleParticipant and
-                // throw an exception if not. This check is just and additional security measure.
+                // throw an exception if not. This check is just and additional safety measure.
                 CTEngineMod.LOG.error(String.format("invalid participant '%s', must extend from %s or implement %s, skipped", participant.getName(), TrainerPlayer.class.getName(), AIBattleParticipant.class.getName()));
             }
         }
