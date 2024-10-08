@@ -11,8 +11,8 @@ import com.google.gson.GsonBuilder;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
+import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.TrainerPlayer;
-import net.ctengine.example.models.TrainerModel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 
