@@ -15,7 +15,7 @@ import dev.architectury.event.events.common.CommandRegistrationEvent;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
 import net.ctengine.api.battle.BattleFormat;
-import net.ctengine.api.battle.BattleParticipant;
+import net.ctengine.api.trainer.Trainer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -76,7 +76,7 @@ public final class CTEngineCommands {
         try {
             var trainerRegistry = CTEngine.getInstance().getTrainerRegistry();
             var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
-            List<List<BattleParticipant>> participants = List.of(new ArrayList<>(), new ArrayList<>());
+            List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
             for(int side = 0; side < 2; side++) {
                 var list = participants.get(side);

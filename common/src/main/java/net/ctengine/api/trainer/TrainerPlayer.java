@@ -8,11 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
-import net.ctengine.api.battle.BattleParticipant;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class TrainerPlayer implements BattleParticipant {
+public class TrainerPlayer implements Trainer {
     private ServerPlayerEntity player;
 
     public TrainerPlayer(@NotNull ServerPlayerEntity player) {
@@ -37,7 +36,7 @@ public class TrainerPlayer implements BattleParticipant {
     }
 
     @Override @Nullable
-    public LivingEntity getSourceEntity() {
+    public LivingEntity getEntity() {
         return this.getPlayer();
     }
 }

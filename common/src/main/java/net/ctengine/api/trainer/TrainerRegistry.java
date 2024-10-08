@@ -4,19 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import net.ctengine.api.battle.AIBattleParticipant;
-import net.ctengine.api.battle.BattleParticipant;
-
 public class TrainerRegistry {
-    private Map<String, BattleParticipant> trainers = new HashMap<>();
+    private Map<String, Trainer> trainers = new HashMap<>();
 
-    public void register(String trainerId, BattleParticipant participant) {
+    public void register(String trainerId, Trainer participant) {
         if(this.isRegistered(trainerId)) {
             throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
         }
 
-        if(!(participant instanceof TrainerPlayer) && !(participant instanceof AIBattleParticipant)) {
-            throw new IllegalArgumentException(String.format("invalid trainer type %s ('%s'), must extend from %s or implement %s", participant.getClass().getName(), trainerId, TrainerPlayer.class.getName(), AIBattleParticipant.class.getName()));
+        if(!(participant instanceof TrainerPlayer) && !(participant instanceof TrainerNPC)) {
+            throw new IllegalArgumentException(String.format("invalid trainer type %s ('%s'), must extend from %s or implement %s", participant.getClass().getName(), trainerId, TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
         }
 
         this.trainers.put(trainerId, participant);
@@ -34,11 +31,11 @@ public class TrainerRegistry {
         return this.trainers.keySet();
     }
 
-    public BattleParticipant getTrainer(String trainerId) {
-        return this.getTrainer(trainerId, BattleParticipant.class);
+    public Trainer getTrainer(String trainerId) {
+        return this.getTrainer(trainerId, Trainer.class);
     }
 
-    public <T extends BattleParticipant> T getTrainer(String trainerId, Class<T> type) {
+    public <T extends Trainer> T getTrainer(String trainerId, Class<T> type) {
         if(!this.isRegistered(trainerId)) {
             throw new IllegalArgumentException(String.format("no such trainer registered '%s'", trainerId));
         }

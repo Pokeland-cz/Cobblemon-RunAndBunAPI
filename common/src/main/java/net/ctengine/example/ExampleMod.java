@@ -12,6 +12,7 @@ import dev.architectury.event.events.common.PlayerEvent;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
 import net.ctengine.api.models.TrainerModel;
+import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
@@ -44,9 +45,10 @@ public class ExampleMod {
             for(var trainerFile : files) {
                 try(var rd = new BufferedReader(new FileReader(trainerFile))) {
                     // We use the file name as trainer id and parse the content into a TrainerModel
-                    // instance, which is then registered to the TrainerRegistry.
+                    // instance, which is then passed to a TrainerNPC that is registered to the
+                    // TrainerRegistry (along a server to initialize the default villager entity).
                     var trainerId = fileToId(trainerFile);
-                    trainerReg.register(trainerId, GSON.fromJson(rd, TrainerModel.class));
+                    trainerReg.register(trainerId, new TrainerNPC(server, GSON.fromJson(rd, TrainerModel.class)));
                 } catch(IOException e) {
                     CTEngineMod.LOG.error("failed to parse trainer", e);
                 }

@@ -5,32 +5,21 @@ import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
-import com.cobblemon.mod.common.pokemon.Pokemon;
-import net.ctengine.api.ai.SelfdotGen5AI;
-import net.ctengine.api.battle.AIBattleParticipant;
-
 /**
  * A pojo class for parsing trainers.
  */
-public class TrainerModel implements AIBattleParticipant {
+public class TrainerModel {
     private String name = "";
     private List<PokemonModel> team = new ArrayList<>();
-    private transient BattleAI battleAI = new SelfdotGen5AI();
 
-    @Override @NotNull
+    @NotNull
     public String getName() {
         return this.name;
     }
 
-    @Override @NotNull
-    public Pokemon[] getTeam() {
-        return this.team.stream().map(pm -> pm.toPokemon()).toList().toArray(new Pokemon[0]);
-    }
-
-    @Override @NotNull
-    public BattleAI getBattleAI() {
-        return this.battleAI;
+    @NotNull
+    public List<PokemonModel> getTeam() {
+        return this.team;
     }
 
     @Override

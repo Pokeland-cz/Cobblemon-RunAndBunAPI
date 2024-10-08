@@ -5,14 +5,16 @@ import java.util.List;
 
 import com.cobblemon.mod.common.battles.BattleSide;
 
+import net.ctengine.api.trainer.Trainer;
+
 public class BattleContext {
-    private List<BattleParticipant> participants1;
-    private List<BattleParticipant> participants2;
+    private List<Trainer> participants1;
+    private List<Trainer> participants2;
     private BattleSide battleSide1;
     private BattleSide battleSide2;
     private BattleFormat battleFormat;
 
-    public BattleContext(List<BattleParticipant> participants1, List<BattleParticipant> participants2, BattleSide battleSide1, BattleSide battleSide2, BattleFormat battleFormat) {
+    public BattleContext(List<Trainer> participants1, List<Trainer> participants2, BattleSide battleSide1, BattleSide battleSide2, BattleFormat battleFormat) {
         this.participants1 = participants1;
         this.participants2 = participants2;
         this.battleSide1 = battleSide1;
@@ -20,11 +22,11 @@ public class BattleContext {
         this.battleFormat = battleFormat;
     }
 
-    public List<BattleParticipant> getParticipants1() {
+    public List<Trainer> getParticipants1() {
         return Collections.unmodifiableList(this.participants1);
     }
 
-    public List<BattleParticipant> getParticipants2() {
+    public List<Trainer> getParticipants2() {
         return Collections.unmodifiableList(this.participants2);
     }
 

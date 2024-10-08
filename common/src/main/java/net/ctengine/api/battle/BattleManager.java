@@ -16,12 +16,13 @@ import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.BattleSide;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
-import com.cobblemon.mod.common.battles.actor.TrainerBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
 import net.ctengine.CTEngineMod;
+import net.ctengine.api.trainer.Trainer;
+import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.text.MutableText;
@@ -34,8 +35,8 @@ public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
 
     public void startBattle(
-        @NotNull List<BattleParticipant> participants1,
-        @NotNull List<BattleParticipant> participants2,
+        @NotNull List<Trainer> participants1,
+        @NotNull List<Trainer> participants2,
         BattleFormat battleFormat)
     {
         var side1 = toBattleSide(participants1);
@@ -75,19 +76,19 @@ public class BattleManager {
         }
     }
 
-    private static BattleSide toBattleSide(List<BattleParticipant> participants) {
+    private static BattleSide toBattleSide(List<Trainer> participants) {
         var battleActors = new ArrayList<BattleActor>();
 
         for(var participant : participants) {
             if(participant instanceof TrainerPlayer trainerPlayer) {
                 battleActors.add(toBattleActor(trainerPlayer));
-            } else if(participant instanceof AIBattleParticipant aiParticipant) {
+            } else if(participant instanceof TrainerNPC aiParticipant) {
                 battleActors.add(toBattleActor(aiParticipant));
             } else {
                 // note: registering trainers with the TrainerRegistry will already check if battle
-                // participants extend from TrainerPlayer or implement AIBattleParticipant and
-                // throw an exception if not. This check is just and additional safety measure.
-                CTEngineMod.LOG.error(String.format("invalid participant '%s', must extend from %s or implement %s, skipped", participant.getName(), TrainerPlayer.class.getName(), AIBattleParticipant.class.getName()));
+                // participants extend from TrainerPlayer or TrainerNPC and throw an exception if
+                // not. This check is just and additional safety measure.
+                CTEngineMod.LOG.error(String.format("invalid participant '%s', must extend from %s or %s, skipped", participant.getName(), TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
             }
         }
 
@@ -111,15 +112,8 @@ public class BattleManager {
         return new PlayerBattleActor(participant.getPlayer().getUuid(), toBattlePokemons(participant.getTeam()));
     }
 
-    private static BattleActor toBattleActor(AIBattleParticipant participant) {
-        return participant.getSourceEntity() != null
-            ? new TrainerEntityBattleActor(participant.getName(), participant.getSourceEntity(), participant.getSourceEntity().getUuid(), toBattlePokemons(participant.getTeam()), participant.getBattleAI())
-            : new TrainerBattleActor(participant.getName(), getParticipantUUID(participant), toBattlePokemons(participant.getTeam()), participant.getBattleAI());
-    }
-
-    private static UUID getParticipantUUID(BattleParticipant participant) {
-        var entity = participant.getSourceEntity();
-        return entity != null ? entity.getUuid() : UUID.randomUUID();
+    private static BattleActor toBattleActor(TrainerNPC participant) {
+        return new TrainerEntityBattleActor(participant.getName(), participant.getEntity(), participant.getEntity().getUuid(), toBattlePokemons(participant.getTeam()), participant.getBattleAI());
     }
 
     private static class TrainerEntityBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
