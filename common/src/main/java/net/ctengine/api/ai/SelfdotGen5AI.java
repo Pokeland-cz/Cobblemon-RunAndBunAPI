@@ -19,9 +19,9 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-// "Borrowed" entirely from selfdot's code.
-// Seems very confusing
-
+/**
+ * Gen5 battle ai originally developed by Selfdot for CobblemonTrainers (unchanged).
+ */
 public class SelfdotGen5AI implements BattleAI {
 
     private static final Random RANDOM = new Random();

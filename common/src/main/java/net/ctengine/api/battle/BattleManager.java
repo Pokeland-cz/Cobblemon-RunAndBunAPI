@@ -31,9 +31,19 @@ import net.minecraft.util.math.Vec3d;
 
 import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 
+/**
+ * A service to manage pokemon battles.
+ */
 public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
 
+    /**
+     * Starts a new pokemon battle.
+     * 
+     * @param participants1 List of trainer participants for one side.
+     * @param participants2 List of trainer participants for the other side.
+     * @param battleFormat Battle format to use.
+     */
     public void startBattle(
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2,

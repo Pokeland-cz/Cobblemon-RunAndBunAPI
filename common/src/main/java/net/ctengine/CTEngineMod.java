@@ -17,7 +17,7 @@ public class CTEngineMod {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 
     public static void init() {
-        LifecycleEvent.SERVER_STARTED.register(ExampleMod::init);
+        LifecycleEvent.SERVER_STARTED.register(ExampleMod::init); // example...
         CTEngine.init(new TrainerRegistry());
         CTEngineCommands.register();
     }

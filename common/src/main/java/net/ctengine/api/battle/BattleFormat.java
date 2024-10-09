@@ -1,5 +1,8 @@
 package net.ctengine.api.battle;
 
+/**
+ * Wrapper enum for supported battle formats provided by cobblemon.
+ */
 public enum BattleFormat {
     GEN_9_SINGLES(com.cobblemon.mod.common.battles.BattleFormat.Companion.getGEN_9_SINGLES()),
     GEN_9_DOUBLES(com.cobblemon.mod.common.battles.BattleFormat.Companion.getGEN_9_DOUBLES()),
@@ -13,6 +16,11 @@ public enum BattleFormat {
         this.cobblemonBattleFormat = cobblemonBattleFormat;
     }
 
+    /**
+     * Retrieves the com.cobblemon.mod.common.battles.BattleFormat this enum value refers to.
+     * 
+     * @return Cobblemon battle format.
+     */
     public com.cobblemon.mod.common.battles.BattleFormat getCobblemonBattleFormat() {
         return this.cobblemonBattleFormat;
     }

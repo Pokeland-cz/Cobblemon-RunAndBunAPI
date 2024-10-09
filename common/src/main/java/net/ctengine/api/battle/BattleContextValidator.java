@@ -11,7 +11,12 @@ import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.MutableText;
 
+/**
+ * A service that is used by battle managers to validate the technical correctness
+ * of battle contexts.
+ */
 public class BattleContextValidator {
+    // placeholder (see todo below)
     class InsufficientPokemonError implements BattleStartError {
         public final int requiredCount;
         public final int hadCount;
@@ -29,6 +34,10 @@ public class BattleContextValidator {
         }
     }
 
+    /**
+     * An error that occurs if a battle actors appears more than once in a battle
+     * context.
+     */
     class DuplicateActorError implements BattleStartError {
         public final String actorName;
 
@@ -36,12 +45,20 @@ public class BattleContextValidator {
             this.actorName = actorName;
         }
 
+        // TODO: lang file? :/
         @Override
         public MutableText getMessageFor(Entity arg0) {
             return battleLang("error.duplicate_actor", actorName);
         }
     }
 
+    /**
+     * Validates the given battle context and collects any errors that may occur.
+     * 
+     * @param errors Battle start result to collect errors.
+     * @param context Battle context.
+     * @return The provided battle start result instance.
+     */
     public ErroredBattleStart validate(ErroredBattleStart errors, BattleContext context) {
         var actorsPersSide = context.getBattleFormat().getCobblemonBattleFormat().component2().getActorsPerSide();
         var slotsPerActor = context.getBattleFormat().getCobblemonBattleFormat().component2().getSlotsPerActor();
@@ -54,7 +71,7 @@ public class BattleContextValidator {
 
             for(var actor : side.getActors()) {
                 if(actor.getPokemonList().size() < slotsPerActor) {
-                    // TODO: custom error that does not require an entity
+                    // TODO: custom error that does not require an entity (or rather associate actor to participant to gain access to the entity)
                     // errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.insufficientPokemon(null, slotsPerActor, actor.getPokemonList().size()));
                     errors.getParticipantErrors().get(actor).add(new InsufficientPokemonError(slotsPerActor, actor.getPokemonList().size()));
                 }
