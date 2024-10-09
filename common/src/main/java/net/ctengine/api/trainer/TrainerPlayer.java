@@ -11,13 +11,26 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+/**
+ * A trainer that is represented by a player.
+ */
 public class TrainerPlayer implements Trainer {
     private ServerPlayerEntity player;
 
+    /**
+     * Creates a trainer for the given player instance.
+     * 
+     * @param player Player instance to associate the trainer to.
+     */
     public TrainerPlayer(@NotNull ServerPlayerEntity player) {
         this.player = player;
     }
 
+    /**
+     * Retrieves the player associated to this trainer.
+     * 
+     * @return Player instance.
+     */
     @NotNull
     public ServerPlayerEntity getPlayer() {
         return this.player;
