@@ -1,0 +1,60 @@
+package net.ctengine.api.errors;
+
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * General error representation.
+ */
+public class CTError {
+    /**
+     * Error message.
+     */
+    public final @Nullable String message;
+
+    /**
+     * Throwable that caused the error.
+     */
+    public final @Nullable Throwable cause;
+
+    /**
+     * Creates a new error instance with the given message and no cause.
+     * 
+     * @param message Error message string.
+     * @return New error instance.
+     */
+    public static CTError of(String message) {
+        return new CTError(message, null);
+    }
+    
+    /**
+     * Creates a new error instance for given cause. The error message is set to the
+     * message of the throwable if not null and to null otherwise.
+     * 
+     * @param cause Throwable that caused this error.
+     * @return New error instance.
+     */
+    public static CTError of(Throwable cause) {
+        return new CTError(cause != null && cause.getMessage() != null ? cause.getMessage() : null, cause);
+    }
+
+    /**
+     * Creates a new error instance for the given cause and with the provided message.
+     * 
+     * @param message Error message string.
+     * @param cause Throwable that caused this error.
+     * @return New error instance.
+     */
+    public static CTError of(String message, Throwable cause) {
+        return new CTError(message, cause);
+    }
+
+    private CTError(String message, Throwable cause) {
+        this.message = message;
+        this.cause = cause;
+    }
+
+    @Override
+    public String toString() {
+        return this.message != null ? this.message : super.toString();
+    }
+}
