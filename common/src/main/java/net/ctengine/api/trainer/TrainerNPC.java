@@ -5,7 +5,12 @@ import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import net.ctengine.api.ai.SelfdotGen5AI;
+import net.ctengine.api.errors.CTError;
+import net.ctengine.api.errors.CTErrors;
+import net.ctengine.api.models.PokemonModel;
 import net.ctengine.api.models.TrainerModel;
+import net.ctengine.api.models.converter.Converter;
+import net.ctengine.api.models.converter.PokemonModelConverter;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.MinecraftServer;
@@ -15,20 +20,40 @@ import net.minecraft.server.MinecraftServer;
  */
 public class TrainerNPC implements Trainer {
     private BattleAI battleAI = new SelfdotGen5AI();
+    private Pokemon[] team;
     private LivingEntity entity;
     private TrainerModel model;
+    private Converter<PokemonModel, Pokemon> pmc;
 
     /**
-     * Creates a new trainer with the given trainer model and instantiates a default
-     * villager entity on the provided servers overworld (not spawned), which is
-     * associated to the trainer.
+     * Creates a new trainer with the given {@link TrainerModel} and instantiates a
+     * default villager entity on the provided servers overworld (not spawned), which
+     * is associated to the trainer npc. Instantiates the trainer with a default
+     * instance of {@link PokemonModelConverter}.
      * 
      * @param server Minecraft server.
-     * @param model Trainer model.
+     * @param model {@link TrainerModel}.
+     * @param pokemonModelConverter A converter that can create pokemon instances of models and vica versa.
+     * @throws CTException In case of validation failures with the provided model.
      */
     public TrainerNPC(@NotNull MinecraftServer server, @NotNull TrainerModel model) {
-        this.model = model;
-        this.entity = EntityType.VILLAGER.create(server.getOverworld());
+        this(server, model, new PokemonModelConverter());
+    }
+
+    /**
+     * Creates a new trainer with the given {@link TrainerModel} and instantiates a default
+     * villager entity on the provided servers overworld (not spawned), which is
+     * associated to the trainer npc.
+     * 
+     * @param server Minecraft server.
+     * @param model {@link TrainerModel}.
+     * @param pokemonModelConverter A converter that can create pokemon instance of models and vica versa.
+     * @throws CTException In case of validation failures with the provided model.
+     */
+    public TrainerNPC(@NotNull MinecraftServer server, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
+        this.pmc = pokemonModelConverter;
+        this.setEntity(EntityType.VILLAGER.create(server.getOverworld()));
+        this.setModel(model);
     }
 
     /**
@@ -38,6 +63,47 @@ public class TrainerNPC implements Trainer {
      */
     public void setBattleAI(@NotNull BattleAI battleAI) {
         this.battleAI = battleAI;
+    }
+
+    /**
+     * Sets the battle ai of this trainer.
+     * 
+     * @param battleAI New battle ai.
+     * @return This trainer instance.
+     */
+    public TrainerNPC witBattleAI(@NotNull BattleAI battleAI) {
+        this.battleAI = battleAI;
+        return this;
+    }
+
+    /**
+     * Sets the model of this trainer.
+     * 
+     * @param model New {@link TrainerModel}.
+     * @throws CTException In case of validation failures with the provided model.
+     */
+    public void setModel(@NotNull TrainerModel model) {
+        var errors = CTErrors.create();
+        this.model = model;
+
+        if(this.model.getTeam().size() > 6) {
+            errors.add(CTError.of("too many pokemon in party " + this.model.getTeam().size() + "/6"));
+        }
+
+        this.team = this.model.getTeam().stream().limit(6)
+            .map(pkModel -> this.pmc.toTarget(pkModel, errors))
+            .toList().toArray(new Pokemon[0]);
+
+        errors.check();
+    }
+
+    /**
+     * Sets the pokemon model converter of this trainer.
+     * 
+     * @param pokemonModelConverter New {@link Converter}.
+     */
+    public void setPokemonModelConverter(@NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
+        this.pmc = pokemonModelConverter;
     }
 
     /**
@@ -62,7 +128,7 @@ public class TrainerNPC implements Trainer {
     /**
      * Retrieves the model of this trainer.
      * 
-     * @return Trainer model.
+     * @return {@link TrainerModel}.
      */
     @NotNull
     public TrainerModel getModel() {
@@ -76,7 +142,7 @@ public class TrainerNPC implements Trainer {
 
     @Override @NotNull
     public Pokemon[] getTeam() {
-        return this.model.getTeam().stream().map(pm -> pm.toPokemon()).toList().toArray(new Pokemon[0]);
+        return this.team;
     }
 
     @Override @NotNull

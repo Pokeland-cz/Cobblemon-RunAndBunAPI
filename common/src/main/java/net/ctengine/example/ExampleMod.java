@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
+import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
@@ -49,6 +50,9 @@ public class ExampleMod {
                     // TrainerRegistry (along a server to initialize the default villager entity).
                     var trainerId = fileToId(trainerFile);
                     trainerReg.register(trainerId, new TrainerNPC(server, GSON.fromJson(rd, TrainerModel.class)));
+                } catch(CTException errors) {
+                    CTEngineMod.LOG.error("model validation failure in: " + trainerFile.getPath());
+                    errors.getErrors().forEach(error -> CTEngineMod.LOG.error(error.message)); // this will log all issues that the model may has
                 } catch(IOException e) {
                     CTEngineMod.LOG.error("failed to parse trainer", e);
                 }

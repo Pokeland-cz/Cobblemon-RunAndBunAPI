@@ -2,6 +2,7 @@ package net.ctengine.api.errors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -101,7 +102,7 @@ public class CTErrors<T extends CTException> {
      * @param format Format string used to create the error message (may contain exactly one '%s' placeholder).
      * @return The provided value if the test succeeded or the result of otherwise if it fails.
      */
-    public <V> V expect(V got, Function<V, Boolean> predicate, Supplier<V> otherwise, String format) {        
+    public <V> V expect(V got, Function<V, Boolean> predicate, Supplier<V> otherwise, String format) {
         if(!predicate.apply(got)) {
             if(format.contains("%s")) {
                 format = String.format(format, got != null ? got.toString() : got);
@@ -112,6 +113,24 @@ public class CTErrors<T extends CTException> {
         }
 
         return got;
+    }
+
+    public <V> boolean doif(V got, Function<V, Boolean> predicate, Consumer<V> then) {
+        return doif(got, predicate, then, "invalid value '%s'");
+    }
+
+    public <V> boolean doif(V got, Function<V, Boolean> predicate, Consumer<V> then, String format) {
+        if(!predicate.apply(got)) {
+            if(format.contains("%s")) {
+                format = String.format(format, got != null ? got.toString() : got);
+            }
+
+            this.add(CTError.of(format));
+            return false;
+        }
+        
+        then.accept(got);
+        return true;
     }
 
     /**
