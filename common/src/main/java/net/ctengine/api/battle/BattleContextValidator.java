@@ -29,13 +29,13 @@ public class BattleContextValidator {
         @Override
         public MutableText getMessageFor(Entity arg0) {
             return battleLang(
-                "error.insufficient_pokemon",
+                "error.insufficient_pokemon", "trainer",
                 this.hadCount, this.requiredCount);
         }
     }
 
     /**
-     * An error that occurs if a battle actors appears more than once in a battle
+     * An error that occurs if a battle actor appears more than once in a battle
      * context.
      */
     class DuplicateActorError implements BattleStartError {

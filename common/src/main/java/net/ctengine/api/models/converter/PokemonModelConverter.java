@@ -57,7 +57,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         if(!model.getAbility().isBlank()) {
             errors.doif(
                 Abilities.INSTANCE.get(model.getAbility()),
-                v -> v != null, v -> pokemon.setAbility$common(v.create(true)),
+                v -> v != null, v -> pokemon.updateAbility(v.create(true)),
                 "invalid ability '" + model.getAbility() + "'");
         }
 
@@ -91,7 +91,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
             errors.doif(
                 Registries.ITEM.get(Identifier.of(model.getHeldItem())),
                 v -> CobblemonHeldItemManager.INSTANCE.showdownIdOf(v) != null,
-                v -> pokemon.setHeldItem$common(v.getDefaultStack()),
+                v -> pokemon.swapHeldItem(v.getDefaultStack(), true),
                 "invalid held item '" + model.getHeldItem() + "'");
         }
 

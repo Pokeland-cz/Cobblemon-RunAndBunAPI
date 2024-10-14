@@ -98,7 +98,9 @@ public class BattleManager {
                 // note: registering trainers with the TrainerRegistry will already check if battle
                 // participants extend from TrainerPlayer or TrainerNPC and throw an exception if
                 // not. This check is just and additional safety measure.
-                CTEngineMod.LOG.error(String.format("invalid participant '%s', must extend from %s or %s, skipped", participant.getName(), TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
+                CTEngineMod.LOG.error(String.format(
+                    "invalid participant '%s', must extend from %s or %s, skipped",
+                    participant.getName(), TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
             }
         }
 
@@ -106,12 +108,18 @@ public class BattleManager {
     }
 
     private static List<BattlePokemon> toBattlePokemons(Pokemon... pokemons) {
+        return toBattlePokemons(false, pokemons);
+    }
+
+    private static List<BattlePokemon> toBattlePokemons(boolean clone, Pokemon... pokemons) {
         var battlePokemons = new ArrayList<BattlePokemon>();
 
         for(var pokemon : pokemons) {
             if(!pokemon.isFainted()) {
                 // TODO: mark as 'trainer owned'
-                battlePokemons.add(new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
+                battlePokemons.add(clone
+                    ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> Unit.INSTANCE)
+                    : new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
             }
         }
 
@@ -123,7 +131,11 @@ public class BattleManager {
     }
 
     private static BattleActor toBattleActor(TrainerNPC participant) {
-        return new TrainerEntityBattleActor(participant.getName(), participant.getEntity(), participant.getEntity().getUuid(), toBattlePokemons(participant.getTeam()), participant.getBattleAI());
+        return new TrainerEntityBattleActor(
+            participant.getName(), participant.getEntity(),
+            participant.getEntity().getUuid(),
+            toBattlePokemons(true, participant.getTeam()),
+            participant.getBattleAI());
     }
 
     private static class TrainerEntityBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
