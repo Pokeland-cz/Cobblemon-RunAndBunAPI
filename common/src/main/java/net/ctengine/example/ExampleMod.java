@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
+import net.ctengine.api.ai.RandomAI;
 import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.TrainerNPC;
@@ -49,7 +50,7 @@ public class ExampleMod {
                     // instance, which is then passed to a TrainerNPC that is registered to the
                     // TrainerRegistry (along a server to initialize the default villager entity).
                     var trainerId = fileToId(trainerFile);
-                    trainerReg.register(trainerId, new TrainerNPC(server, GSON.fromJson(rd, TrainerModel.class)));
+                    trainerReg.register(trainerId, new TrainerNPC(server, GSON.fromJson(rd, TrainerModel.class)).witBattleAI(new RandomAI(42)));
                 } catch(CTException errors) {
                     CTEngineMod.LOG.error("model validation failure in: " + trainerFile.getPath());
                     errors.getErrors().forEach(error -> CTEngineMod.LOG.error(error.message)); // this will log all issues that the model may has
@@ -61,7 +62,9 @@ public class ExampleMod {
 
         // We can easily (un)register players as trainers whenever they log in or out.
         // Note: The TrainerRegistry does not allow to implicitly overwrite an existing
-        // trainer id. Using a players uuid should be sufficent in most cases.
+        // trainer id. Using a players uuid should be sufficent in most cases but a custom
+        // resolution for duplicate player names can be used instead if readability is a
+        // concern.
         if(!eventsRegistered) {
             PlayerEvent.PLAYER_JOIN.register(player -> trainerReg.register(player.getUuidAsString(), new TrainerPlayer(player)));
             PlayerEvent.PLAYER_QUIT.register(player -> trainerReg.unregister(player.getUuidAsString()));
