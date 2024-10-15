@@ -16,14 +16,22 @@ import net.ctengine.CTEngineMod;
 import net.ctengine.api.CTEngine;
 import net.ctengine.api.battle.BattleFormat;
 import net.ctengine.api.trainer.Trainer;
+import net.ctengine.api.trainer.TrainerNPC;
+import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 
 public final class CTEngineCommands {
     public static final String CMD_BATTLE = "battle";
     public static final String ARG_BATTLE_FORMAT = "format";
     public static final String ARG_PARTICIPANT = "participant";
     public static final String ARG_VS = "vs";
+    
+    public static final String CMD_ATTACH = "attach";
+    private static final String ARG_TRAINER_ID = "trainerId";
+    private static final String ARG_TRAINER_ENTITY = "trainerEntity";
 
     private CTEngineCommands() {}
 
@@ -37,6 +45,12 @@ public final class CTEngineCommands {
 
             dispatcher.register(CommandManager.literal(CTEngineMod.MOD_ID)
                 .requires(css -> css.hasPermissionLevel(2))
+                .then(CommandManager.literal(CMD_ATTACH)
+                    .then(CommandManager
+                        .argument(ARG_TRAINER_ID, StringArgumentType.string())
+                        .suggests(CTEngineCommands::get_trainer_id_suggestions)
+                            .then(CommandManager.argument(ARG_TRAINER_ENTITY, EntityArgumentType.entity())
+                                .executes(CTEngineCommands::attach))))
                 .then(builder));
         });
     }
@@ -67,9 +81,28 @@ public final class CTEngineCommands {
         return String.format("%s_%d_%d", ARG_PARTICIPANT, side, actor);
     }
 
+    private static int handleError(CommandContext<ServerCommandSource> context, Exception e) {
+        CTEngineMod.LOG.error(e.getMessage(), e);
+        context.getSource().sendError(Text.of(e.getMessage()));
+        return 1;
+    }
+
     private static CompletableFuture<Suggestions> get_trainer_id_suggestions(final CommandContext<ServerCommandSource> context, final SuggestionsBuilder builder) throws CommandSyntaxException {
         CTEngine.getInstance().getTrainerRegistry().getTrainerIds().forEach(builder::suggest);
         return builder.buildFuture();
+    }
+
+    private static int attach(CommandContext<ServerCommandSource> context) {
+        try {
+            var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
+            var trainerEntity = (LivingEntity)EntityArgumentType.getEntity(context, ARG_TRAINER_ENTITY);
+            CTEngine.getInstance().getTrainerRegistry().getTrainer(trainerId, TrainerNPC.class).setEntity(trainerEntity);
+            context.getSource().sendMessage(Text.of(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
+        } catch(Exception e) {
+            return handleError(context, e);
+        }
+
+        return 0;
     }
 
     private static int battle(CommandContext<ServerCommandSource> context, BattleFormat format) {
@@ -93,8 +126,7 @@ public final class CTEngineCommands {
 
             CTEngine.getInstance().getBattleManager().startBattle(participants.get(0), participants.get(1), format);
         } catch(Exception e) {
-            CTEngineMod.LOG.error(e.getMessage(), e);
-            throw e;
+            return handleError(context, e);
         }
 
         return 0;
