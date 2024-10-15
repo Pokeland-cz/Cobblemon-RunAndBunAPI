@@ -66,7 +66,8 @@ public class BattleManager {
                     }
                 }
 
-                error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(null).getString()));
+                // TODO: how to log on server?
+                error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
                 CTEngineMod.LOG.info("BATTLE START:");
@@ -82,7 +83,8 @@ public class BattleManager {
                 return Unit.INSTANCE;
             });
         } else {
-            errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(null).getString()));
+            // TODO: how to log on server?
+            errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
         }
     }
 
@@ -116,9 +118,9 @@ public class BattleManager {
 
         for(var pokemon : pokemons) {
             if(!pokemon.isFainted()) {
-                // TODO: mark as 'trainer owned'
+                // TODO: how to prevent loot?
                 battlePokemons.add(clone
-                    ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> Unit.INSTANCE)
+                    ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; })
                     : new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
             }
         }
