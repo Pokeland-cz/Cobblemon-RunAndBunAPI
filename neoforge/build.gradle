@@ -35,7 +35,11 @@ repositories {
 
 dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
-    implementation "thedarkcolour:kotlinforforge:$kff_version"
+
+    // see: https://github.com/thedarkcolour/KotlinForForge/issues/103
+    implementation("thedarkcolour:kotlinforforge-neoforge:$rootProject.kff_version") {
+        exclude group: "net.neoforged.fancymodloader", module: "loader"
+    }
 
     // Architectury API. This is optional, and you can comment it out if you don't need it.
     modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
