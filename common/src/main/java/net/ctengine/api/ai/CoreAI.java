@@ -2,8 +2,10 @@ package net.ctengine.api.ai;
 
 import java.util.List;
 
+import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
+import com.cobblemon.mod.common.battles.BagItemActionResponse;
 import com.cobblemon.mod.common.battles.DefaultActionResponse;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.MoveActionResponse;
@@ -90,6 +92,11 @@ public abstract class CoreAI implements BattleAI {
 
         // consider item
         // TODO: somehow instantiate and associate lists of bag items, from trainer models, to battle actors (maybe mixin).
+        var bi = CobblemonItems.X_ATTACK.getBagItem();
+        CTEngineMod.LOG.info("ITEM: " + bi.getItemName() + ", " + bi.canUse(pkmn.getBattle(), pkmn.getBattlePokemon()));
+        int x = 1; if(x == 1) return new BagItemActionResponse(bi, pkmn.getBattlePokemon(), null);
+        // var bagItemCandidates = List.of(bi); // example
+
         // if(bagItemCandidates.size() > 0 && (moveset == null || this.shouldUseItem(pkmn, bagItemCandidates))) {
         // }
 
