@@ -1,17 +1,15 @@
 package net.ctengine.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
-
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
-
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 
 // "Borrowed" from selfdot
 @Mixin(PokemonEntity.class)
 public abstract class PokemonEntityMixin extends LivingEntity {
-    protected PokemonEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
+    protected PokemonEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
         super(entityType, world);
     }
 

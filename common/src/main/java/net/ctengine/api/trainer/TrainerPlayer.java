@@ -1,28 +1,26 @@
 package net.ctengine.api.trainer;
 
 import java.util.ArrayList;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 /**
  * A trainer that is represented by a player.
  */
 public class TrainerPlayer implements Trainer {
-    private ServerPlayerEntity player;
+    private ServerPlayer player;
 
     /**
      * Creates a trainer for the given player instance.
      * 
      * @param player Player instance to associate the trainer to.
      */
-    public TrainerPlayer(@NotNull ServerPlayerEntity player) {
+    public TrainerPlayer(@NotNull ServerPlayer player) {
         this.player = player;
     }
 
@@ -32,7 +30,7 @@ public class TrainerPlayer implements Trainer {
      * @return Player instance.
      */
     @NotNull
-    public ServerPlayerEntity getPlayer() {
+    public ServerPlayer getPlayer() {
         return this.player;
     }
 

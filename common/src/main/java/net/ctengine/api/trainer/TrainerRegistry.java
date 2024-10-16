@@ -13,8 +13,8 @@ public class TrainerRegistry {
     /**
      * Registers the given trainer instance to the trainer registry.
      * 
-     * @param trainerId Unique id of the trainer to register
-     * @param trainer Trainer instance to register
+     * @param trainerId Unique id of the trainer to register.
+     * @param trainer Trainer instance to register.
      * @throws IllegalArgumentException If a trainer with the given id is already registered. (TODO: change to not found)
      * @throws IllegalArgumentException If the trainer neither is or extends from TrainerPlayer or TrainerNPC.
      */
@@ -33,7 +33,7 @@ public class TrainerRegistry {
     /**
      * Unregisters the trainer with the given id.
      * 
-     * @param trainerId If of the trainer to unregister.
+     * @param trainerId Id of the trainer to unregister.
      * @return Boolean indicating if the trainer was unregistered.
      */
     public boolean unregister(String trainerId) {

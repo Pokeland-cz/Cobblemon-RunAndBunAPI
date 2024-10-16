@@ -17,7 +17,7 @@ import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.level.storage.LevelResource;
 
 public class ExampleMod {
     private static final Gson GSON = new GsonBuilder()
@@ -36,7 +36,7 @@ public class ExampleMod {
 
     public static void init(MinecraftServer server) {        
         // We look for trainer json files in 'minecraft/trainers'
-        var trainerDir = Path.of(server.getSavePath(WorldSavePath.ROOT).toString(), "..", "..", "trainers").toFile();
+        var trainerDir = Path.of(server.getWorldPath(LevelResource.ROOT).toString(), "..", "..", "trainers").toFile();
         var files = trainerDir.listFiles(f -> f.getName().toLowerCase().endsWith(".json"));
 
         // Revert to initial state (safety measure)
@@ -66,8 +66,8 @@ public class ExampleMod {
         // resolution for duplicate player names can be used instead if readability is a
         // concern.
         if(!eventsRegistered) {
-            PlayerEvent.PLAYER_JOIN.register(player -> trainerReg.register(player.getUuidAsString(), new TrainerPlayer(player)));
-            PlayerEvent.PLAYER_QUIT.register(player -> trainerReg.unregister(player.getUuidAsString()));
+            PlayerEvent.PLAYER_JOIN.register(player -> trainerReg.register(player.getStringUUID(), new TrainerPlayer(player)));
+            PlayerEvent.PLAYER_QUIT.register(player -> trainerReg.unregister(player.getStringUUID()));
             eventsRegistered = true;
         }
     }

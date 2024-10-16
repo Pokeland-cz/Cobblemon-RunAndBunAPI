@@ -24,10 +24,10 @@ import net.ctengine.CTEngineMod;
 import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 
@@ -67,24 +67,12 @@ public class BattleManager {
                 }
 
                 // TODO: how to log on server?
-                error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
+                // error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
                 return Unit.INSTANCE;
-            }).ifSuccessful(battle -> {
-                CTEngineMod.LOG.info("BATTLE START:");
-                
-                for(var act : battle.getActors()) {
-                    CTEngineMod.LOG.info(" " + act.getName().getString());
-
-                    for(var poke : act.getPokemonList()) {
-                        CTEngineMod.LOG.info("  " + String.format("%s, %d: %d/%d", poke.getName(), poke.getOriginalPokemon().getLevel(), poke.getHealth(), poke.getMaxHealth()));
-                    }
-                }
-
-                return Unit.INSTANCE;
-            });
+            }).ifSuccessful(battle -> Unit.INSTANCE);
         } else {
             // TODO: how to log on server?
-            errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
+            // errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
         }
     }
 
@@ -129,13 +117,13 @@ public class BattleManager {
     }
 
     private static BattleActor toBattleActor(TrainerPlayer participant) {
-        return new PlayerBattleActor(participant.getPlayer().getUuid(), toBattlePokemons(participant.getTeam()));
+        return new PlayerBattleActor(participant.getPlayer().getUUID(), toBattlePokemons(participant.getTeam()));
     }
 
     private static BattleActor toBattleActor(TrainerNPC participant) {
         return new TrainerEntityBattleActor(
             participant.getName(), participant.getEntity(),
-            participant.getEntity().getUuid(),
+            participant.getEntity().getUUID(),
             toBattlePokemons(true, participant.getTeam()),
             participant.getBattleAI());
     }
@@ -167,18 +155,18 @@ public class BattleManager {
         }
 
         @Override @NotNull
-        public MutableText getName() {
-            return Text.literal(this.name);
+        public MutableComponent getName() {
+            return Component.literal(this.name);
         }
 
         @Override @NotNull
-        public MutableText nameOwned(@NotNull String s) {
+        public MutableComponent nameOwned(@NotNull String s) {
             return battleLang("owned_pokemon", getName(), this.name);
         }
 
         @Override @Nullable
-        public Vec3d getInitialPos() {
-            return this.entity.getPos();
+        public Vec3 getInitialPos() {
+            return this.entity.position();
         }
     }
 }

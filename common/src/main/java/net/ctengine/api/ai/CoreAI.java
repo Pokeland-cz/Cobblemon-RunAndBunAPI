@@ -90,12 +90,7 @@ public abstract class CoreAI implements BattleAI {
 
         // consider item
         // TODO: somehow instantiate and associate lists of bag items, from trainer models, to battle actors (maybe mixin).
-        // var bagItemCandidates = pkmn.getActor()
-        //     .getItemsUsed().stream()
-        //     .filter(bi -> bi.canUse(pkmn.getBattle(), pkmn.getBattlePokemon())).toList();
-
         // if(bagItemCandidates.size() > 0 && (moveset == null || this.shouldUseItem(pkmn, bagItemCandidates))) {
-        //     return new BagItemActionResponse(this.selectItem(pkmn, bagItemCandidates), pkmn.getBattlePokemon(), null);
         // }
 
         // (forced) move
@@ -104,7 +99,7 @@ public abstract class CoreAI implements BattleAI {
             return PassActionResponse.INSTANCE;
         }
 
-        // forced recharge (e.g. after hyperbea,)
+        // forced recharge (e.g. after hyperbeam)
         if(moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
             return new MoveActionResponse("recharge", null, null);
         }

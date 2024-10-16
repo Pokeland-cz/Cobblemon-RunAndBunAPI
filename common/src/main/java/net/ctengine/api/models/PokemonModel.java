@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import net.minecraft.registry.Registries;
 
 /**
  * A pojo class for parsing pokemon.
@@ -84,7 +84,7 @@ public class PokemonModel {
      */
     public PokemonModel(Pokemon pokemon) {
         this.species = pokemon.getSpecies().getName();
-        this.gender = pokemon.getGender().asString();
+        this.gender = pokemon.getGender().getSerializedName();
         this.level = pokemon.getLevel();
         this.nature = pokemon.getNature().getName().toString();
         this.ability = pokemon.getAbility().getName();
@@ -102,7 +102,7 @@ public class PokemonModel {
         this.evs.spd = pokemon.getEvs().getOrDefault(Stats.SPECIAL_DEFENCE);
         this.evs.spe = pokemon.getEvs().getOrDefault(Stats.SPEED);
         this.shiny = pokemon.getShiny();
-        this.heldItem = Registries.ITEM.getId(pokemon.heldItem().getItem()).toString();
+        this.heldItem = BuiltInRegistries.ITEM.getKey(pokemon.heldItem().getItem()).toString();
         this.aspects = pokemon.getAspects();
     }
 

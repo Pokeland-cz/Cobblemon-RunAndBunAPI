@@ -8,8 +8,9 @@ import java.util.UUID;
 
 import com.cobblemon.mod.common.battles.BattleStartError;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
-import net.minecraft.entity.Entity;
-import net.minecraft.text.MutableText;
+
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.Entity;
 
 /**
  * A service that is used by battle managers to validate the technical correctness
@@ -27,7 +28,7 @@ public class BattleContextValidator {
         }
 
         @Override
-        public MutableText getMessageFor(Entity arg0) {
+        public MutableComponent getMessageFor(Entity arg0) {
             return battleLang(
                 "error.insufficient_pokemon", "trainer",
                 this.hadCount, this.requiredCount);
@@ -47,7 +48,7 @@ public class BattleContextValidator {
 
         // TODO: lang file? :/
         @Override
-        public MutableText getMessageFor(Entity arg0) {
+        public MutableComponent getMessageFor(Entity arg0) {
             return battleLang("error.duplicate_actor", actorName);
         }
     }

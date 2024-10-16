@@ -2,8 +2,7 @@ package net.ctengine.api.trainer;
 
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Defines the required functionality of a trainer.

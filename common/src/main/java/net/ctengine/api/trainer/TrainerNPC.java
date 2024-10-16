@@ -11,9 +11,9 @@ import net.ctengine.api.models.PokemonModel;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.models.converter.Converter;
 import net.ctengine.api.models.converter.PokemonModelConverter;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * An ai trainer that is represented by an arbitrary living entity.
@@ -52,7 +52,7 @@ public class TrainerNPC implements Trainer {
      */
     public TrainerNPC(@NotNull MinecraftServer server, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
         this.pmc = pokemonModelConverter;
-        this.setEntity(EntityType.VILLAGER.create(server.getOverworld()));
+        this.setEntity(EntityType.VILLAGER.create(server.overworld()));
         this.setModel(model);
     }
 

@@ -13,8 +13,8 @@ import net.ctengine.api.errors.CTError;
 import net.ctengine.api.errors.CTErrors;
 import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.PokemonModel;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Defines a conversion from {@link PokemonModel} to {@link Pokemon}.
@@ -26,7 +26,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
 
         if(!model.getSpecies().isBlank()) {
             errors.doif(
-                PokemonSpecies.INSTANCE.getByIdentifier(Identifier.of(model.getSpecies())),
+                PokemonSpecies.INSTANCE.getByIdentifier(ResourceLocation.parse(model.getSpecies())),
                 v -> v != null, v -> pokemon.setSpecies(v),
                 "invalid species '" + model.getSpecies() + "'");
         }
@@ -89,9 +89,9 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
 
         if(!model.getHeldItem().isBlank()) {
             errors.doif(
-                Registries.ITEM.get(Identifier.of(model.getHeldItem())),
+                BuiltInRegistries.ITEM.get(ResourceLocation.parse(model.getHeldItem())),
                 v -> CobblemonHeldItemManager.INSTANCE.showdownIdOf(v) != null,
-                v -> pokemon.swapHeldItem(v.getDefaultStack(), true),
+                v -> pokemon.swapHeldItem(v.getDefaultInstance(), true),
                 "invalid held item '" + model.getHeldItem() + "'");
         }
 
