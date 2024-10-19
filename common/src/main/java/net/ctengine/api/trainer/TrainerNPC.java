@@ -1,18 +1,23 @@
 package net.ctengine.api.trainer;
 
+import java.util.UUID;
+
 import org.jetbrains.annotations.NotNull;
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.cobblemon.mod.common.api.storage.party.PartyStore;
+import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import net.ctengine.api.ai.SelfdotGen5AI;
 import net.ctengine.api.errors.CTError;
 import net.ctengine.api.errors.CTErrors;
+import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.PokemonModel;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.models.converter.Converter;
 import net.ctengine.api.models.converter.PokemonModelConverter;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -25,34 +30,22 @@ public class TrainerNPC implements Trainer {
     private TrainerModel model;
     private Converter<PokemonModel, Pokemon> pmc;
 
-    /**
-     * Creates a new trainer with the given {@link TrainerModel} and instantiates a
-     * default villager entity on the provided servers overworld (not spawned), which
-     * is associated to the trainer npc. Instantiates the trainer with a default
-     * instance of {@link PokemonModelConverter}.
-     * 
-     * @param server Minecraft server.
-     * @param model {@link TrainerModel}.
-     * @param pokemonModelConverter A converter that can create pokemon instances of models and vica versa.
-     * @throws CTException In case of validation failures with the provided model.
-     */
-    public TrainerNPC(@NotNull MinecraftServer server, @NotNull TrainerModel model) {
-        this(server, model, new PokemonModelConverter());
-    }
+    private RegistryAccess registryAccess;
+    private UUID uuid;
 
     /**
-     * Creates a new trainer with the given {@link TrainerModel} and instantiates a default
-     * villager entity on the provided servers overworld (not spawned), which is
-     * associated to the trainer npc.
+     * Creates a new trainer npc.
      * 
-     * @param server Minecraft server.
-     * @param model {@link TrainerModel}.
-     * @param pokemonModelConverter A converter that can create pokemon instance of models and vica versa.
-     * @throws CTException In case of validation failures with the provided model.
+     * @param uuid UUID of the trainer npc.
+     * @param entity Living entity this trainer is (initially) attached to.
+     * @param model {@link TrainerModel} representing this trainer.
+     * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      */
-    public TrainerNPC(@NotNull MinecraftServer server, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
+    public TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
+        this.registryAccess = RegistryAccess.EMPTY;
         this.pmc = pokemonModelConverter;
-        this.setEntity(EntityType.VILLAGER.create(server.overworld()));
+        this.entity = entity;
+        this.uuid = uuid;
         this.setModel(model);
     }
 
@@ -95,6 +88,7 @@ public class TrainerNPC implements Trainer {
             .toList().toArray(new Pokemon[0]);
 
         errors.check();
+        this.storeTeam();
     }
 
     /**
@@ -112,7 +106,10 @@ public class TrainerNPC implements Trainer {
      * @param entity Entity to associate to this trainer.
      */
     public void setEntity(@NotNull LivingEntity entity) {
-        this.entity = entity;
+        if(entity != this.entity) {
+            this.entity = entity;
+            this.storeTeam();
+        }
     }
 
     /**
@@ -148,5 +145,20 @@ public class TrainerNPC implements Trainer {
     @Override @NotNull
     public LivingEntity getEntity() {
         return this.entity;
+    }
+    
+    private void storeTeam() {
+        var store = Cobblemon.INSTANCE.getStorage().getCustomStore(PartyStore.class, this.uuid, this.registryAccess);
+        store.clearParty();
+
+        for(var pkmn : this.team) {
+            if(!store.add(pkmn)) {
+                throw new IllegalStateException("failed to store pokemon for trainer npc");
+            }
+
+            pkmn.setOriginalTrainer(this.uuid);
+            pkmn.setOriginalTrainerName(this.getName());
+            pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
+        }
     }
 }

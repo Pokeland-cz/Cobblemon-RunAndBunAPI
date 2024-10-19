@@ -44,7 +44,7 @@ public class BattleManager {
      * @param participants2 List of trainer participants for the other side.
      * @param battleFormat Battle format to use.
      */
-    public void startBattle(
+    public void start(
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2,
         BattleFormat battleFormat)
@@ -107,6 +107,7 @@ public class BattleManager {
         for(var pokemon : pokemons) {
             if(!pokemon.isFainted()) {
                 // TODO: how to prevent loot?
+                pokemon.getOwnerEntity();
                 battlePokemons.add(clone
                     ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; })
                     : new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
