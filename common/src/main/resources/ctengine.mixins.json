@@ -5,7 +5,10 @@
   "minVersion": "0.8",
   "client": [
   ],
-  "mixins": [],
+  "mixins": [
+    "PokemonMixin",
+    "PokemonEntityMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
