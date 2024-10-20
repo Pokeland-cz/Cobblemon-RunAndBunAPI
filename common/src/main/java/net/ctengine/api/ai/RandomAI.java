@@ -2,6 +2,8 @@ package net.ctengine.api.ai;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
@@ -37,8 +39,8 @@ public class RandomAI extends CoreAI {
     }
 
     @Override
-    public BagItem selectItem(ActiveBattlePokemon pkmn, List<BagItem> candidates) {
-        return candidates.get(RNG.nextInt(candidates.size()));
+    public BagItem selectItem(ActiveBattlePokemon pkmn, Set<BagItem> candidates) {
+        return candidates.stream().skip(RNG.nextInt(candidates.size())).findFirst().get();
     }
 
     @Override
@@ -47,7 +49,7 @@ public class RandomAI extends CoreAI {
     }
 
     @Override
-    public boolean shouldUseItem(ActiveBattlePokemon pkmn, List<BagItem> items) {
-        return RNG.nextDouble() < 0.15;
+    public boolean shouldUseItem(ActiveBattlePokemon pkmn, Set<BagItem> items) {
+        return RNG.nextDouble() < 0.75;
     }
 }

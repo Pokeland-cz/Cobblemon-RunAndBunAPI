@@ -1,12 +1,13 @@
 package net.ctengine.api.ai;
 
 import java.util.List;
+import java.util.Set;
 
-import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BagItemActionResponse;
 import com.cobblemon.mod.common.battles.DefaultActionResponse;
+import com.cobblemon.mod.common.battles.ForcePassActionResponse;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.MoveActionResponse;
 import com.cobblemon.mod.common.battles.PassActionResponse;
@@ -15,8 +16,7 @@ import com.cobblemon.mod.common.battles.ShowdownMoveset;
 import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
-
-import net.ctengine.CTEngineMod;
+import net.ctengine.api.battle.BattleManager.TrainerEntityBattleActor;
 
 /**
  * Abstract BattleAI that implements any forced actions (e.g. 'forced switch' or 'struggle').
@@ -51,10 +51,10 @@ public abstract class CoreAI implements BattleAI {
      * Selects a bag item to used.
      * 
      * @param pkmn Active battle pokemon.
-     * @param candidates Non empty list of usable bag items.
+     * @param candidates Non empty set of usable bag items.
      * @return Next item to use.
      */
-    public abstract BagItem selectItem(ActiveBattlePokemon pkmn, List<BagItem> candidates);
+    public abstract BagItem selectItem(ActiveBattlePokemon pkmn, Set<BagItem> candidates);
 
     /**
      * Determines if the current active pokemon should be switched.
@@ -68,10 +68,10 @@ public abstract class CoreAI implements BattleAI {
      * Determines if an item from the bag should be used.
      * 
      * @param pkmn Active battle pokemon.
-     * @param items Non empty list of usable bag items.
+     * @param items Non empty set of usable bag items.
      * @return True if an item should be used.
      */
-    public abstract boolean shouldUseItem(ActiveBattlePokemon pkmn, List<BagItem> items);
+    public abstract boolean shouldUseItem(ActiveBattlePokemon pkmn, Set<BagItem> items);
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
@@ -82,27 +82,28 @@ public abstract class CoreAI implements BattleAI {
         // (forced/consider) switch
         if(forceSwitch || pkmn.isGone() || (!switchCandidates.isEmpty() && (moveset == null || this.shouldSwitch(pkmn)))) {
             if(switchCandidates.isEmpty()) {
-                CTEngineMod.LOG.info("DEFAULT RESPONSE");
                 return new DefaultActionResponse();
             }
-            
-            CTEngineMod.LOG.info("SWITCH RESPONSE");
+
             return new SwitchActionResponse(this.selectSwitch(switchCandidates).getUuid());
         }
 
         // consider item
-        // TODO: somehow instantiate and associate lists of bag items, from trainer models, to battle actors (maybe mixin).
-        var bi = CobblemonItems.X_ATTACK.getBagItem();
-        CTEngineMod.LOG.info("ITEM: " + bi.getItemName() + ", " + bi.canUse(pkmn.getBattle(), pkmn.getBattlePokemon()));
-        int x = 1; if(x == 1) return new BagItemActionResponse(bi, pkmn.getBattlePokemon(), null);
-        // var bagItemCandidates = List.of(bi); // example
+        if(pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
+            var bagItemCandidates = actor.getBag().getItems();
 
-        // if(bagItemCandidates.size() > 0 && (moveset == null || this.shouldUseItem(pkmn, bagItemCandidates))) {
-        // }
+            if(bagItemCandidates.size() > 0 && (moveset == null || this.shouldUseItem(pkmn, bagItemCandidates))) {
+                var bagItem = this.selectItem(pkmn, bagItemCandidates);
+
+                if(bagItem.canUse(pkmn.getBattle(), pkmn.getBattlePokemon())) {
+                    actor.forceChoose(new BagItemActionResponse(actor.getBag().use(this.selectItem(pkmn, bagItemCandidates)), pkmn.getBattlePokemon(), pkmn.getBattlePokemon().getUuid().toString()));
+                    return new ForcePassActionResponse();
+                }
+            }
+        }
 
         // (forced) move
         if(moveset == null) {
-            CTEngineMod.LOG.info("MOVESET IS NULL BRO");
             return PassActionResponse.INSTANCE;
         }
 
@@ -119,7 +120,6 @@ public abstract class CoreAI implements BattleAI {
             }).toList();
 
         if(moveCandidates.isEmpty()) {
-            CTEngineMod.LOG.info("STRUGGLE RESPONSE");
             return new MoveActionResponse("struggle", null, null);
         }
 
