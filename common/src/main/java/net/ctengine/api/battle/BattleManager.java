@@ -39,13 +39,15 @@ public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
 
     /**
-     * Starts a new pokemon battle.
+     * Starts a new pokemon battle. Potential errors that may occur at the start or
+     * during a battle a sent to all participating players.
      * 
      * @param participants1 List of trainer participants for one side.
      * @param participants2 List of trainer participants for the other side.
      * @param battleFormat Battle format to use.
+     * @return True if a battle was started.
      */
-    public void start(
+    public boolean start(
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2,
         BattleFormat battleFormat)
@@ -59,21 +61,26 @@ public class BattleManager {
                 battleFormat.getCobblemonBattleFormat(),
                 side1, side2, false
             ).ifErrored(error -> {
-                for(var participants : List.of(participants1, participants2)) {
-                    for(var participant : participants) {
-                        if(participant instanceof TrainerPlayer trainerPlayer) {
-                            error.sendTo(trainerPlayer.getPlayer(), t -> t);
-                        }
-                    }
-                }
-
                 // TODO: how to log on server?
-                // error.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
+                sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> Unit.INSTANCE);
         } else {
             // TODO: how to log on server?
-            // errors.getErrors().forEach(e -> CTEngineMod.LOG.error(e.getMessageFor(participants1.get(0).getEntity()).getString()));
+            sendErrors(errors, participants1, participants2);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void sendErrors(ErroredBattleStart errors, List<Trainer> participants1, List<Trainer> participants2) {
+        for(var participants : List.of(participants1, participants2)) {
+            for(var participant : participants) {
+                if(participant instanceof TrainerPlayer trainerPlayer) {
+                    errors.sendTo(trainerPlayer.getPlayer(), t -> t);
+                }
+            }
         }
     }
 
@@ -90,7 +97,7 @@ public class BattleManager {
                 // participants extend from TrainerPlayer or TrainerNPC and throw an exception if
                 // not. This check is just and additional safety measure.
                 CTEngineMod.LOG.error(String.format(
-                    "invalid participant '%s', must extend from %s or %s, skipped",
+                    "invalid participant '%s', must extend from %s or %s",
                     participant.getName(), TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
             }
         }
@@ -107,8 +114,6 @@ public class BattleManager {
 
         for(var pokemon : pokemons) {
             if(!pokemon.isFainted()) {
-                // TODO: how to prevent loot?
-                pokemon.getOwnerEntity();
                 battlePokemons.add(clone
                     ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; })
                     : new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
