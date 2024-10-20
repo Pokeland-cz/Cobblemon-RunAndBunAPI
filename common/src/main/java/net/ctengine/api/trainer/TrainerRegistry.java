@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.models.converter.PokemonModelConverter;
 import net.minecraft.server.MinecraftServer;
@@ -60,6 +61,7 @@ public class TrainerRegistry {
      * @param model {@link TrainerModel} that represents the trainer.
      * @param server Minecraft server to instantiate a default villager the trainer will be attached to.
      * @return Registered {@link TrainerNPC} instance.
+     * @throws CTException In case of validation failures with the provided model.
      * @throws IllegalArgumentException If a trainer with the given id is already registered.
      */
     public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server) {
@@ -74,13 +76,17 @@ public class TrainerRegistry {
      * @param server Minecraft server to instantiate a default villager the trainer will be attached to.
      * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      * @return Registered {@link TrainerNPC} instance.
+     * @throws CTException In case of validation failures with the provided model.
      * @throws IllegalArgumentException If a trainer with the given id is already registered.
      */
     public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server, PokemonModelConverter pokemonModelConverter) {
-        return this.registerNPC(trainerId, new TrainerNPC(
+        var trainer = this.registerNPC(trainerId, new TrainerNPC(
             UUID.nameUUIDFromBytes(trainerId.getBytes()),
             EntityType.VILLAGER.create(server.overworld()),
-            model, pokemonModelConverter));
+            pokemonModelConverter));
+
+        trainer.setModel(model);
+        return trainer;
     }
 
     /**
@@ -137,6 +143,15 @@ public class TrainerRegistry {
         return this.getById(trainerId, Trainer.class);
     }
 
+    /**
+     * Retrieves the {@link Trainer} with the given id as the specified type.
+     * 
+     * @param <T> Target {@link Trainer} type.
+     * @param trainerId Id of the {@link Trainer} to retrieve.
+     * @param type Target {@link Trainer} type class instance.
+     * @throws IllegalArgumentException If the trainer is not from the given type.
+     * @return {@link Trainer} instance from the trainer registry.
+     */
     public <T extends Trainer> T getById(String trainerId, Class<T> type) {
         return this.getByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()), type);
     }

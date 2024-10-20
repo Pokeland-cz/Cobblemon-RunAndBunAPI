@@ -9,7 +9,6 @@ import com.cobblemon.mod.common.api.storage.party.PartyStore;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
-import net.ctengine.api.ai.SelfdotGen5AI;
 import net.ctengine.api.errors.CTError;
 import net.ctengine.api.errors.CTErrors;
 import net.ctengine.api.errors.CTException;
@@ -24,8 +23,8 @@ import net.minecraft.world.entity.LivingEntity;
  * An ai trainer that is represented by an arbitrary living entity.
  */
 public class TrainerNPC implements Trainer {
-    private BattleAI battleAI = new SelfdotGen5AI();
     private Pokemon[] team;
+    private TrainerBag bag;
     private LivingEntity entity;
     private TrainerModel model;
     private Converter<PokemonModel, Pokemon> pmc;
@@ -38,8 +37,23 @@ public class TrainerNPC implements Trainer {
      * 
      * @param uuid UUID of the trainer npc.
      * @param entity Living entity this trainer is (initially) attached to.
+     * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
+     */
+    TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
+        this.registryAccess = RegistryAccess.EMPTY;
+        this.pmc = pokemonModelConverter;
+        this.entity = entity;
+        this.uuid = uuid;
+    }
+
+    /**
+     * Creates a new trainer npc.
+     * 
+     * @param uuid UUID of the trainer npc.
+     * @param entity Living entity this trainer is (initially) attached to.
      * @param model {@link TrainerModel} representing this trainer.
      * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
+     * @throws CTException In case of validation failures with the provided model.
      */
     public TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
         this.registryAccess = RegistryAccess.EMPTY;
@@ -48,27 +62,7 @@ public class TrainerNPC implements Trainer {
         this.uuid = uuid;
         this.setModel(model);
     }
-
-    /**
-     * Sets the battle ai of this trainer.
-     * 
-     * @param battleAI New battle ai.
-     */
-    public void setBattleAI(@NotNull BattleAI battleAI) {
-        this.battleAI = battleAI;
-    }
-
-    /**
-     * Sets the battle ai of this trainer.
-     * 
-     * @param battleAI New battle ai.
-     * @return This trainer instance.
-     */
-    public TrainerNPC witBattleAI(@NotNull BattleAI battleAI) {
-        this.battleAI = battleAI;
-        return this;
-    }
-
+    
     /**
      * Sets the model of this trainer.
      * 
@@ -87,8 +81,17 @@ public class TrainerNPC implements Trainer {
             .map(pkModel -> this.pmc.toTarget(pkModel, errors))
             .toList().toArray(new Pokemon[0]);
 
-        errors.check();
+        this.bag = new TrainerBag();
+        this.model.getBag().forEach(bim -> {
+            try {
+                this.bag.add(bim.getItem(), bim.getQuantity());
+            } catch(IllegalArgumentException e) {
+                errors.add(CTError.of(e));
+            }
+        });
+
         this.storeTeam();
+        errors.check();
     }
 
     /**
@@ -101,9 +104,9 @@ public class TrainerNPC implements Trainer {
     }
 
     /**
-     * Sets the entity associated to this trainer.
+     * Sets the {@link LivingEntity} associated with this trainer.
      * 
-     * @param entity Entity to associate to this trainer.
+     * @param entity Entity to associate with this trainer.
      */
     public void setEntity(@NotNull LivingEntity entity) {
         if(entity != this.entity) {
@@ -113,19 +116,28 @@ public class TrainerNPC implements Trainer {
     }
 
     /**
-     * Retrieves the battle ai of this trainer.
+     * Retrieves the {@link BattleAI}  of this trainer.
      * 
      * @return Current battle ai.
      */
     @NotNull
     public BattleAI getBattleAI() {
-        return this.battleAI;
+        return this.model.getAI().INSTANCE;
     }
 
     /**
-     * Retrieves the model of this trainer.
+     * Retrieves the {@link TrainerBag} of this trainer.
      * 
-     * @return {@link TrainerModel}.
+     * @return Bag of the trainer.
+     */
+    public TrainerBag getBag() {
+        return this.bag;
+    }
+
+    /**
+     * Retrieves the {@link TrainerModel} of this trainer.
+     * 
+     * @return Model representing the trainer.
      */
     @NotNull
     public TrainerModel getModel() {

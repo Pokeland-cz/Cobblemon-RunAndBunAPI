@@ -22,6 +22,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import kotlin.Unit;
 import net.ctengine.CTEngineMod;
 import net.ctengine.api.trainer.Trainer;
+import net.ctengine.api.trainer.TrainerBag;
 import net.ctengine.api.trainer.TrainerNPC;
 import net.ctengine.api.trainer.TrainerPlayer;
 import net.minecraft.network.chat.Component;
@@ -126,23 +127,33 @@ public class BattleManager {
             participant.getName(), participant.getEntity(),
             participant.getEntity().getUUID(),
             toBattlePokemons(true, participant.getTeam()),
+            participant.getBag().clone(),
             participant.getBattleAI());
     }
 
-    private static class TrainerEntityBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
+    // TODO: move to different package
+    public static class TrainerEntityBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
         private final String name;
         private final LivingEntity entity;
+        private final TrainerBag bag;
 
         public TrainerEntityBattleActor(
             String name,
             LivingEntity entity,
             UUID uuid,
             List<BattlePokemon> pokemonList,
+            TrainerBag bag,
             BattleAI artificialDecider)
         {
             super(uuid, pokemonList, artificialDecider);
             this.name = name;
+            this.bag = bag;
             this.entity = entity;
+        }
+
+        @NotNull
+        public TrainerBag getBag() {
+            return this.bag;
         }
 
         @Override

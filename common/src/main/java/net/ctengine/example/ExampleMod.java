@@ -48,7 +48,7 @@ public class ExampleMod {
                     // instance, which is then passed to a TrainerNPC that is registered to the
                     // TrainerRegistry (along a server to initialize the default villager entity).
                     var trainerId = fileToId(trainerFile);
-                    Trainers.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class), server).witBattleAI(new RandomAI(42));
+                    Trainers.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class), server);
                     // trainerReg.register(trainerId, new TrainerNPC(UUID.nameUUIDFromBytes(trainerId.getBytes()), server, GSON.fromJson(rd, TrainerModel.class)).witBattleAI(new RandomAI(42)));
                 } catch(CTException errors) {
                     CTEngineMod.LOG.error("model validation failure in: " + trainerFile.getPath());

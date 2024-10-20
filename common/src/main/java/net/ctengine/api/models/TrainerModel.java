@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
+import net.ctengine.api.ai.AIType;
+
 /**
  * A pojo class for parsing trainers.
  */
 public class TrainerModel {
     private String name = "";
+    private AIType ai = AIType.RNG; // TODO: maybe option for default
+    private List<BagItemModel> bag = new ArrayList<>();
     private List<PokemonModel> team = new ArrayList<>();
 
     @NotNull
@@ -18,8 +22,18 @@ public class TrainerModel {
     }
 
     @NotNull
+    public List<BagItemModel> getBag() {
+        return this.bag;
+    }
+
+    @NotNull
     public List<PokemonModel> getTeam() {
         return this.team;
+    }
+
+    @NotNull
+    public AIType getAI() {
+        return this.ai;
     }
 
     @Override
@@ -31,6 +45,7 @@ public class TrainerModel {
     public boolean equals(Object obj) {
         return (obj instanceof TrainerModel other)
             && this.name.equals(other.name)
+            && this.bag.equals(other.bag)
             && this.team.equals(other.team);
     }
 }
