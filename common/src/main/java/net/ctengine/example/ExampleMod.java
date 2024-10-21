@@ -10,7 +10,6 @@ import com.google.gson.GsonBuilder;
 
 import dev.architectury.event.events.common.PlayerEvent;
 import net.ctengine.CTEngineMod;
-import net.ctengine.api.ai.RandomAI;
 import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.TrainerPlayer;

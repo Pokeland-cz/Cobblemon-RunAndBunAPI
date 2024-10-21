@@ -6,7 +6,6 @@ import java.util.Set;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BagItemActionResponse;
-import com.cobblemon.mod.common.battles.DefaultActionResponse;
 import com.cobblemon.mod.common.battles.ForcePassActionResponse;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.MoveActionResponse;
