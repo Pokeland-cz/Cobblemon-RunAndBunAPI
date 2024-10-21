@@ -75,28 +75,44 @@ public abstract class CoreAI implements BattleAI {
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
+        // forced switch
         var switchCandidates = pkmn.getActor()
             .getPokemonList().stream()
             .filter(BattlePokemon::canBeSentOut).toList();
 
-        // (forced/consider) switch
-        if(forceSwitch || pkmn.isGone() || (!switchCandidates.isEmpty() && (moveset == null || this.shouldSwitch(pkmn)))) {
-            if(switchCandidates.isEmpty()) {
-                return new DefaultActionResponse();
-            }
+        if(!switchCandidates.isEmpty() && forceSwitch) {
+            var next = this.selectSwitch(switchCandidates);
+            next.setWillBeSwitchedIn(true);
+            return new SwitchActionResponse(next.getUuid());
+        }
 
-            return new SwitchActionResponse(this.selectSwitch(switchCandidates).getUuid());
+        // no more pokemon available
+        if(pkmn.isGone()) {
+            return PassActionResponse.INSTANCE;
+        }
+
+        // forced recharge (e.g. after hyperbeam)
+        if(moveset != null && moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
+            return new MoveActionResponse("recharge", null, null);
+        }
+
+        // consider switch
+        if(!switchCandidates.isEmpty() && this.shouldSwitch(pkmn)) {
+            var next = this.selectSwitch(switchCandidates);
+            next.setWillBeSwitchedIn(true);
+            pkmn.getBattlePokemon().setWillBeSwitchedIn(false);
+            return new SwitchActionResponse(next.getUuid());
         }
 
         // consider item
-        if(pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
+        if(pkmn.getActor().canFitForcedAction() && pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
             var bagItemCandidates = actor.getBag().getItems();
 
             if(bagItemCandidates.size() > 0 && (moveset == null || this.shouldUseItem(pkmn, bagItemCandidates))) {
                 var bagItem = this.selectItem(pkmn, bagItemCandidates);
 
                 if(bagItem.canUse(pkmn.getBattle(), pkmn.getBattlePokemon())) {
-                    actor.forceChoose(new BagItemActionResponse(actor.getBag().use(this.selectItem(pkmn, bagItemCandidates)), pkmn.getBattlePokemon(), pkmn.getBattlePokemon().getUuid().toString()));
+                    actor.forceChoose(new BagItemActionResponse(actor.getBag().use(bagItem), pkmn.getBattlePokemon(), pkmn.getBattlePokemon().getUuid().toString()));
                     return new ForcePassActionResponse();
                 }
             }
@@ -105,11 +121,6 @@ public abstract class CoreAI implements BattleAI {
         // (forced) move
         if(moveset == null) {
             return PassActionResponse.INSTANCE;
-        }
-
-        // forced recharge (e.g. after hyperbeam)
-        if(moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
-            return new MoveActionResponse("recharge", null, null);
         }
 
         var moveCandidates = moveset.moves.stream()
