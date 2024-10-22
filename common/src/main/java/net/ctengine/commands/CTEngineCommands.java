@@ -29,6 +29,9 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 
+/**
+ * Ingame commands provided by this mod.
+ */
 public final class CTEngineCommands {
     private static Gson GSON = new Gson();
 
@@ -44,6 +47,9 @@ public final class CTEngineCommands {
 
     private CTEngineCommands() {}
 
+    /**
+     * Registers all commands provided by this mod.
+     */
     public static void register() {
         CommandRegistrationEvent.EVENT.register((dispatcher, access, environment) -> {
             var builder = Commands.literal(CMD_BATTLE);

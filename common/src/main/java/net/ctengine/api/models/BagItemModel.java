@@ -2,13 +2,16 @@ package net.ctengine.api.models;
 
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * A pojo class for parsing trainer bag items.
+ * A pojo class for parsing trainer {@link BagItem}s.
  */
 public class BagItemModel {
     private String item = "";
     private int quantity = 1;
 
+    @NotNull
     public String getItem() {
         return this.item;
     }

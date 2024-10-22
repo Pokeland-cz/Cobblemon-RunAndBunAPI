@@ -3,7 +3,7 @@ package net.ctengine.api.battle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 
 /**
- * Additional rules that can be imposed on trainer battles.
+ * Additional rules that are enforced during trainer battles.
  */
 public class BattleRules {
     protected int maxItemUses = -1;

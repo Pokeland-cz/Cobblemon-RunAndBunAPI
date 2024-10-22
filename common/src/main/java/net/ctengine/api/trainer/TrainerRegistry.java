@@ -30,10 +30,10 @@ public class TrainerRegistry {
     /**
      * Instantiates and registers a {@link TrainerPlayer} to the trainer registry.
      * 
-     * @param trainerId Unique id of the trainer to register.
-     * @param trainer Player instance to represent the trainer.
+     * @param trainerId Unique id of the {@link TrainerPlayer} to register.
+     * @param player {@link ServerPlayer} to associate with the trainer.
      * @return Registered {@link TrainerPlayer} instance.
-     * @throws IllegalArgumentException If a trainer with the given id is already registered.
+     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     public TrainerPlayer registerPlayer(String trainerId, ServerPlayer player) {
         return registerPlayer(trainerId, new TrainerPlayer(player));
@@ -43,10 +43,10 @@ public class TrainerRegistry {
      * Registers the given {@link TrainerPlayer} to the trainer registry.
      * 
      * @param <T> {@link TrainerPlayer} type.
-     * @param trainerId Unique id of the trainer to register.
+     * @param trainerId Unique id of the {@link TrainerPlayer} to register.
      * @param trainer {@link TrainerPlayer} instance to register.
      * @return Registered {@link TrainerPlayer} instance.
-     * @throws IllegalArgumentException If a trainer with the given id is already registered.
+     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     public <T extends TrainerPlayer> T registerPlayer(String trainerId, T trainer) {
         this.register(trainerId, trainer);
@@ -55,14 +55,14 @@ public class TrainerRegistry {
 
     /**
      * Instantiates and registers a {@link TrainerNPC} to the trainer registry. Uses a
-     * default {@link PokemonModelConverter} to instantiate a party pokemon.
+     * default {@link PokemonModelConverter} to create the pokemon party.
      * 
-     * @param trainerId Unique id of the trainer to register.
+     * @param trainerId Unique id of the {@link TrainerNPC} to register.
      * @param model {@link TrainerModel} that represents the trainer.
-     * @param server Minecraft server to instantiate a default villager the trainer will be attached to.
+     * @param server {@link MinecraftServer} to instantiate a default villager the trainer will be associated with.
      * @return Registered {@link TrainerNPC} instance.
      * @throws CTException In case of validation failures with the provided model.
-     * @throws IllegalArgumentException If a trainer with the given id is already registered.
+     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server) {
         return this.registerNPC(trainerId, model, server, new PokemonModelConverter());
@@ -71,13 +71,13 @@ public class TrainerRegistry {
     /**
      * Instantiates and registers a {@link TrainerNPC} to the trainer registry.
      * 
-     * @param trainerId Unique id of the trainer to register.
+     * @param trainerId Unique id of the {@link TrainerNPC} to register.
      * @param model {@link TrainerModel} that represents the trainer.
-     * @param server Minecraft server to instantiate a default villager the trainer will be attached to.
+     * @param server {@link MinecraftServer} to instantiate a default villager the trainer will be associated with.
      * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      * @return Registered {@link TrainerNPC} instance.
      * @throws CTException In case of validation failures with the provided model.
-     * @throws IllegalArgumentException If a trainer with the given id is already registered.
+     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server, PokemonModelConverter pokemonModelConverter) {
         var trainer = this.registerNPC(trainerId, new TrainerNPC(
@@ -93,10 +93,10 @@ public class TrainerRegistry {
      * Registers the given {@link TrainerNPC} to the trainer registry.
      * 
      * @param <T> {@link TrainerNPC} type.
-     * @param trainerId Unique id of the trainer to register.
+     * @param trainerId Unique id of the {@link TrainerNPC} to register.
      * @param trainer {@link TrainerNPC} instance to register.
      * @return Registered {@link TrainerNPC} instance.
-     * @throws IllegalArgumentException If a trainer with the given id is already registered.
+     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     public <T extends TrainerNPC> T registerNPC(String trainerId, T trainer) {
         this.register(trainerId, trainer);
@@ -104,30 +104,30 @@ public class TrainerRegistry {
     }
 
     /**
-     * Unregisters the trainer with the given trainer id.
+     * Unregisters the {@link Trainer} with the given trainer id.
      * 
-     * @param trainerId Id of the trainer to unregister.
-     * @return Unregistered {@link Trainer} instance or null if no such trainer was registered.
+     * @param trainerId Id of the {@link Trainer} to unregister.
+     * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
     public Trainer unregisterById(String trainerId) {
         return this.unregisterByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()));
     }
 
     /**
-     * Unregisters the trainer with the given trainer uuid.
+     * Unregisters the {@link Trainer} with the given trainer uuid.
      * 
-     * @param trainerUUID UUID of the trainer to unregister.
-     * @return Unregistered {@link Trainer} instance or null if no such trainer was registered.
+     * @param trainerUUID UUID of the {@link Trainer} to unregister.
+     * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
     public Trainer unregisterByUUID(UUID trainerUUID) {
         return this.unregisterByStringUUID(trainerUUID.toString());
     }
 
     /**
-     * Unregisters the trainer with the given trainer uuid string.
+     * Unregisters the {@link Trainer} with the given trainer uuid string.
      * 
-     * @param trainerUUID String representation of the uuid (as returned by {@llink UUID.toString()}) of the trainer to unregister.
-     * @return Unregistered {@link Trainer} instance or null if no such trainer was registered.
+     * @param trainerUUID String representation of the uuid (as returned by {@link UUID#toString()}) of the trainer to unregister.
+     * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
     public Trainer unregisterByStringUUID(String trainerUUID) {
         return this.trainers.remove(trainerUUID);

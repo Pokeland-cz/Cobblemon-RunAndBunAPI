@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import net.ctengine.api.ai.AIType;
 
 /**
- * A pojo class for parsing trainers.
+ * A pojo class for parsing {@link Trainer}.
  */
 public class TrainerModel {
     private String name = "";

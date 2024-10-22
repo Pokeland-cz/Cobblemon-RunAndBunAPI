@@ -20,7 +20,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * An ai trainer that is represented by an arbitrary living entity.
+ * An ai trainer that is represented by an arbitrary {@link LivingEntity}.
  */
 public class TrainerNPC implements Trainer {
     private Pokemon[] team;
@@ -36,7 +36,7 @@ public class TrainerNPC implements Trainer {
      * Creates a new trainer npc.
      * 
      * @param uuid UUID of the trainer npc.
-     * @param entity Living entity this trainer is (initially) attached to.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to.
      * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      */
     TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
@@ -50,7 +50,7 @@ public class TrainerNPC implements Trainer {
      * Creates a new trainer npc.
      * 
      * @param uuid UUID of the trainer npc.
-     * @param entity Living entity this trainer is (initially) attached to.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to.
      * @param model {@link TrainerModel} representing this trainer.
      * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      * @throws CTException In case of validation failures with the provided model.
@@ -64,7 +64,7 @@ public class TrainerNPC implements Trainer {
     }
     
     /**
-     * Sets the model of this trainer.
+     * Sets the {@link TrainerModel} of this trainer.
      * 
      * @param model New {@link TrainerModel}.
      * @throws CTException In case of validation failures with the provided model.
@@ -106,7 +106,7 @@ public class TrainerNPC implements Trainer {
     /**
      * Sets the {@link LivingEntity} associated with this trainer.
      * 
-     * @param entity Entity to associate with this trainer.
+     * @param entity {@link LivingEntity} to associate with this trainer.
      */
     public void setEntity(@NotNull LivingEntity entity) {
         if(entity != this.entity) {
@@ -116,9 +116,9 @@ public class TrainerNPC implements Trainer {
     }
 
     /**
-     * Retrieves the {@link BattleAI}  of this trainer.
+     * Retrieves the {@link BattleAI} of this trainer.
      * 
-     * @return Current battle ai.
+     * @return Current {@link BattleAI}.
      */
     @NotNull
     public BattleAI getBattleAI() {
@@ -128,7 +128,7 @@ public class TrainerNPC implements Trainer {
     /**
      * Retrieves the {@link TrainerBag} of this trainer.
      * 
-     * @return Bag of the trainer.
+     * @return {@link TrainerBag} of the trainer.
      */
     public TrainerBag getBag() {
         return this.bag;
@@ -137,7 +137,7 @@ public class TrainerNPC implements Trainer {
     /**
      * Retrieves the {@link TrainerModel} of this trainer.
      * 
-     * @return Model representing the trainer.
+     * @return {@link TrainerModel} representing the trainer.
      */
     @NotNull
     public TrainerModel getModel() {

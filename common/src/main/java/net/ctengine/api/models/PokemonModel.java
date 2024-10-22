@@ -10,7 +10,7 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 /**
- * A pojo class for parsing pokemon.
+ * A pojo class for parsing {@link Pokemon}.
  */
 public class PokemonModel {
     public static class StatsModel {

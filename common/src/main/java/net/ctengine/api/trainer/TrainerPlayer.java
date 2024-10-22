@@ -10,24 +10,24 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 /**
- * A trainer that is represented by a player.
+ * A trainer that is represented by a {@link ServerPlayer}.
  */
 public class TrainerPlayer implements Trainer {
     private ServerPlayer player;
 
     /**
-     * Creates a trainer for the given player instance.
+     * Creates a trainer for the given {@link ServerPlayer} instance.
      * 
-     * @param player Player instance to associate the trainer to.
+     * @param player {@link ServerPlayer} instance to associate with the trainer.
      */
     public TrainerPlayer(@NotNull ServerPlayer player) {
         this.player = player;
     }
 
     /**
-     * Retrieves the player associated to this trainer.
+     * Retrieves the {@link ServerPlayer} associated with this trainer.
      * 
-     * @return Player instance.
+     * @return {@link ServerPlayer} instance.
      */
     @NotNull
     public ServerPlayer getPlayer() {

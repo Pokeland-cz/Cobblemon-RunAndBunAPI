@@ -16,16 +16,16 @@ public interface Trainer {
     @NotNull String getName();
 
     /**
-     * Retrieves the pokemon team of this trainer.
+     * Retrieves the {@link Pokemon} team of this trainer.
      * 
-     * @return Array of pokemon.
+     * @return Array of {@link Pokemon}.
      */
     @NotNull Pokemon[] getTeam();
 
     /**
-     * Retrieves the entity associated to this trainer.
+     * Retrieves the {@link LivingEntity} associated with this trainer.
      * 
-     * @return Entity associated to this trainer.
+     * @return {@link LivingEntity} associated with this trainer.
      */
     @NotNull LivingEntity getEntity();
 }

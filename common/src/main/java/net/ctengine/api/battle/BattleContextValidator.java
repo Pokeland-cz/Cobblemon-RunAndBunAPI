@@ -13,8 +13,8 @@ import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import net.minecraft.network.chat.Component;
 
 /**
- * A service that is used by battle managers to validate the technical correctness
- * of battle contexts.
+ * A service that is used by {@link BattleManager}s to validate the technical
+ * correctness of battle contexts.
  */
 public class BattleContextValidator {
     /**
@@ -24,9 +24,9 @@ public class BattleContextValidator {
      * {@link BattleActor}s must implement {@link EntityBackedBattleActor} and may not
      * return null when retrieving the attached entity with {@link EntityBackedBattleActor#getEntity()}.
      * 
-     * @param errors Battle start result to collect errors.
-     * @param context Battle context.
-     * @return The provided battle start result instance.
+     * @param errors {@link ErroredBattleStart} to collect errors.
+     * @param context {@link BattleContext} to check.
+     * @return The provided {@link ErroredBattleStart} instance.
      */
     public ErroredBattleStart validate(ErroredBattleStart errors, BattleContext context) {
         var actorsPersSide = context.getBattleFormat().getCobblemonBattleFormat().component2().getActorsPerSide();

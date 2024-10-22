@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
 import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 
 /**
- * A service to manage pokemon battles.
+ * A service to manage {@link PokemonBattle}s.
  */
 public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();

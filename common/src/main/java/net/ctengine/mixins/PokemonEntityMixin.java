@@ -9,6 +9,9 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 
 import net.ctengine.api.util.Trainers;
 
+/**
+ * Ensures pokemon entites from {@link Trainer}s are never saved to the world.
+ */
 @Mixin(PokemonEntity.class)
 public abstract class PokemonEntityMixin {
     @Inject(method = "shouldBeSaved", at = @At("HEAD"), cancellable = true, remap = false)

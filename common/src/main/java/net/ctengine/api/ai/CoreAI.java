@@ -18,7 +18,9 @@ import com.cobblemon.mod.common.item.battle.BagItem;
 import net.ctengine.api.battle.BattleManager.TrainerEntityBattleActor;
 
 /**
- * Abstract BattleAI that implements any forced actions (e.g. 'forced switch' or 'struggle').
+ * Abstract {@link BattleAI} that implements any forced actions (e.g. 'forced
+ * switch' or 'struggle') and provides an outline for implementing custom AIs
+ * without having to worry about invalid states actions.
  */
 public abstract class CoreAI implements BattleAI {
     /**
@@ -139,6 +141,7 @@ public abstract class CoreAI implements BattleAI {
         switch(move.getTarget()) {
             case normal:
             case foeSide:
+                // TODO: fix potential targeting of unreachable pokemon (e.g. in 3vs3)
                 target = this.selectTarget(move, pkmn.getSide().getOppositeSide().getActivePokemon());
                 break;
             case allySide:

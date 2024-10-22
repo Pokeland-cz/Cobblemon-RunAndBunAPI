@@ -11,6 +11,10 @@ import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.util.Trainers;
 import net.minecraft.world.entity.LivingEntity;
 
+/**
+ * Serves as hook between Cobblemons pokemon/trainer relation and trainers
+ * registered by this api.
+ */
 @Mixin(Pokemon.class)
 public abstract class PokemonMixin {
     @Inject(method = "getOwnerEntity", at = @At("RETURN"), cancellable = true, remap = false)

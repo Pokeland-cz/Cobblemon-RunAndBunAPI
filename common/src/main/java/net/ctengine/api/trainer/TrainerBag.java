@@ -45,12 +45,12 @@ public class TrainerBag {
     }
 
     /**
-     * Uses a {@link BagItem} from this bag effectively decrement its quantity. If the
-     * quantity reaches 0 or less the item is removed. Does nothing if the item is not
-     * from this bag.
+     * Uses a {@link BagItem} from this bag effectively decrementing its quantity. If
+     * the quantity reaches 0 or less the item is removed. Does nothing if the item is
+     * not from this bag.
      * 
-     * @param item Item to use.
-     * @return The given item.
+     * @param item {@link BagItem} to use.
+     * @return The given {@link BagItem}.
      */
     public BagItem use(BagItem item) {
         this.items.computeIfPresent(item, (k, v) -> v > 1 ? v - 1 : null);
@@ -60,7 +60,7 @@ public class TrainerBag {
     /**
      * Retrieves a readonly set of all {@link BagItem}s within this bag.
      * 
-     * @return Readonly set of items from this bag.
+     * @return Readonly set of {@link BagItem}.
      */
     public Set<BagItem> getItems() {
         return this.items.keySet();
@@ -69,7 +69,7 @@ public class TrainerBag {
     /**
      * Retrieves the quantity of the given {@link BagItem} within this bag.
      * 
-     * @return Quantity of the given item.
+     * @return Quantity of the given {@link BagItem}.
      */
     public int getQuanity(BagItem item) {
         return this.items.getOrDefault(item, 0);

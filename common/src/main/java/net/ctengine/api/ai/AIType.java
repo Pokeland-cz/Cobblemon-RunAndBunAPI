@@ -17,7 +17,7 @@ public enum AIType {
     SDG5(new SelfdotGen5AI());
 
     /**
-     * BattleAI instance.
+     * {@link BattleAI} instance this enum value refers to.
      */
     public final BattleAI INSTANCE;
 

@@ -8,7 +8,7 @@ import com.cobblemon.mod.common.battles.BattleSide;
 import net.ctengine.api.trainer.Trainer;
 
 /**
- * Contains information relevant for a battle.
+ * Contains information relevant to a {@link PokemonBattle}.
  */
 public class BattleContext {
     private List<Trainer> participants1;
@@ -20,11 +20,11 @@ public class BattleContext {
     /**
      * Creates a new battle context.
      * 
-     * @param participants1 List of trainer participants from the first side.
-     * @param participants2 List of trainer participants from the other side.
-     * @param battleSide1 Battle side instance of the first side.
-     * @param battleSide2 Battle side instance of the other side.
-     * @param battleFormat Battle format to use.
+     * @param participants1 List of {@link Trainer} participants from the first side.
+     * @param participants2 List of {@link Trainer} participants from the other side.
+     * @param battleSide1 {@link BattleSide} instance of the first side.
+     * @param battleSide2 {@link BattleSide} instance of the other side.
+     * @param battleFormat {@link BattleFormat} to use.
      */
     public BattleContext(List<Trainer> participants1, List<Trainer> participants2, BattleSide battleSide1, BattleSide battleSide2, BattleFormat battleFormat) {
         this.participants1 = participants1;
@@ -35,45 +35,45 @@ public class BattleContext {
     }
 
     /**
-     * Retrieves all trainer participants of the first side.
+     * Retrieves all {@link Trainer} participants of the first side.
      * 
-     * @return List of trainer participants.
+     * @return List of {@link Trainer} participants.
      */
     public List<Trainer> getParticipants1() {
         return Collections.unmodifiableList(this.participants1);
     }
 
     /**
-     * Retrieves all trainer participants of the second side.
+     * Retrieves all {@link Trainer} participants of the second side.
      * 
-     * @return List of trainer participants.
+     * @return List of {@link Trainer} participants.
      */
     public List<Trainer> getParticipants2() {
         return Collections.unmodifiableList(this.participants2);
     }
 
     /**
-     * Retrieves the battle side instance of the first side.
+     * Retrieves the {@link BattleSide} instance of the first side.
      * 
-     * @return Battle side instance.
+     * @return {@link BattleSide} instance.
      */
     public BattleSide getBattleSide1() {
         return this.battleSide1;
     }
 
     /**
-     * Retrieves the battles side instance of the second side.
+     * Retrieves the {@link BattleSide} instance of the second side.
      * 
-     * @return Battle side instance.
+     * @return {@link BattleSide} instance.
      */
     public BattleSide getBattleSide2() {
         return this.battleSide2;
     }
 
     /**
-     * Retrieves the battle format to use.
+     * Retrieves the {@link BattleFormat} to use.
      * 
-     * @return Battle format.
+     * @return {@link BattleFormat} instance.
      */
     public BattleFormat getBattleFormat() {
         return this.battleFormat;
