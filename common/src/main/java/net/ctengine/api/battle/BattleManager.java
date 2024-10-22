@@ -1,7 +1,9 @@
 package net.ctengine.api.battle;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,20 +39,23 @@ import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
  */
 public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
+    private Map<UUID, BattleState> battleStates = new HashMap<>();
 
     /**
-     * Starts a new pokemon battle. Potential errors that may occur at the start or
-     * during a battle a sent to all participating players.
+     * Starts a new {@link PokemonBattle}. Potential errors that may occur at the start
+     * or during a battle are sent to all participating players.
      * 
-     * @param participants1 List of trainer participants for one side.
-     * @param participants2 List of trainer participants for the other side.
-     * @param battleFormat Battle format to use.
+     * @param participants1 List of {@link Trainer} participants for one side.
+     * @param participants2 List of {@link Trainer} participants for the other side.
+     * @param battleFormat {@link BattleFormat} to use.
+     * @param battleRules {@link BattleRules} enforced on the battle.
      * @return True if a battle was started.
      */
     public boolean start(
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2,
-        BattleFormat battleFormat)
+        @NotNull BattleFormat battleFormat,
+        @NotNull BattleRules battleRules)
     {
         var side1 = toBattleSide(participants1);
         var side2 = toBattleSide(participants2);
@@ -64,7 +69,16 @@ public class BattleManager {
                 // TODO: how to log on server?
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
-            }).ifSuccessful(battle -> Unit.INSTANCE);
+            }).ifSuccessful(battle -> {
+                this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleRules));
+                
+                battle.getOnEndHandlers().add(b -> {
+                    this.battleStates.remove(b.getBattleId());
+                    return Unit.INSTANCE;
+                });
+
+                return Unit.INSTANCE;
+            });
         } else {
             // TODO: how to log on server?
             sendErrors(errors, participants1, participants2);
@@ -72,6 +86,18 @@ public class BattleManager {
         }
 
         return true;
+    }
+
+    /**
+     * Retrieves the {@link BattleState} for an ongoing {@link PokemonBattle} that was
+     * previously started with {@link BattleManager#start(List, List, BattleFormat, BattleRules)}.
+     * 
+     * @param battleUUID UUID of the {@link PokemonBattle}.
+     * @return The {@link BattleState} or null of no such battle is active.
+     */
+    @Nullable
+    public BattleState getState(UUID battleUUID) {
+        return this.battleStates.get(battleUUID);
     }
 
     private static void sendErrors(ErroredBattleStart errors, List<Trainer> participants1, List<Trainer> participants2) {

@@ -6,6 +6,8 @@
   "client": [
   ],
   "mixins": [
+    "BagItemInstructionMixin",
+    "BattleActorMixin",
     "PokemonMixin",
     "PokemonEntityMixin",
     "SwitchInstructionMixin"
