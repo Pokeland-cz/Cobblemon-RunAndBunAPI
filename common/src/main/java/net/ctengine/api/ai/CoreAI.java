@@ -13,6 +13,7 @@ import com.cobblemon.mod.common.battles.PassActionResponse;
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
 import com.cobblemon.mod.common.battles.ShowdownMoveset;
 import com.cobblemon.mod.common.battles.SwitchActionResponse;
+import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import net.ctengine.api.battle.BattleManager.TrainerEntityBattleActor;
@@ -46,7 +47,7 @@ public abstract class CoreAI implements BattleAI {
      * @param candidates Target pokemon candidates (may be empty).
      * @return Target pokemon PNX.
      */
-    public abstract String selectTarget(InBattleMove move, List<ActiveBattlePokemon> candidates);
+    public abstract String selectTarget(InBattleMove move, List<Targetable> candidates);
 
     /**
      * Selects a bag item to used.
@@ -124,33 +125,15 @@ public abstract class CoreAI implements BattleAI {
             return PassActionResponse.INSTANCE;
         }
 
-        var moveCandidates = moveset.moves.stream()
-            .filter(InBattleMove::canBeUsed)
-            .filter(move -> {
-                var targetList = move.getTarget().getTargetList().invoke(pkmn);
-                return move.mustBeUsed() || targetList == null || !targetList.isEmpty();
-            }).toList();
+        var moveCandidates = moveset.moves.stream().filter(InBattleMove::canBeUsed).toList();
 
         if(moveCandidates.isEmpty()) {
             return new MoveActionResponse("struggle", null, null);
         }
 
         var move = this.selectMove(pkmn, moveCandidates);
-        String target = null;
-
-        switch(move.getTarget()) {
-            case normal:
-            case foeSide:
-                // TODO: fix potential targeting of unreachable pokemon (e.g. in 3vs3)
-                target = this.selectTarget(move, pkmn.getSide().getOppositeSide().getActivePokemon());
-                break;
-            case allySide:
-                target = this.selectTarget(move, pkmn.getSidePokemon());
-                break;
-            default:
-                break;
-        }
-
+        var targetCandidates = move.getTargets(pkmn);
+        var target = this.selectTarget(move, targetCandidates == null ? List.of() : targetCandidates);
         return new MoveActionResponse(move.id, target, null);
     }
 }

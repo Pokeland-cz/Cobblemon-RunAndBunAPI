@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.InBattleMove;
+import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 
@@ -34,7 +35,7 @@ public class RandomAI extends CoreAI {
     }
 
     @Override
-    public String selectTarget(InBattleMove move, List<ActiveBattlePokemon> candidates) {
+    public String selectTarget(InBattleMove move, List<Targetable> candidates) {
         return candidates.isEmpty() ? null : candidates.get(RNG.nextInt(candidates.size())).getPNX();
     }
 
@@ -50,6 +51,6 @@ public class RandomAI extends CoreAI {
 
     @Override
     public boolean shouldUseItem(ActiveBattlePokemon pkmn, Set<BagItem> items) {
-        return RNG.nextDouble() < 0.75;
+        return RNG.nextDouble() < 0.15;
     }
 }
