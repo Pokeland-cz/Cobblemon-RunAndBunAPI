@@ -44,14 +44,14 @@ public class ExampleMod {
             for(var trainerFile : files) {
                 try(var rd = new BufferedReader(new FileReader(trainerFile))) {
                     // We use the file name as trainer id and parse the content into a TrainerModel
-                    // instance, which is then passed to a TrainerNPC that is registered to the
-                    // TrainerRegistry (along a server to initialize the default villager entity).
+                    // instance, which is then provided to the TrainerRegistry to register a new
+                    // TrainerNPC (along a server to initialize a default villager entity).
                     var trainerId = fileToId(trainerFile);
                     Trainers.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class), server);
-                    // trainerReg.register(trainerId, new TrainerNPC(UUID.nameUUIDFromBytes(trainerId.getBytes()), server, GSON.fromJson(rd, TrainerModel.class)).witBattleAI(new RandomAI(42)));
                 } catch(CTException errors) {
+                    // this will log all issues that the model may has (the trainer will still be registered)
                     CTEngineMod.LOG.error("model validation failure in: " + trainerFile.getPath());
-                    errors.getErrors().forEach(error -> CTEngineMod.LOG.error(error.message)); // this will log all issues that the model may has
+                    errors.getErrors().forEach(error -> CTEngineMod.LOG.error(error.message));
                 } catch(IOException e) {
                     CTEngineMod.LOG.error("failed to parse trainer", e);
                 }
@@ -60,12 +60,13 @@ public class ExampleMod {
 
         // We can easily (un)register players as trainers whenever they log in or out.
         // Note: The TrainerRegistry does not allow to implicitly overwrite an existing
-        // trainer id. Using a players uuid should be sufficent in most cases but a custom
-        // resolution for duplicate player names can be used instead if readability is a
-        // concern.
+        // trainer id. Using a players display name may be sufficient for this example but
+        // in real scenarios a custom resolution of duplicate names would be necessary. It
+        // is of course possible to use any other string as id to circumvent this issue
+        // (e.g. a players uuid).
         if(!eventsRegistered) {
-            PlayerEvent.PLAYER_JOIN.register(player -> Trainers.registerPlayer(player.getStringUUID(), new TrainerPlayer(player)));
-            PlayerEvent.PLAYER_QUIT.register(player -> Trainers.unregisterById(player.getStringUUID()));
+            PlayerEvent.PLAYER_JOIN.register(player -> Trainers.registerPlayer(player.getDisplayName().getString(), new TrainerPlayer(player)));
+            PlayerEvent.PLAYER_QUIT.register(player -> Trainers.unregisterById(player.getDisplayName().getString()));
             eventsRegistered = true;
         }
     }
