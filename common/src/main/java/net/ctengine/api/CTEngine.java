@@ -10,7 +10,9 @@ import net.ctengine.api.trainer.TrainerRegistry;
  */
 public class CTEngine {
     private static Supplier<CTEngine> instanceSupplier = () -> {
-        throw new IllegalStateException(CTEngine.class.getName() + " not initialized");
+        var instance = new CTEngine(new TrainerRegistry(), new BattleManager());
+        instanceSupplier = () -> instance;
+        return instance;
     };
 
     private TrainerRegistry trainerRegistry;
@@ -43,9 +45,10 @@ public class CTEngine {
      * Initializes a new singleton instance that can be accessed with {@link CTEngine#getInstance()}.
      * 
      * @param trainerRegistry {@link TrainerRegistry} to use.
+     * @param battleManager {@link BattleManager} to use.
      */
-    public static void init(TrainerRegistry trainerRegistry) {
-        var instance = new CTEngine(trainerRegistry, new BattleManager());
+    public static void init(TrainerRegistry trainerRegistry, BattleManager battleManager) {
+        var instance = new CTEngine(trainerRegistry, battleManager);
         instanceSupplier = () -> instance;
     }
 

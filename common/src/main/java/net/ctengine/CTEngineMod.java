@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.architectury.event.events.common.LifecycleEvent;
-import net.ctengine.api.CTEngine;
-import net.ctengine.api.trainer.TrainerRegistry;
 import net.ctengine.commands.CTEngineCommands;
 import net.ctengine.example.ExampleMod;
 
@@ -18,7 +16,6 @@ public class CTEngineMod {
 
     public static void init() {
         LifecycleEvent.SERVER_STARTED.register(ExampleMod::init); // example...
-        CTEngine.init(new TrainerRegistry());
         CTEngineCommands.register();
     }
 }
