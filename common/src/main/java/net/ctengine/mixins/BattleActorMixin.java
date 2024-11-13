@@ -10,7 +10,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import net.ctengine.api.util.Battles;
 
 /**
- * Restricts usage of bag items based on a configurable limits per battle.
+ * Restricts usage of bag items based on configurable limits per battle.
  * 
  * @see BagItemInstructionMixin
  */

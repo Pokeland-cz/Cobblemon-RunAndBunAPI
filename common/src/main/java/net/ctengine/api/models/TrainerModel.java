@@ -12,7 +12,7 @@ import net.ctengine.api.ai.AIType;
  */
 public class TrainerModel {
     private String name = "";
-    private AIType ai = AIType.RNG; // TODO: maybe option for default
+    private AIType ai = AIType.LAI; // TODO: maybe global option for default
     private List<BagItemModel> bag = new ArrayList<>();
     private List<PokemonModel> team = new ArrayList<>();
 

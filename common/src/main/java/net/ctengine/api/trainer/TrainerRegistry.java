@@ -7,12 +7,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jetbrains.annotations.NotNull;
+
+import net.ctengine.api.errors.CTErrors;
 import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.models.converter.PokemonModelConverter;
+import net.ctengine.api.models.converter.TrainerModelConverter;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
 
 /**
  * Key/value trainer storage.
@@ -20,11 +23,16 @@ import net.minecraft.world.entity.EntityType;
 public class TrainerRegistry {
     private Map<String, Trainer> trainers = new HashMap<>();
     private Set<String> trainerIds = new HashSet<>();
+    private TrainerModelConverter tmc;
 
-    private void register(String trainerId, Trainer trainer) {
-        if(!this.trainerIds.add(trainerId) || this.trainers.putIfAbsent(UUID.nameUUIDFromBytes(trainerId.getBytes()).toString(), trainer) != null) {
-            throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
-        }
+    /**
+     * Initializes and clears the trainer registry.
+     * 
+     * @param server Minecraft server.
+     */
+    public void init(@NotNull MinecraftServer server) {
+        this.tmc = new TrainerModelConverter(server, new PokemonModelConverter());
+        this.clear();
     }
 
     /**
@@ -35,7 +43,8 @@ public class TrainerRegistry {
      * @return Registered {@link TrainerPlayer} instance.
      * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
-    public TrainerPlayer registerPlayer(String trainerId, ServerPlayer player) {
+    @NotNull
+    public TrainerPlayer registerPlayer(@NotNull String trainerId, @NotNull ServerPlayer player) {
         return registerPlayer(trainerId, new TrainerPlayer(player));
     }
 
@@ -48,7 +57,8 @@ public class TrainerRegistry {
      * @return Registered {@link TrainerPlayer} instance.
      * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
-    public <T extends TrainerPlayer> T registerPlayer(String trainerId, T trainer) {
+    @NotNull
+    public <T extends TrainerPlayer> T registerPlayer(@NotNull String trainerId, @NotNull T trainer) {
         this.register(trainerId, trainer);
         return trainer;
     }
@@ -59,33 +69,18 @@ public class TrainerRegistry {
      * 
      * @param trainerId Unique id of the {@link TrainerNPC} to register.
      * @param model {@link TrainerModel} that represents the trainer.
-     * @param server {@link MinecraftServer} to instantiate a default villager the trainer will be associated with.
      * @return Registered {@link TrainerNPC} instance.
-     * @throws CTException In case of validation failures with the provided model.
+     * @throws CTException In case of validation failures with the provided model (the trainer will be registered regardless).
      * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
-    public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server) {
-        return this.registerNPC(trainerId, model, server, new PokemonModelConverter());
-    }
+    @NotNull
+    public TrainerNPC registerNPC(@NotNull String trainerId, @NotNull TrainerModel model) {
+        var errors = CTErrors.create();
+        var trainer = this.tmc.toTarget(model, errors);
 
-    /**
-     * Instantiates and registers a {@link TrainerNPC} to the trainer registry.
-     * 
-     * @param trainerId Unique id of the {@link TrainerNPC} to register.
-     * @param model {@link TrainerModel} that represents the trainer.
-     * @param server {@link MinecraftServer} to instantiate a default villager the trainer will be associated with.
-     * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
-     * @return Registered {@link TrainerNPC} instance.
-     * @throws CTException In case of validation failures with the provided model.
-     * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
-     */
-    public TrainerNPC registerNPC(String trainerId, TrainerModel model, MinecraftServer server, PokemonModelConverter pokemonModelConverter) {
-        var trainer = this.registerNPC(trainerId, new TrainerNPC(
-            UUID.nameUUIDFromBytes(trainerId.getBytes()),
-            EntityType.VILLAGER.create(server.overworld()),
-            pokemonModelConverter));
-
-        trainer.setModel(model);
+        trainer.setUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()));
+        this.registerNPC(trainerId, trainer);
+        errors.check();
         return trainer;
     }
 
@@ -98,7 +93,8 @@ public class TrainerRegistry {
      * @return Registered {@link TrainerNPC} instance.
      * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
-    public <T extends TrainerNPC> T registerNPC(String trainerId, T trainer) {
+    @NotNull
+    public <T extends TrainerNPC> T registerNPC(@NotNull String trainerId, @NotNull T trainer) {
         this.register(trainerId, trainer);
         return trainer;
     }
@@ -109,7 +105,7 @@ public class TrainerRegistry {
      * @param trainerId Id of the {@link Trainer} to unregister.
      * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
-    public Trainer unregisterById(String trainerId) {
+    public Trainer unregisterById(@NotNull String trainerId) {
         return this.unregisterByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()));
     }
 
@@ -119,7 +115,7 @@ public class TrainerRegistry {
      * @param trainerUUID UUID of the {@link Trainer} to unregister.
      * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
-    public Trainer unregisterByUUID(UUID trainerUUID) {
+    public Trainer unregisterByUUID(@NotNull UUID trainerUUID) {
         return this.unregisterByStringUUID(trainerUUID.toString());
     }
 
@@ -129,7 +125,7 @@ public class TrainerRegistry {
      * @param trainerUUID String representation of the uuid (as returned by {@link UUID#toString()}) of the trainer to unregister.
      * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
-    public Trainer unregisterByStringUUID(String trainerUUID) {
+    public Trainer unregisterByStringUUID(@NotNull String trainerUUID) {
         return this.trainers.remove(trainerUUID);
     }
 
@@ -137,9 +133,9 @@ public class TrainerRegistry {
      * Retrieves the trainer with the given id.
      * 
      * @param trainerId Id of the trainer to retrieve.
-     * @return Trainer instance from the trainer registry.
+     * @return Trainer instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public Trainer getById(String trainerId) {
+    public Trainer getById(@NotNull String trainerId) {
         return this.getById(trainerId, Trainer.class);
     }
 
@@ -150,9 +146,9 @@ public class TrainerRegistry {
      * @param trainerId Id of the {@link Trainer} to retrieve.
      * @param type Target {@link Trainer} type class instance.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public <T extends Trainer> T getById(String trainerId, Class<T> type) {
+    public <T extends Trainer> T getById(@NotNull String trainerId, @NotNull Class<T> type) {
         return this.getByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()), type);
     }
 
@@ -160,9 +156,9 @@ public class TrainerRegistry {
      * Retrieves the {@link Trainer} with the given uuid.
      * 
      * @param trainerUUID UUID of the {@link Trainer} to retrieve.
-     * @return {@link Trainer} instance from the trainer registry.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public Trainer getByUUID(UUID trainerUUID) {
+    public Trainer getByUUID(@NotNull UUID trainerUUID) {
         return this.getByUUID(trainerUUID, Trainer.class);
     }
 
@@ -173,9 +169,9 @@ public class TrainerRegistry {
      * @param trainerUUID UUID of the {@link Trainer} to retrieve.
      * @param type Target {@link Trainer} type class instance.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public <T extends Trainer> T getByUUID(UUID trainerUUID, Class<T> type) {
+    public <T extends Trainer> T getByUUID(@NotNull UUID trainerUUID, @NotNull Class<T> type) {
         return this.getByStringUUID(trainerUUID.toString(), type);
     }
 
@@ -183,9 +179,9 @@ public class TrainerRegistry {
      * Retrieves the {@link Trainer} with the given uuid string.
      * 
      * @param trainerUUID String representation of the uuid (as returned by {@llink UUID.toString()}) of the {@link Trainer} to retrieve.
-     * @return {@link Trainer} instance from the trainer registry.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public Trainer getByStringUUID(String trainerUUID) {
+    public Trainer getByStringUUID(@NotNull String trainerUUID) {
         return this.getByStringUUID(trainerUUID, Trainer.class);
     }
 
@@ -196,9 +192,9 @@ public class TrainerRegistry {
      * @param trainerUUID String representation of the uuid (as returned by {@llink UUID.toString()}) of the {@link Trainer} to retrieve.
      * @param type Target {@link Trainer} type class instance.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
-    public <T extends Trainer> T getByStringUUID(String trainerUUID, Class<T> type) {
+    public <T extends Trainer> T getByStringUUID(@NotNull String trainerUUID, @NotNull Class<T> type) {
         var trainer = this.trainers.get(trainerUUID);
 
         if(trainer == null) {
@@ -217,6 +213,7 @@ public class TrainerRegistry {
      * 
      * @return Set of trainer ids.
      */
+    @NotNull
     public Set<String> getIds() {
         return Collections.unmodifiableSet(this.trainerIds);
     }
@@ -227,5 +224,11 @@ public class TrainerRegistry {
     public void clear() {
         this.trainers.clear();
         this.trainerIds.clear();
+    }
+
+    private void register(String trainerId, Trainer trainer) {
+        if(!this.trainerIds.add(trainerId) || this.trainers.putIfAbsent(UUID.nameUUIDFromBytes(trainerId.getBytes()).toString(), trainer) != null) {
+            throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
+        }
     }
 }

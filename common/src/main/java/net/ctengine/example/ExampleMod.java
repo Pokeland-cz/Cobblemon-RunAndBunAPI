@@ -32,22 +32,22 @@ public class ExampleMod {
     // safety measure
     private static boolean eventsRegistered;
 
-    public static void init(MinecraftServer server) {        
+    public static void init(MinecraftServer server) {
+        // Initialize (and clear) trainer registry for the server
+        Trainers.init(server);
+
         // We look for trainer json files in 'minecraft/trainers'
         var trainerDir = Path.of(server.getWorldPath(LevelResource.ROOT).toString(), "..", "..", "trainers").toFile();
         var files = trainerDir.listFiles(f -> f.getName().toLowerCase().endsWith(".json"));
-
-        // Revert to initial state (safety measure)
-        Trainers.clear();
 
         if(files != null) {
             for(var trainerFile : files) {
                 try(var rd = new BufferedReader(new FileReader(trainerFile))) {
                     // We use the file name as trainer id and parse the content into a TrainerModel
                     // instance, which is then provided to the TrainerRegistry to register a new
-                    // TrainerNPC (along a server to initialize a default villager entity).
+                    // TrainerNPC.
                     var trainerId = fileToId(trainerFile);
-                    Trainers.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class), server);
+                    Trainers.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class));
                 } catch(CTException errors) {
                     // this will log all issues that the model may has (the trainer will still be registered)
                     CTEngineMod.LOG.error("model validation failure in: " + trainerFile.getPath());
@@ -64,10 +64,10 @@ public class ExampleMod {
         // in real scenarios a custom resolution of duplicate names would be necessary. It
         // is of course possible to use any other string as id to circumvent this issue
         // (e.g. a players uuid).
-        if(!eventsRegistered) {
+        if(!ExampleMod.eventsRegistered) {
             PlayerEvent.PLAYER_JOIN.register(player -> Trainers.registerPlayer(player.getDisplayName().getString(), new TrainerPlayer(player)));
             PlayerEvent.PLAYER_QUIT.register(player -> Trainers.unregisterById(player.getDisplayName().getString()));
-            eventsRegistered = true;
+            ExampleMod.eventsRegistered = true;
         }
     }
 }

@@ -1,7 +1,5 @@
 package net.ctengine.api.errors;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * General error representation.
  */
@@ -9,12 +7,12 @@ public class CTError {
     /**
      * Error message.
      */
-    public final @Nullable String message;
+    public final String message;
 
     /**
      * Throwable that caused the error.
      */
-    public final @Nullable Throwable cause;
+    public final Throwable cause;
 
     /**
      * Creates a new error instance with the given message and no cause.

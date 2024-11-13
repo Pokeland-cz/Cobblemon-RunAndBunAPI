@@ -1,5 +1,6 @@
 package net.ctengine.api.models.converter;
 
+import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.abilities.Abilities;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.Natures;
@@ -57,7 +58,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         if(!model.getAbility().isBlank()) {
             errors.doif(
                 Abilities.INSTANCE.get(model.getAbility()),
-                v -> v != null, v -> pokemon.updateAbility(v.create(true)),
+                v -> v != null, v -> pokemon.updateAbility(v.create(true, Priority.NORMAL)),
                 "invalid ability '" + model.getAbility() + "'");
         }
 

@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
@@ -46,7 +44,7 @@ public class TrainerPlayer implements Trainer {
         return party.toArray(new Pokemon[party.size()]);
     }
 
-    @Override @Nullable
+    @Override @NotNull
     public LivingEntity getEntity() {
         return this.getPlayer();
     }

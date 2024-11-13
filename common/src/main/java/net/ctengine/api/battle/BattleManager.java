@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
@@ -95,7 +93,6 @@ public class BattleManager {
      * @param battleUUID UUID of the {@link PokemonBattle}.
      * @return The {@link BattleState} or null of no such battle is active.
      */
-    @Nullable
     public BattleState getState(UUID battleUUID) {
         return this.battleStates.get(battleUUID);
     }
@@ -207,7 +204,7 @@ public class BattleManager {
             return battleLang("owned_pokemon", getName(), this.name);
         }
 
-        @Override @Nullable
+        @Override
         public Vec3 getInitialPos() {
             return this.entity.position();
         }

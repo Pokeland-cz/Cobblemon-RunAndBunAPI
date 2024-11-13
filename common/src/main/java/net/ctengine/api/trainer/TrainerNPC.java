@@ -3,104 +3,64 @@ package net.ctengine.api.trainer;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
-import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
-import com.cobblemon.mod.common.api.storage.party.PartyStore;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
-import net.ctengine.api.errors.CTError;
-import net.ctengine.api.errors.CTErrors;
-import net.ctengine.api.errors.CTException;
-import net.ctengine.api.models.PokemonModel;
-import net.ctengine.api.models.TrainerModel;
-import net.ctengine.api.models.converter.Converter;
-import net.ctengine.api.models.converter.PokemonModelConverter;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
  * An ai trainer that is represented by an arbitrary {@link LivingEntity}.
  */
 public class TrainerNPC implements Trainer {
+    private String name;
     private Pokemon[] team;
     private TrainerBag bag;
+    private BattleAI battleAI;
     private LivingEntity entity;
-    private TrainerModel model;
-    private Converter<PokemonModel, Pokemon> pmc;
-
-    private RegistryAccess registryAccess;
     private UUID uuid;
 
     /**
-     * Creates a new trainer npc.
+     * Constructs a new trainer npc with a random {@link UUID}.
      * 
-     * @param uuid UUID of the trainer npc.
+     * @param name The name of the trainer.
+     * @param team The {@link Pokemon} party of the trainer.
+     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
+     * @param battleAI {@link BattleAI} used by this trainer.
      * @param entity {@link LivingEntity} this trainer is (initially) attached to.
-     * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
      */
-    TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
-        this.registryAccess = RegistryAccess.EMPTY;
-        this.pmc = pokemonModelConverter;
-        this.entity = entity;
-        this.uuid = uuid;
+    public TrainerNPC(@NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
+        this(UUID.randomUUID(), name, team, bag, battleAI, entity);
     }
 
     /**
-     * Creates a new trainer npc.
+     * Constructs a new trainer npc.
      * 
-     * @param uuid UUID of the trainer npc.
+     * @param uuid {@link UUID} to identify this trainer.
+     * @param name The name of the trainer.
+     * @param team The {@link Pokemon} party of the trainer.
+     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
+     * @param battleAI {@link BattleAI} used by this trainer.
      * @param entity {@link LivingEntity} this trainer is (initially) attached to.
-     * @param model {@link TrainerModel} representing this trainer.
-     * @param pokemonModelConverter {@link PokemonModelConverter} instance used to instantiate party pokemon.
-     * @throws CTException In case of validation failures with the provided model.
      */
-    public TrainerNPC(@NotNull UUID uuid, @NotNull LivingEntity entity, @NotNull TrainerModel model, @NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
-        this.registryAccess = RegistryAccess.EMPTY;
-        this.pmc = pokemonModelConverter;
-        this.entity = entity;
+    public TrainerNPC(@NotNull UUID uuid, @NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
         this.uuid = uuid;
-        this.setModel(model);
-    }
-    
-    /**
-     * Sets the {@link TrainerModel} of this trainer.
-     * 
-     * @param model New {@link TrainerModel}.
-     * @throws CTException In case of validation failures with the provided model.
-     */
-    public void setModel(@NotNull TrainerModel model) {
-        var errors = CTErrors.create();
-        this.model = model;
-
-        if(this.model.getTeam().size() > 6) {
-            errors.add(CTError.of("too many pokemon in party " + this.model.getTeam().size() + "/6"));
-        }
-
-        this.team = this.model.getTeam().stream().limit(6)
-            .map(pkModel -> this.pmc.toTarget(pkModel, errors))
-            .toList().toArray(new Pokemon[0]);
-
-        this.bag = new TrainerBag();
-        this.model.getBag().forEach(bim -> {
-            try {
-                this.bag.add(bim.getItem(), bim.getQuantity());
-            } catch(IllegalArgumentException e) {
-                errors.add(CTError.of(e));
-            }
-        });
-
-        this.storeTeam();
-        errors.check();
+        this.name = name;
+        this.team = team;
+        this.bag = bag;
+        this.battleAI = battleAI;
+        this.entity = entity;
+        this.initTeam();
     }
 
     /**
-     * Sets the pokemon model converter of this trainer.
+     * Sets the {@link UUID} of this trainer.
      * 
-     * @param pokemonModelConverter New {@link Converter}.
+     * @param uuid New {@link UUID}.
      */
-    public void setPokemonModelConverter(@NotNull Converter<PokemonModel, Pokemon> pokemonModelConverter) {
-        this.pmc = pokemonModelConverter;
+    public void setUUID(UUID uuid) {
+        this.uuid = uuid;
+        this.initTeam();
     }
 
     /**
@@ -109,10 +69,17 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} to associate with this trainer.
      */
     public void setEntity(@NotNull LivingEntity entity) {
-        if(entity != this.entity) {
-            this.entity = entity;
-            this.storeTeam();
-        }
+        this.entity = entity;
+    }
+
+    /**
+     * Retrieves the {@link UUID} of this trainer.
+     * 
+     * @return {@link UUID} of this trainer.
+     */
+    @NotNull
+    public UUID getUUID() {
+        return this.uuid;
     }
 
     /**
@@ -122,7 +89,7 @@ public class TrainerNPC implements Trainer {
      */
     @NotNull
     public BattleAI getBattleAI() {
-        return this.model.getAI().INSTANCE;
+        return this.battleAI;
     }
 
     /**
@@ -130,23 +97,14 @@ public class TrainerNPC implements Trainer {
      * 
      * @return {@link TrainerBag} of the trainer.
      */
+    @NotNull
     public TrainerBag getBag() {
         return this.bag;
     }
 
-    /**
-     * Retrieves the {@link TrainerModel} of this trainer.
-     * 
-     * @return {@link TrainerModel} representing the trainer.
-     */
-    @NotNull
-    public TrainerModel getModel() {
-        return this.model;
-    }
-
     @Override @NotNull
     public String getName() {
-        return this.model.getName();
+        return this.name;
     }
 
     @Override @NotNull
@@ -158,16 +116,9 @@ public class TrainerNPC implements Trainer {
     public LivingEntity getEntity() {
         return this.entity;
     }
-    
-    private void storeTeam() {
-        var store = Cobblemon.INSTANCE.getStorage().getCustomStore(PartyStore.class, this.uuid, this.registryAccess);
-        store.clearParty();
 
+    private void initTeam() {
         for(var pkmn : this.team) {
-            if(!store.add(pkmn)) {
-                throw new IllegalStateException("failed to store pokemon for trainer npc");
-            }
-
             pkmn.setOriginalTrainer(this.uuid);
             pkmn.setOriginalTrainerName(this.getName());
             pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
