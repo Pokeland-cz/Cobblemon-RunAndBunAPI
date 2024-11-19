@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-// rootProject.name = 'ctengine'
+rootProject.name = 'rctapi'
 
 include 'common'
 include 'fabric'

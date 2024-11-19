@@ -16,7 +16,7 @@ TOOLS_PATH="${TOOLS_PATH:-tools}"
 sub_projects="common fabric forge neoforge"
 
 # keys of fields in gradle.properties
-mod_name_key="name="
+mod_name_key="mod_name="
 mod_id_key="mod_id="
 mod_author_key="mod_author="
 mod_version_key="mod_version="

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "${mod_id}",
   "version": "${mod_version}",
-  "name": "${name}",
+  "name": "${mod_name}",
   "description": "${mod_description}",
   "authors": [
     "${mod_author}"
@@ -12,20 +12,20 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "${maven_group}.FabricCommon"
+      "${maven_group}.${mod_id}.fabric.FabricCommon"
     ],
     "client": [
-      "${maven_group}.FabricClient"
+      "${maven_group}.${mod_id}.fabric.FabricClient"
     ]
   },
   "mixins": [
-    "ctengine.mixins.json"
+    "${mod_id}.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.5",
-    "minecraft": "~1.21",
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "~${minecraft_version}",
     "java": ">=21",
-    "architectury": ">=13.0.2",
+    "architectury": ">=${architectury_api_version}",
     "fabric-api": "*"
   },
   "suggests": {
