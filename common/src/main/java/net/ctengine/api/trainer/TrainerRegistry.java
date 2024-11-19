@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
-import net.ctengine.api.errors.CTErrors;
-import net.ctengine.api.errors.CTException;
+import net.ctengine.api.errors.RCTErrors;
+import net.ctengine.api.errors.RCTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.models.converter.PokemonModelConverter;
 import net.ctengine.api.models.converter.TrainerModelConverter;
@@ -69,12 +69,12 @@ public class TrainerRegistry {
      * @param trainerId Unique id of the {@link TrainerNPC} to register.
      * @param model {@link TrainerModel} that represents the trainer.
      * @return Registered {@link TrainerNPC} instance.
-     * @throws CTException In case of validation failures with the provided model (the trainer will be registered regardless).
+     * @throws RCTException In case of validation failures with the provided model (the trainer will be registered regardless).
      * @throws IllegalArgumentException If a {@link Trainer} with the given id is already registered.
      */
     @NotNull
     public TrainerNPC registerNPC(@NotNull String trainerId, @NotNull TrainerModel model) {
-        var errors = CTErrors.create();
+        var errors = RCTErrors.create();
         var trainer = this.tmc.toTarget(model, errors);
         this.registerNPC(trainerId, trainer);
         errors.check();

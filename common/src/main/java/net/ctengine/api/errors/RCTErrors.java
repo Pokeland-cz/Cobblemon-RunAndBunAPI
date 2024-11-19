@@ -9,13 +9,13 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Service to collect and react to multiple {@link CTError}s.
+ * Service to collect and react to multiple {@link RCTError}s.
  */
-public class CTErrors<T extends CTException> {
-    private final Function<List<CTError>, T> exceptionInitializer;
-    private List<CTError> errors = new ArrayList<>();
+public class RCTErrors<T extends RCTException> {
+    private final Function<List<RCTError>, T> exceptionInitializer;
+    private List<RCTError> errors = new ArrayList<>();
 
-    private CTErrors(@NotNull Function<List<CTError>, T> exceptionInitializer) {
+    private RCTErrors(@NotNull Function<List<RCTError>, T> exceptionInitializer) {
         this.exceptionInitializer = exceptionInitializer;
     }
 
@@ -24,34 +24,34 @@ public class CTErrors<T extends CTException> {
      * 
      * @return New error collection instance.
      */
-    public static CTErrors<CTException> create() {
-        return create(CTException::new);
+    public static RCTErrors<RCTException> create() {
+        return create(RCTException::new);
     }
 
     /**
      * Creates a new error collection instance.
      * 
-     * @param <V> {@link CTException} type parameter.
+     * @param <V> {@link RCTException} type parameter.
      * @param exceptionInitializer Initializer function to instantiate a new exception of type V.
      * @return New error collection instance.
      */
-    public static <V extends CTException> CTErrors<V> create(@NotNull Function<List<CTError>, V> exceptionInitializer) {
-        return new CTErrors<V>(exceptionInitializer);
+    public static <V extends RCTException> RCTErrors<V> create(@NotNull Function<List<RCTError>, V> exceptionInitializer) {
+        return new RCTErrors<V>(exceptionInitializer);
     }
 
     /**
-     * Adds a new {@link CTError} to this error collection.
+     * Adds a new {@link RCTError} to this error collection.
      * 
-     * @param error {@link CTError} to add.
+     * @param error {@link RCTError} to add.
      * @return This error collection.
      */
-    public CTErrors<T> add(@NotNull CTError error) {
+    public RCTErrors<T> add(@NotNull RCTError error) {
         this.errors.add(error);
         return this;
     }
 
     /**
-     * Tests the provided value with the given predicate and adds an {@link CTError}
+     * Tests the provided value with the given predicate and adds an {@link RCTError}
      * to this error collection if the test fails.
      * 
      * @param <V> Type of the value to test.
@@ -64,7 +64,7 @@ public class CTErrors<T extends CTException> {
     }
 
     /**
-     * Tests the provided value with the given predicate and adds an {@link CTError}
+     * Tests the provided value with the given predicate and adds an {@link RCTError}
      * to this error collection if the test fails.
      * 
      * @param <V> Type of the value to test.
@@ -78,7 +78,7 @@ public class CTErrors<T extends CTException> {
     }
 
     /**
-     * Tests the provided value with the given predicate and adds an {@link CTError}
+     * Tests the provided value with the given predicate and adds an {@link RCTError}
      * to this error collection if the test fails.
      * 
      * @param <V> Type of the value to test.
@@ -92,7 +92,7 @@ public class CTErrors<T extends CTException> {
     }
 
     /**
-     * Tests the provided value with the given predicate and adds an {@link CTError}
+     * Tests the provided value with the given predicate and adds an {@link RCTError}
      * to this error collection if the test fails.
      * 
      * @param <V> Type of the value to test.
@@ -108,7 +108,7 @@ public class CTErrors<T extends CTException> {
                 format = String.format(format, got != null ? got.toString() : got);
             }
 
-            this.add(CTError.of(format));
+            this.add(RCTError.of(format));
             return otherwise.get();
         }
 
@@ -125,7 +125,7 @@ public class CTErrors<T extends CTException> {
                 format = String.format(format, got != null ? got.toString() : got);
             }
 
-            this.add(CTError.of(format));
+            this.add(RCTError.of(format));
             return false;
         }
         
@@ -134,10 +134,10 @@ public class CTErrors<T extends CTException> {
     }
 
     /**
-     * Checks if at least one {@link CTError} occured and throws a new {@link CTException}
+     * Checks if at least one {@link RCTError} occured and throws a new {@link RCTException}
      * if this is the case.
      * 
-     * @throws T If atleast one {@link CTError} occured.
+     * @throws T If atleast one {@link RCTError} occured.
      */
     public void check() {
         if(this.errors.size() > 0) {

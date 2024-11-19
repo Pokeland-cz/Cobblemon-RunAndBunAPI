@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 
-import net.ctengine.api.CTEngine;
+import net.ctengine.api.RCTApi;
 
 /**
  * Ensures pokemon entites from {@link Trainer}s are never saved to the world.
@@ -19,7 +19,7 @@ public abstract class PokemonEntityMixin {
         var self = (PokemonEntity)(Object)this;
         var ot = self.getPokemon().getOriginalTrainer();
 
-        if(ot != null && CTEngine.getInstance().getTrainerRegistry().getById(ot) != null) {
+        if(ot != null && RCTApi.getInstance().getTrainerRegistry().getById(ot) != null) {
             cir.setReturnValue(false);
         }
     }

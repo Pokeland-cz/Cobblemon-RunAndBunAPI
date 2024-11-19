@@ -6,11 +6,12 @@ import net.ctengine.api.battle.BattleManager;
 import net.ctengine.api.trainer.TrainerRegistry;
 
 /**
- * API entrypoint (see CTEngine#init() and CTEngine#getInstance()).
+ * API entrypoint (see {@link RCTApi#init(TrainerRegistry, BattleManager)} and
+ * {@link RCTApi#getInstance()})).
  */
-public class CTEngine {
-    private static Supplier<CTEngine> instanceSupplier = () -> {
-        var instance = new CTEngine(new TrainerRegistry(), new BattleManager());
+public class RCTApi {
+    private static Supplier<RCTApi> instanceSupplier = () -> {
+        var instance = new RCTApi(new TrainerRegistry(), new BattleManager());
         instanceSupplier = () -> instance;
         return instance;
     };
@@ -18,7 +19,7 @@ public class CTEngine {
     private TrainerRegistry trainerRegistry;
     private BattleManager battleManager;
 
-    private CTEngine(TrainerRegistry trainerRegistry, BattleManager battleManager) {
+    private RCTApi(TrainerRegistry trainerRegistry, BattleManager battleManager) {
         this.trainerRegistry = trainerRegistry;
         this.battleManager = battleManager;
     }
@@ -42,22 +43,23 @@ public class CTEngine {
     }
 
     /**
-     * Initializes a new singleton instance that can be accessed with {@link CTEngine#getInstance()}.
+     * Initializes a new singleton instance that can be accessed with {@link
+     * RCTApi#getInstance()}.
      * 
      * @param trainerRegistry {@link TrainerRegistry} to use.
      * @param battleManager {@link BattleManager} to use.
      */
     public static void init(TrainerRegistry trainerRegistry, BattleManager battleManager) {
-        var instance = new CTEngine(trainerRegistry, battleManager);
+        var instance = new RCTApi(trainerRegistry, battleManager);
         instanceSupplier = () -> instance;
     }
 
     /**
-     * Retrieves the singleton instance of the CTEngine service.
+     * Retrieves the singleton instance of the {@link RCTApi} service.
      * 
-     * @return CTEngine singleton.
+     * @return {@link RCTApi} singleton.
      */
-    public static CTEngine getInstance() {
+    public static RCTApi getInstance() {
         return instanceSupplier.get();
     }
 }

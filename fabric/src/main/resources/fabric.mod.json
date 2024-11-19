@@ -1,25 +1,21 @@
 {
   "schemaVersion": 1,
-  "id": "ctengine",
-  "version": "${version}",
-  "name": "Cobblemon Trainer Engine",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${name}",
+  "description": "${mod_description}",
   "authors": [
-    "Me!"
+    "${mod_author}"
   ],
-  "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
-  },
-  "license": "CC0-1.0",
-  "icon": "assets/ctengine/icon.png",
+  "license": "${license}",
+  "icon": "assets/${mod_id}/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.ctengine.fabric.CTEngineFabric"
+      "${maven_group}.FabricCommon"
     ],
     "client": [
-      "net.ctengine.fabric.client.ExampleModFabricClient"
+      "${maven_group}.FabricClient"
     ]
   },
   "mixins": [

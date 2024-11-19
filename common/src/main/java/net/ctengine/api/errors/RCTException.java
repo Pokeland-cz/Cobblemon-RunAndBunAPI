@@ -6,27 +6,27 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A general exception that may be thrown by the occurence of {@link CTError}s.
+ * A general exception that may be thrown by the occurence of {@link RCTError}s.
  */
-public class CTException extends RuntimeException {
-    private List<CTError> errors;
+public class RCTException extends RuntimeException {
+    private List<RCTError> errors;
 
     /**
-     * Creates a new {@link CTError}s exception instance.
+     * Creates a new {@link RCTError}s exception instance.
      * 
-     * @param errors List of {@link CTError}s that occured.
+     * @param errors List of {@link RCTError}s that occured.
      */
-    public CTException(@NotNull List<CTError> errors) {
+    public RCTException(@NotNull List<RCTError> errors) {
         this.errors = errors;
     }
 
     /**
-     * Retrieves all {@link CTError}s that occured.
+     * Retrieves all {@link RCTError}s that occured.
      * 
-     * @return List of {@link CTError}s that occured.
+     * @return List of {@link RCTError}s that occured.
      */
     @NotNull
-    public List<CTError> getErrors() {
+    public List<RCTError> getErrors() {
         return Collections.unmodifiableList(this.errors);
     }
 

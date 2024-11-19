@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.BagItemInstruction;
 
-import net.ctengine.api.CTEngine;
+import net.ctengine.api.RCTApi;
 
 /**
  * Required to keep track of the number of items used by actors per battle.
@@ -20,7 +20,7 @@ public abstract class BagItemInstructionMixin {
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
         var self = (BagItemInstruction)(Object)this;
-        var battleState = CTEngine.getInstance().getBattleManager().getState(battle.getBattleId());
+        var battleState = RCTApi.getInstance().getBattleManager().getState(battle.getBattleId());
 
         if(battleState != null) {
             var message = self.getMessage();

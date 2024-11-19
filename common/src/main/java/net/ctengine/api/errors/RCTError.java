@@ -3,7 +3,7 @@ package net.ctengine.api.errors;
 /**
  * General error representation.
  */
-public class CTError {
+public class RCTError {
     /**
      * Error message.
      */
@@ -20,8 +20,8 @@ public class CTError {
      * @param message Error message string.
      * @return New error instance.
      */
-    public static CTError of(String message) {
-        return new CTError(message, null);
+    public static RCTError of(String message) {
+        return new RCTError(message, null);
     }
     
     /**
@@ -31,8 +31,8 @@ public class CTError {
      * @param cause Throwable that caused this error.
      * @return New error instance.
      */
-    public static CTError of(Throwable cause) {
-        return new CTError(cause != null && cause.getMessage() != null ? cause.getMessage() : null, cause);
+    public static RCTError of(Throwable cause) {
+        return new RCTError(cause != null && cause.getMessage() != null ? cause.getMessage() : null, cause);
     }
 
     /**
@@ -42,11 +42,11 @@ public class CTError {
      * @param cause Throwable that caused this error.
      * @return New error instance.
      */
-    public static CTError of(String message, Throwable cause) {
-        return new CTError(message, cause);
+    public static RCTError of(String message, Throwable cause) {
+        return new RCTError(message, cause);
     }
 
-    private CTError(String message, Throwable cause) {
+    private RCTError(String message, Throwable cause) {
         this.message = message;
         this.cause = cause;
     }

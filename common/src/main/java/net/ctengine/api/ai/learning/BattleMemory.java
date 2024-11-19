@@ -10,7 +10,7 @@ import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 
-import net.ctengine.CTEngineMod;
+import net.ctengine.ModCommon;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -20,7 +20,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public class BattleMemory<T> extends SavedData {
     private static final Random RNG = new Random();
     private static final double RATING_MARGIN = 0.075;
-    private static final String FILE = CTEngineMod.MOD_ID + ".lai.knowledge";
+    private static final String FILE = ModCommon.MOD_ID + ".lai.knowledge";
 
     private BattleEvaluator evaluator = new BattleEvaluator();
     private Map<String, RatedAction<T>> exactActions = new HashMap<>();
@@ -79,7 +79,7 @@ public class BattleMemory<T> extends SavedData {
      */
     public T getChoice() {
         this.dump();
-        CTEngineMod.LOG.info("## SELECTED ACTION RATING: " + this.previousAction.getRating());
+        ModCommon.LOG.info("## SELECTED ACTION RATING: " + this.previousAction.getRating());
         return this.previousAction.get();
     }
 
@@ -135,7 +135,7 @@ public class BattleMemory<T> extends SavedData {
     protected RatedAction<T> storeIfBest(RatedAction<T> nextAction) {
         var r = nextAction.getRating();
         var m = RATING_MARGIN * RNG.nextDouble();
-        CTEngineMod.LOG.info(String.format("prev: %s, next: %f, margin: %f, %b", this.previousAction == null ? "0" : String.valueOf(this.previousAction.getRating()), r, m, (this.previousAction == null || (r + m) > this.previousAction.getRating())));
+        ModCommon.LOG.info(String.format("prev: %s, next: %f, margin: %f, %b", this.previousAction == null ? "0" : String.valueOf(this.previousAction.getRating()), r, m, (this.previousAction == null || (r + m) > this.previousAction.getRating())));
 
         if(this.previousAction == null || (r + m) > this.previousAction.getRating()) {
             this.previousAction = nextAction;
@@ -145,16 +145,16 @@ public class BattleMemory<T> extends SavedData {
     }
 
     private void dump() {
-        CTEngineMod.LOG.info("## EXACT:");
+        ModCommon.LOG.info("## EXACT:");
 
         for(var p : this.exactActions.entrySet()) {
-            CTEngineMod.LOG.info(p.getKey() + ": " + p.getValue().getRating());
+            ModCommon.LOG.info(p.getKey() + ": " + p.getValue().getRating());
         }
 
-        CTEngineMod.LOG.info("## FUZZY:");
+        ModCommon.LOG.info("## FUZZY:");
 
         for(var p : this.fuzzyActions.entrySet()) {
-            CTEngineMod.LOG.info(p.getKey() + ": " + p.getValue().getRating());
+            ModCommon.LOG.info(p.getKey() + ": " + p.getValue().getRating());
         }
     }
 }

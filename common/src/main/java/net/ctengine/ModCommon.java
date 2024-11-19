@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Mod initialization logic.
  */
-public class CTEngineMod {
+public class ModCommon {
     public static final String MOD_ID = "ctengine";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 }

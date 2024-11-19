@@ -20,7 +20,7 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
-import net.ctengine.CTEngineMod;
+import net.ctengine.ModCommon;
 import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.trainer.TrainerBag;
 import net.ctengine.api.trainer.TrainerNPC;
@@ -119,7 +119,7 @@ public class BattleManager {
                 // note: registering trainers with the TrainerRegistry will already check if battle
                 // participants extend from TrainerPlayer or TrainerNPC and throw an exception if
                 // not. This check is just and additional safety measure.
-                CTEngineMod.LOG.error(String.format(
+                ModCommon.LOG.error(String.format(
                     "invalid participant '%s', must extend from %s or %s",
                     participant.getName(), TrainerPlayer.class.getName(), TrainerNPC.class.getName()));
             }

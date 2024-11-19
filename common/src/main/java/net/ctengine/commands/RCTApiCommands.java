@@ -14,8 +14,8 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import dev.architectury.event.events.common.CommandRegistrationEvent;
-import net.ctengine.CTEngineMod;
-import net.ctengine.api.CTEngine;
+import net.ctengine.ModCommon;
+import net.ctengine.api.RCTApi;
 import net.ctengine.api.battle.BattleFormat;
 import net.ctengine.api.battle.BattleRules;
 import net.ctengine.api.trainer.Trainer;
@@ -31,7 +31,7 @@ import net.minecraft.world.entity.LivingEntity;
 /**
  * Ingame commands provided by this mod.
  */
-public final class CTEngineCommands {
+public final class RCTApiCommands {
     private static Gson GSON = new Gson();
 
     public static final String CMD_BATTLE = "battle";
@@ -44,7 +44,7 @@ public final class CTEngineCommands {
     public static final String ARG_TRAINER_ID = "trainerId";
     public static final String ARG_TRAINER_ENTITY = "trainerEntity";
 
-    private CTEngineCommands() {}
+    private RCTApiCommands() {}
 
     /**
      * Registers all commands provided by this mod.
@@ -57,14 +57,14 @@ public final class CTEngineCommands {
                 builder.then(builderFormat(format));
             }
 
-            dispatcher.register(Commands.literal(CTEngineMod.MOD_ID)
+            dispatcher.register(Commands.literal(ModCommon.MOD_ID)
                 .requires(css -> css.hasPermission(2))
                 .then(Commands.literal(CMD_ATTACH)
                     .then(Commands
                         .argument(ARG_TRAINER_ID, StringArgumentType.string())
-                        .suggests(CTEngineCommands::get_trainer_id_suggestions)
+                        .suggests(RCTApiCommands::get_trainer_id_suggestions)
                         .then(Commands.argument(ARG_TRAINER_ENTITY, EntityArgument.entity())
-                            .executes(CTEngineCommands::attach))))
+                            .executes(RCTApiCommands::attach))))
                 .then(builder));
         });
     }
@@ -81,14 +81,14 @@ public final class CTEngineCommands {
         if(actor < actorsPerSide) {
             var arg = RequiredArgumentBuilder
                 .<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                .suggests(CTEngineCommands::get_trainer_id_suggestions);
+                .suggests(RCTApiCommands::get_trainer_id_suggestions);
 
             return actor + 1 < actorsPerSide
                 ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, withRules)) : side < 1
                 ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, withRules)))
                 : withRules
-                    ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> CTEngineCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
-                    : arg.executes(context -> CTEngineCommands.battle(context, format, null));
+                    ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> RCTApiCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
+                    : arg.executes(context -> RCTApiCommands.battle(context, format, null));
         }
 
         throw new IllegalArgumentException("invalid battle actor index: " + actor);
@@ -99,13 +99,13 @@ public final class CTEngineCommands {
     }
 
     private static int handleError(CommandContext<CommandSourceStack> context, Exception e) {
-        CTEngineMod.LOG.error(e.getMessage(), e);
+        ModCommon.LOG.error(e.getMessage(), e);
         context.getSource().sendFailure(Component.nullToEmpty(e.getMessage()));
         return 1;
     }
 
     private static CompletableFuture<Suggestions> get_trainer_id_suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) throws CommandSyntaxException {
-        CTEngine.getInstance().getTrainerRegistry().getIds().forEach(builder::suggest);
+        RCTApi.getInstance().getTrainerRegistry().getIds().forEach(builder::suggest);
         return builder.buildFuture();
     }
 
@@ -113,7 +113,7 @@ public final class CTEngineCommands {
         try {
             var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
             var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
-            CTEngine.getInstance().getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
+            RCTApi.getInstance().getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
             context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
         } catch(Exception e) {
             return handleError(context, e);
@@ -124,7 +124,7 @@ public final class CTEngineCommands {
 
     private static int battle(CommandContext<CommandSourceStack> context, BattleFormat format, Tag rulesTag) {
         try {
-            var registry = CTEngine.getInstance().getTrainerRegistry();
+            var registry = RCTApi.getInstance().getTrainerRegistry();
             var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
             List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
@@ -142,7 +142,7 @@ public final class CTEngineCommands {
             }
 
             var rules = rulesTag != null ? GSON.fromJson(rulesTag.getAsString(), BattleRules.class) : new BattleRules();
-            CTEngine.getInstance().getBattleManager().start(participants.get(0), participants.get(1), format, rules);
+            RCTApi.getInstance().getBattleManager().start(participants.get(0), participants.get(1), format, rules);
         } catch(Exception e) {
             return handleError(context, e);
         }

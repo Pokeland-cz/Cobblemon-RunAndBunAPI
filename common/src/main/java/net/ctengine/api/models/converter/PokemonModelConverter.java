@@ -10,9 +10,9 @@ import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.helditem.CobblemonHeldItemManager;
 
-import net.ctengine.api.errors.CTError;
-import net.ctengine.api.errors.CTErrors;
-import net.ctengine.api.errors.CTException;
+import net.ctengine.api.errors.RCTError;
+import net.ctengine.api.errors.RCTErrors;
+import net.ctengine.api.errors.RCTException;
 import net.ctengine.api.models.PokemonModel;
 import net.ctengine.api.util.Locations;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
     @Override
-    public Pokemon toTarget(PokemonModel model, CTErrors<CTException> errors) {
+    public Pokemon toTarget(PokemonModel model, RCTErrors<RCTException> errors) {
         var pokemon = new Pokemon();
 
         if(!model.getSpecies().isBlank()) {
@@ -70,7 +70,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         }
 
         if(model.getMoveset().size() > 4) {
-            errors.add(CTError.of("too many moves " + model.getMoveset().size() + "/4"));
+            errors.add(RCTError.of("too many moves " + model.getMoveset().size() + "/4"));
         }
 
         model.getMoveset().stream().limit(42).forEach(m -> {

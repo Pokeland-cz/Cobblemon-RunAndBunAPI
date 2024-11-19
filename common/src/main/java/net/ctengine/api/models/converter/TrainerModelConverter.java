@@ -6,9 +6,9 @@ import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ai.RandomBattleAI;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
-import net.ctengine.api.errors.CTError;
-import net.ctengine.api.errors.CTErrors;
-import net.ctengine.api.errors.CTException;
+import net.ctengine.api.errors.RCTError;
+import net.ctengine.api.errors.RCTErrors;
+import net.ctengine.api.errors.RCTException;
 import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.trainer.TrainerBag;
@@ -36,15 +36,15 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
     }
 
     @Override
-    public TrainerNPC toTarget(@NotNull TrainerModel model, @NotNull CTErrors<CTException> errors) {
+    public TrainerNPC toTarget(@NotNull TrainerModel model, @NotNull RCTErrors<RCTException> errors) {
         if(model.getTeam().size() > 6) {
-            errors.add(CTError.of("too many pokemon in party " + model.getTeam().size() + "/6"));
+            errors.add(RCTError.of("too many pokemon in party " + model.getTeam().size() + "/6"));
         }
 
         BattleAI battleAI;
 
         if(model.getAI() == null) {
-            errors.add(CTError.of("unknown AI type"));
+            errors.add(RCTError.of("unknown AI type"));
             battleAI = new RandomBattleAI();
         } else {
             battleAI = model.getAI().getInstanceFor(this.server);
@@ -60,7 +60,7 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
             try {
                 bag.add(Locations.withNamespace("cobblemon", bim.getItem()), bim.getQuantity());
             } catch(IllegalArgumentException e) {
-                errors.add(CTError.of(e));
+                errors.add(RCTError.of(e));
             }
         });
 
