@@ -28,9 +28,9 @@ import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
  */
 public class RCTApi {
     private static Supplier<RCTApi> instanceSupplier = () -> {
-        var instance = new RCTApi(new TrainerRegistry(), new BattleManager());
-        instanceSupplier = () -> instance;
-        return instance;
+        var defaultInstance = new RCTApi(new TrainerRegistry(), new BattleManager());
+        RCTApi.instanceSupplier = () -> defaultInstance;
+        return defaultInstance;
     };
 
     private TrainerRegistry trainerRegistry;
@@ -68,7 +68,7 @@ public class RCTApi {
      */
     public static void init(TrainerRegistry trainerRegistry, BattleManager battleManager) {
         var instance = new RCTApi(trainerRegistry, battleManager);
-        instanceSupplier = () -> instance;
+        RCTApi.instanceSupplier = () -> instance;
     }
 
     /**
@@ -77,6 +77,6 @@ public class RCTApi {
      * @return {@link RCTApi} singleton.
      */
     public static RCTApi getInstance() {
-        return instanceSupplier.get();
+        return RCTApi.instanceSupplier.get();
     }
 }

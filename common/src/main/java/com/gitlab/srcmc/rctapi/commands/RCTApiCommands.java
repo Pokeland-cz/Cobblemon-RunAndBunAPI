@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.gson.Gson;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -37,8 +38,11 @@ import com.gitlab.srcmc.rctapi.api.battle.BattleFormat;
 import com.gitlab.srcmc.rctapi.api.battle.BattleRules;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.Commands.CommandSelection;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.NbtTagArgument;
 import net.minecraft.nbt.Tag;
@@ -51,15 +55,14 @@ import net.minecraft.world.entity.LivingEntity;
 public final class RCTApiCommands {
     private static Gson GSON = new Gson();
 
-    public static final String CMD_BATTLE = "battle";
-    public static final String ARG_BATTLE_FORMAT = "format";
-    public static final String ARG_PARTICIPANT = "participant";
-    public static final String ARG_VS = "vs";
-    public static final String ARG_RULES = "rules";
+    private static final String CMD_BATTLE = "battle";
+    private static final String ARG_PARTICIPANT = "participant";
+    private static final String ARG_VS = "vs";
+    private static final String ARG_RULES = "rules";
     
-    public static final String CMD_ATTACH = "attach";
-    public static final String ARG_TRAINER_ID = "trainerId";
-    public static final String ARG_TRAINER_ENTITY = "trainerEntity";
+    private static final String CMD_ATTACH = "attach";
+    private static final String ARG_TRAINER_ID = "trainerId";
+    private static final String ARG_TRAINER_ENTITY = "trainerEntity";
 
     private RCTApiCommands() {}
 
@@ -67,23 +70,25 @@ public final class RCTApiCommands {
      * Registers all commands provided by this mod.
      */
     public static void register() {
-        CommandRegistrationEvent.EVENT.register((dispatcher, access, environment) -> {
-            var builder = Commands.literal(CMD_BATTLE);
+        CommandRegistrationEvent.EVENT.register(RCTApiCommands::onCommandRegistration);
+    }
 
-            for(var format : BattleFormat.values()) {
-                builder.then(builderFormat(format));
-            }
+    static void onCommandRegistration(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, CommandSelection env) {
+        var builder = Commands.literal(CMD_BATTLE);
 
-            dispatcher.register(Commands.literal(ModCommon.MOD_ID)
-                .requires(css -> css.hasPermission(2))
-                .then(Commands.literal(CMD_ATTACH)
-                    .then(Commands
-                        .argument(ARG_TRAINER_ID, StringArgumentType.string())
-                        .suggests(RCTApiCommands::get_trainer_id_suggestions)
-                        .then(Commands.argument(ARG_TRAINER_ENTITY, EntityArgument.entity())
-                            .executes(RCTApiCommands::attach))))
-                .then(builder));
-        });
+        for(var format : BattleFormat.values()) {
+            builder.then(builderFormat(format));
+        }
+
+        dispatcher.register(Commands.literal(ModCommon.MOD_ID)
+            .requires(css -> css.hasPermission(2))
+            .then(Commands.literal(CMD_ATTACH)
+                .then(Commands
+                    .argument(ARG_TRAINER_ID, StringArgumentType.string())
+                    .suggests(RCTApiCommands::get_trainer_id_suggestions)
+                    .then(Commands.argument(ARG_TRAINER_ENTITY, EntityArgument.entity())
+                        .executes(RCTApiCommands::attach))))
+            .then(builder));
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format) {

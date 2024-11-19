@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.fabric;
+package com.gitlab.srcmc.rctapi.fabric.client;
 
 import net.fabricmc.api.ClientModInitializer;
 
