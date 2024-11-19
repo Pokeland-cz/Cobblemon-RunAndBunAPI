@@ -75,9 +75,12 @@ for project in ${sub_projects}; do
     echo "- updating/adding license headers in source files of project '$project'"
     "$TOOLS_PATH"/licensify LGPL3 "$new_mod_name" "$new_mod_author" $old_source_files_project
 
-    echo "- renaming mixin configuration files of project '$project'"
-    mv "$project/src/main/resources/mixins.$old_mod_id.json" "$project/src/main/resources/mixins.$new_mod_id.json" 2> /dev/null
-    mv "$project/src/main/resources/mixins.$old_mod_id.refmap.json" "$project/src/main/resources/mixins.$new_mod_id.refmap.json" 2> /dev/null
+    if [ "$project" != "common" ]; then
+        part=".$project"
+    fi
+    
+    mv "$project/src/main/resources/$old_mod_id$part.mixins.json" "$project/src/main/resources/$new_mod_id$part.mixins.json" 2> /dev/null
+    mv "$project/src/main/resources/$old_mod_id$part.mixins.refmap.json" "$project/src/main/resources/$new_mod_id$part.mixins.refmap.json" 2> /dev/null
 
     if [ "$new_mod_group" != "$old_mod_group" -o "$new_mod_id" != "$old_mod_id" ]; then
         echo "- reorganizing package structure of project '$project'"
