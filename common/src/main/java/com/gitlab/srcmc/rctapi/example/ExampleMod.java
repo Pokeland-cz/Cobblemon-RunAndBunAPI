@@ -49,7 +49,7 @@ public class ExampleMod {
         return i < 0 ? name : name.substring(0, i);
     }
 
-    // Call this in the common setup phase of the mod. E.g. in onInitialze() of your
+    // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
