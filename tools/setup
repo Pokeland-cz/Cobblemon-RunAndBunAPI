@@ -16,7 +16,7 @@ TOOLS_PATH="${TOOLS_PATH:-tools}"
 sub_projects="common fabric forge neoforge"
 
 # keys of fields in gradle.properties
-mod_name_key="mod_name="
+mod_name_key="name="
 mod_id_key="mod_id="
 mod_author_key="mod_author="
 mod_version_key="mod_version="
@@ -63,7 +63,7 @@ sed -i -e s/"$mod_name_key.*"/"$mod_name_key$new_mod_name"/ \
 old_package_path="${old_mod_group//./\/}/$old_mod_id"
 new_package_path="${new_mod_group//./\/}/$new_mod_id"
 
-for sub_projects in ${sub_projects}; do
+for project in ${sub_projects}; do
     old_package_path_project="$project/src/main/java/$old_package_path"
     new_package_path_project="$project/src/main/java/$new_package_path"
     old_source_files_project="$(find $old_package_path_project -name *.java)"
