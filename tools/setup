@@ -82,7 +82,12 @@ for project in ${sub_projects}; do
     if [ "$new_mod_group" != "$old_mod_group" -o "$new_mod_id" != "$old_mod_id" ]; then
         echo "- reorganizing package structure of project '$project'"
         sed -i s/"$old_mod_group.$old_mod_id"/"$new_mod_group.$new_mod_id"/g $old_source_files_project
-        mkdir -p "$project/src/main/tmp~/$(dirname $new_package_path)" && mv "$old_package_path_project" "$project/src/main/tmp~/$new_package_path" && rm -r $project/src/main/java && mv $project/src/main/tmp~ $project/src/main/java
+
+        if [ "$project" == "common" ]; then
+            mkdir -p "$project/src/main/tmp~/$(dirname $new_package_path)" && mv "$old_package_path_project" "$project/src/main/tmp~/$new_package_path" && rm -r $project/src/main/java && mv $project/src/main/tmp~ $project/src/main/java
+        else
+            mkdir -p "$project/src/main/tmp~/$new_package_path" && mv "$old_package_path_project" "$project/src/main/tmp~/$new_package_path" && rm -r $project/src/main/java && mv $project/src/main/tmp~ $project/src/main/java
+        fi
     fi
 done
 
