@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'rctapi'
+rootProject.name = 'Radical Cobblemon Trainers API'
 
 include 'common'
 include 'fabric'
