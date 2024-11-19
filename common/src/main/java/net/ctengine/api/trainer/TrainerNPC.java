@@ -18,7 +18,6 @@ public class TrainerNPC implements Trainer {
     private TrainerBag bag;
     private BattleAI battleAI;
     private LivingEntity entity;
-    private UUID uuid;
 
     /**
      * Constructs a new trainer npc with a random {@link UUID}.
@@ -30,37 +29,11 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to.
      */
     public TrainerNPC(@NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
-        this(UUID.randomUUID(), name, team, bag, battleAI, entity);
-    }
-
-    /**
-     * Constructs a new trainer npc.
-     * 
-     * @param uuid {@link UUID} to identify this trainer.
-     * @param name The name of the trainer.
-     * @param team The {@link Pokemon} party of the trainer.
-     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
-     * @param battleAI {@link BattleAI} used by this trainer.
-     * @param entity {@link LivingEntity} this trainer is (initially) attached to.
-     */
-    public TrainerNPC(@NotNull UUID uuid, @NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
-        this.uuid = uuid;
         this.name = name;
         this.team = team;
         this.bag = bag;
         this.battleAI = battleAI;
         this.entity = entity;
-        this.initTeam();
-    }
-
-    /**
-     * Sets the {@link UUID} of this trainer.
-     * 
-     * @param uuid New {@link UUID}.
-     */
-    public void setUUID(UUID uuid) {
-        this.uuid = uuid;
-        this.initTeam();
     }
 
     /**
@@ -70,16 +43,6 @@ public class TrainerNPC implements Trainer {
      */
     public void setEntity(@NotNull LivingEntity entity) {
         this.entity = entity;
-    }
-
-    /**
-     * Retrieves the {@link UUID} of this trainer.
-     * 
-     * @return {@link UUID} of this trainer.
-     */
-    @NotNull
-    public UUID getUUID() {
-        return this.uuid;
     }
 
     /**
@@ -117,9 +80,9 @@ public class TrainerNPC implements Trainer {
         return this.entity;
     }
 
-    private void initTeam() {
+    void initTeam(String trainerId) {
         for(var pkmn : this.team) {
-            pkmn.setOriginalTrainer(this.uuid);
+            pkmn.setOriginalTrainer(trainerId);
             pkmn.setOriginalTrainerName(this.getName());
             pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
         }

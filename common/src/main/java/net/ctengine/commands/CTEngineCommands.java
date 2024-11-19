@@ -15,12 +15,11 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import net.ctengine.CTEngineMod;
+import net.ctengine.api.CTEngine;
 import net.ctengine.api.battle.BattleFormat;
 import net.ctengine.api.battle.BattleRules;
 import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.trainer.TrainerNPC;
-import net.ctengine.api.util.Battles;
-import net.ctengine.api.util.Trainers;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -106,7 +105,7 @@ public final class CTEngineCommands {
     }
 
     private static CompletableFuture<Suggestions> get_trainer_id_suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) throws CommandSyntaxException {
-        Trainers.getIds().forEach(builder::suggest);
+        CTEngine.getInstance().getTrainerRegistry().getIds().forEach(builder::suggest);
         return builder.buildFuture();
     }
 
@@ -114,7 +113,7 @@ public final class CTEngineCommands {
         try {
             var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
             var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
-            Trainers.getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
+            CTEngine.getInstance().getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
             context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
         } catch(Exception e) {
             return handleError(context, e);
@@ -125,6 +124,7 @@ public final class CTEngineCommands {
 
     private static int battle(CommandContext<CommandSourceStack> context, BattleFormat format, Tag rulesTag) {
         try {
+            var registry = CTEngine.getInstance().getTrainerRegistry();
             var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
             List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
@@ -134,7 +134,7 @@ public final class CTEngineCommands {
                 try {
                     for(int actor = 0; actor < actorsPerSide; actor++) {
                         var trainerId = context.getArgument(getParticipantId(side, actor), String.class);
-                        list.add(Trainers.getById(trainerId));
+                        list.add(registry.getById(trainerId));
                     }
                 } catch(IllegalArgumentException e) {
                     // ignore (assume mixed battle -> validation in BattleManager)
@@ -142,7 +142,7 @@ public final class CTEngineCommands {
             }
 
             var rules = rulesTag != null ? GSON.fromJson(rulesTag.getAsString(), BattleRules.class) : new BattleRules();
-            Battles.start(participants.get(0), participants.get(1), format, rules);
+            CTEngine.getInstance().getBattleManager().start(participants.get(0), participants.get(1), format, rules);
         } catch(Exception e) {
             return handleError(context, e);
         }

@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
+import net.ctengine.api.CTEngine;
 import net.ctengine.api.trainer.Trainer;
-import net.ctengine.api.util.Trainers;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -24,7 +24,7 @@ public abstract class PokemonMixin {
             var ot = self.getOriginalTrainer();
             Trainer npc;
 
-            if(ot != null && (npc = Trainers.getByStringUUID(ot)) != null) {
+            if(ot != null && (npc = CTEngine.getInstance().getTrainerRegistry().getById(ot)) != null) {
                 cir.setReturnValue(npc.getEntity());
             }
         }

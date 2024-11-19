@@ -10,12 +10,12 @@ import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import net.ctengine.CTEngineMod;
 
 class BattleState {
-    static final Set<String> BOOST_IDS = Set.of("hp", "atk", "def", "spa", "sde", "spd");
-    static final Set<String> STATUS_EFFECT_IDS = Set.of("slp", "brn", "psn", "par");
+    public static final Set<String> BOOST_IDS = Set.of("hp", "atk", "def", "spa", "sde", "spd");
+    public static final Set<String> STATUS_EFFECT_IDS = Set.of("slp", "brn", "psn", "par");
 
     public static final int MAX_PKMN_LEVEL = 100;
     public static final int MAX_PARTY_COUNT = 6;
-    private static final int MAX_STAT_BOOST = 6;
+    public static final int MAX_STAT_BOOST = 6;
     public static final int MAX_STAT_BOOSTS = BOOST_IDS.size() * MAX_STAT_BOOST;
 
     public final int sourcePartyCount;

@@ -1,12 +1,9 @@
 package net.ctengine.api.trainer;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-
 import org.jetbrains.annotations.NotNull;
 
 import net.ctengine.api.errors.CTErrors;
@@ -22,7 +19,8 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class TrainerRegistry {
     private Map<String, Trainer> trainers = new HashMap<>();
-    private Set<String> trainerIds = new HashSet<>();
+    private Set<String> trainerNPCs = new HashSet<>();
+    private Set<String> trainerPlayers = new HashSet<>();
     private TrainerModelConverter tmc;
 
     /**
@@ -60,6 +58,7 @@ public class TrainerRegistry {
     @NotNull
     public <T extends TrainerPlayer> T registerPlayer(@NotNull String trainerId, @NotNull T trainer) {
         this.register(trainerId, trainer);
+        this.trainerPlayers.add(trainerId);
         return trainer;
     }
 
@@ -77,8 +76,6 @@ public class TrainerRegistry {
     public TrainerNPC registerNPC(@NotNull String trainerId, @NotNull TrainerModel model) {
         var errors = CTErrors.create();
         var trainer = this.tmc.toTarget(model, errors);
-
-        trainer.setUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()));
         this.registerNPC(trainerId, trainer);
         errors.check();
         return trainer;
@@ -96,6 +93,8 @@ public class TrainerRegistry {
     @NotNull
     public <T extends TrainerNPC> T registerNPC(@NotNull String trainerId, @NotNull T trainer) {
         this.register(trainerId, trainer);
+        this.trainerNPCs.add(trainerId);
+        trainer.initTeam(trainerId);
         return trainer;
     }
 
@@ -106,27 +105,14 @@ public class TrainerRegistry {
      * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
      */
     public Trainer unregisterById(@NotNull String trainerId) {
-        return this.unregisterByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()));
-    }
+        var trainer = this.trainers.remove(trainerId);
 
-    /**
-     * Unregisters the {@link Trainer} with the given trainer uuid.
-     * 
-     * @param trainerUUID UUID of the {@link Trainer} to unregister.
-     * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
-     */
-    public Trainer unregisterByUUID(@NotNull UUID trainerUUID) {
-        return this.unregisterByStringUUID(trainerUUID.toString());
-    }
+        if(trainer != null) {
+            this.trainerPlayers.remove(trainerId);
+            this.trainerNPCs.remove(trainerId);
+        }
 
-    /**
-     * Unregisters the {@link Trainer} with the given trainer uuid string.
-     * 
-     * @param trainerUUID String representation of the uuid (as returned by {@link UUID#toString()}) of the trainer to unregister.
-     * @return Unregistered {@link Trainer} instance or null if no such {@link Trainer} was registered.
-     */
-    public Trainer unregisterByStringUUID(@NotNull String trainerUUID) {
-        return this.trainers.remove(trainerUUID);
+        return trainer;
     }
 
     /**
@@ -149,60 +135,14 @@ public class TrainerRegistry {
      * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
      */
     public <T extends Trainer> T getById(@NotNull String trainerId, @NotNull Class<T> type) {
-        return this.getByUUID(UUID.nameUUIDFromBytes(trainerId.getBytes()), type);
-    }
-
-    /**
-     * Retrieves the {@link Trainer} with the given uuid.
-     * 
-     * @param trainerUUID UUID of the {@link Trainer} to retrieve.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
-     */
-    public Trainer getByUUID(@NotNull UUID trainerUUID) {
-        return this.getByUUID(trainerUUID, Trainer.class);
-    }
-
-    /**
-     * Retrieves the {@link Trainer} with the given uuid as the specified type.
-     * 
-     * @param <T> Target {@link Trainer} type.
-     * @param trainerUUID UUID of the {@link Trainer} to retrieve.
-     * @param type Target {@link Trainer} type class instance.
-     * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
-     */
-    public <T extends Trainer> T getByUUID(@NotNull UUID trainerUUID, @NotNull Class<T> type) {
-        return this.getByStringUUID(trainerUUID.toString(), type);
-    }
-
-    /**
-     * Retrieves the {@link Trainer} with the given uuid string.
-     * 
-     * @param trainerUUID String representation of the uuid (as returned by {@llink UUID.toString()}) of the {@link Trainer} to retrieve.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
-     */
-    public Trainer getByStringUUID(@NotNull String trainerUUID) {
-        return this.getByStringUUID(trainerUUID, Trainer.class);
-    }
-
-    /**
-     * Retrieves the {@link Trainer} with the given uuid string as the specified type.
-     * 
-     * @param <T> Target {@link Trainer} type.
-     * @param trainerUUID String representation of the uuid (as returned by {@llink UUID.toString()}) of the {@link Trainer} to retrieve.
-     * @param type Target {@link Trainer} type class instance.
-     * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
-     */
-    public <T extends Trainer> T getByStringUUID(@NotNull String trainerUUID, @NotNull Class<T> type) {
-        var trainer = this.trainers.get(trainerUUID);
+        var trainer = this.trainers.get(trainerId);
 
         if(trainer == null) {
             return null;
         }
 
         if(!type.isInstance(trainer)) {
-            throw new IllegalArgumentException(String.format("invalid trainer type '%s' for '%s', expected '%s'", trainer.getClass().getName(), trainerUUID, type.getName()));
+            throw new IllegalArgumentException(String.format("invalid trainer type '%s' for '%s', expected '%s'", trainer.getClass().getName(), trainerId, type.getName()));
         }
 
         return type.cast(trainer);
@@ -215,19 +155,36 @@ public class TrainerRegistry {
      */
     @NotNull
     public Set<String> getIds() {
-        return Collections.unmodifiableSet(this.trainerIds);
+        // return Collections.unmodifiableSet(this.trainerIds);
+        return this.trainers.keySet();
     }
 
     /**
      * Removes all registered trainers.
      */
     public void clear() {
-        this.trainers.clear();
-        this.trainerIds.clear();
+        this.clearNPCs();
+        this.clearPlayers();
+    }
+
+    /**
+     * Removes all registered {@link TrainerNPC}s.
+     */
+    public void clearNPCs() {
+        this.trainerNPCs.forEach(this.trainers::remove);
+        this.trainerNPCs.clear();
+    }
+
+    /**
+     * Removes all registered {@link TrainerPlayer}s.
+     */
+    public void clearPlayers() {
+        this.trainerPlayers.forEach(this.trainers::remove);
+        this.trainerPlayers.clear();
     }
 
     private void register(String trainerId, Trainer trainer) {
-        if(!this.trainerIds.add(trainerId) || this.trainers.putIfAbsent(UUID.nameUUIDFromBytes(trainerId.getBytes()).toString(), trainer) != null) {
+        if(this.trainers.putIfAbsent(trainerId, trainer) != null) {
             throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
         }
     }

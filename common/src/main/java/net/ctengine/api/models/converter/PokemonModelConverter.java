@@ -14,6 +14,7 @@ import net.ctengine.api.errors.CTError;
 import net.ctengine.api.errors.CTErrors;
 import net.ctengine.api.errors.CTException;
 import net.ctengine.api.models.PokemonModel;
+import net.ctengine.api.util.Locations;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
@@ -26,10 +27,12 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         var pokemon = new Pokemon();
 
         if(!model.getSpecies().isBlank()) {
+            var species = Locations.withNamespace("cobblemon", model.getSpecies());
+
             errors.doif(
-                PokemonSpecies.INSTANCE.getByIdentifier(ResourceLocation.parse(model.getSpecies())),
+                PokemonSpecies.INSTANCE.getByIdentifier(ResourceLocation.parse(species)),
                 v -> v != null, v -> pokemon.setSpecies(v),
-                "invalid species '" + model.getSpecies() + "'");
+                "invalid species '" + species + "'");
         }
 
         var g = Gender.FEMALE.name().equals(model.getGender()) ? Gender.FEMALE
@@ -49,17 +52,21 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         pokemon.setLevel(errors.expect(model.getLevel(), v -> v > 0, "invalid level '%s'"));
 
         if(!model.getNature().isBlank()) {
+            var nature = Locations.withoutNamespace(model.getNature());
+
             errors.doif(
-                Natures.INSTANCE.getNature(model.getNature()),
+                Natures.INSTANCE.getNature(nature),
                 v -> v != null, v -> pokemon.setNature(v),
-                "invalid nature '" + model.getNature() + "'");
+                "invalid nature '" + nature + "'");
         }
 
         if(!model.getAbility().isBlank()) {
+            var ability = Locations.withoutNamespace(model.getAbility());
+
             errors.doif(
-                Abilities.INSTANCE.get(model.getAbility()),
+                Abilities.INSTANCE.get(ability),
                 v -> v != null, v -> pokemon.updateAbility(v.create(true, Priority.NORMAL)),
-                "invalid ability '" + model.getAbility() + "'");
+                "invalid ability '" + ability + "'");
         }
 
         if(model.getMoveset().size() > 4) {
@@ -67,10 +74,12 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         }
 
         model.getMoveset().stream().limit(42).forEach(m -> {
+            var move = Locations.withoutNamespace(m);
+
             errors.doif(
-                Moves.INSTANCE.getByName(m),
+                Moves.INSTANCE.getByName(move),
                 v -> v != null, v -> pokemon.getMoveSet().add(v.create()),
-                "invalid move '" + m + "'");
+                "invalid move '" + move + "'");
         });
 
         pokemon.setIV(Stats.HP, errors.expect(model.getIVs().getHP(), v -> v >=0 && v <= 31, "invalid hp iv '%s'"));
@@ -89,11 +98,13 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         pokemon.setForcedAspects(model.getAspects());
 
         if(!model.getHeldItem().isBlank()) {
+            var item = Locations.withNamespace("cobblemon", model.getHeldItem());
+
             errors.doif(
-                BuiltInRegistries.ITEM.get(ResourceLocation.parse(model.getHeldItem())),
+                BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)),
                 v -> CobblemonHeldItemManager.INSTANCE.showdownIdOf(v) != null,
                 v -> pokemon.swapHeldItem(v.getDefaultInstance(), true),
-                "invalid held item '" + model.getHeldItem() + "'");
+                "invalid held item '" + item + "'");
         }
 
         return pokemon;

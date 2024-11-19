@@ -13,6 +13,7 @@ import net.ctengine.api.models.TrainerModel;
 import net.ctengine.api.trainer.Trainer;
 import net.ctengine.api.trainer.TrainerBag;
 import net.ctengine.api.trainer.TrainerNPC;
+import net.ctengine.api.util.Locations;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.EntityType;
 
@@ -57,7 +58,7 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
 
         model.getBag().forEach(bim -> {
             try {
-                bag.add(bim.getItem(), bim.getQuantity());
+                bag.add(Locations.withNamespace("cobblemon", bim.getItem()), bim.getQuantity());
             } catch(IllegalArgumentException e) {
                 errors.add(CTError.of(e));
             }

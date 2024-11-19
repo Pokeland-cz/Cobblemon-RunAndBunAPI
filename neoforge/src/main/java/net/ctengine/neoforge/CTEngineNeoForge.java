@@ -7,7 +7,6 @@ import net.ctengine.CTEngineMod;
 @Mod(CTEngineMod.MOD_ID)
 public final class CTEngineNeoForge {
     public CTEngineNeoForge() {
-        // Run our common setup.
-        CTEngineMod.init();
+        // ExampleMod.init(); // uncomment for example
     }
 }

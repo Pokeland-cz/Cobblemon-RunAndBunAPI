@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 
-import net.ctengine.api.util.Battles;
+import net.ctengine.api.CTEngine;
 
 /**
  * Restricts usage of bag items based on configurable limits per battle.
@@ -23,7 +23,7 @@ public class BattleActorMixin {
     @Inject(method = "canFitForcedAction", at = @At("RETURN"), cancellable = true, remap = false)
     private void injectCanFitForcedAction(CallbackInfoReturnable<Boolean> cir) {
         var self = (BattleActor)(Object)this;
-        var battleState = Battles.getState(self.battle.getBattleId());
+        var battleState = CTEngine.getInstance().getBattleManager().getState(self.battle.getBattleId());
         
         if(cir.getReturnValue() && battleState != null) {
             var maxItems = battleState.getRules().getMaxItemUses();
