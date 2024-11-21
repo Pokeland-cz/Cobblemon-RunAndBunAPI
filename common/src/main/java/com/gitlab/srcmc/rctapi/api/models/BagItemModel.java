@@ -25,8 +25,26 @@ import org.jetbrains.annotations.NotNull;
  * A pojo class for parsing trainer {@link BagItem}s.
  */
 public class BagItemModel {
-    private String item = "";
-    private int quantity = 1;
+    private String item;
+    private int quantity;
+
+    /**
+     * Creates a new BagItemModel.
+     */
+    public BagItemModel() {
+        this("", 1);
+    }
+
+    /**
+     * Creates a new BagItemModel with the given properties.
+     * 
+     * @param item Item id (namespace:item).
+     * @param quantity Item quantity available per battle.
+     */
+    public BagItemModel(@NotNull String item, int quantity) {
+        this.item = item;
+        this.quantity = quantity;
+    }
 
     @NotNull
     public String getItem() {

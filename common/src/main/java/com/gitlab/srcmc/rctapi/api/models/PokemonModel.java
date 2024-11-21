@@ -18,10 +18,12 @@
 package com.gitlab.srcmc.rctapi.api.models;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -45,6 +47,31 @@ public class PokemonModel {
         public int getSpD() { return this.spd; }
         public int getSpe() { return this.spe; }
 
+        /**
+         * Creates a new StatsModel.
+         */
+        public StatsModel() {
+        }
+
+        /**
+         * Creates a new Stats model with the given properties.
+         * 
+         * @param hp HP stat.
+         * @param atk Attack stat.
+         * @param def Defense stat.
+         * @param spa Special attack stat.
+         * @param spd Special defense stat.
+         * @param spe Speed stat.
+         */
+        public StatsModel(int hp, int atk, int def, int spa, int spd, int spe) {
+            this.hp = hp;
+            this.atk = atk;
+            this.def = def;
+            this.spa = spa;
+            this.spd = spd;
+            this.spe = spe;
+        }
+
         @Override
         public boolean equals(Object obj) {
             return (obj instanceof StatsModel other)
@@ -65,18 +92,18 @@ public class PokemonModel {
         }
     }
 
-    private String species = "";
-    private String gender = "GENDERLESS";
-    private int level = 1;
-    private String nature = "";
-    private String ability = "";
-    private Set<String> moveset = new HashSet<>();
-    private StatsModel ivs = new StatsModel();
-    private StatsModel evs = new StatsModel();
-    private boolean shiny = false;
-    private String heldItem = "";
-    private Set<String> aspects = new HashSet<>();
-
+    private String species;
+    private String gender;
+    private int level;
+    private String nature;
+    private String ability;
+    private Set<String> moveset;
+    private StatsModel ivs;
+    private StatsModel evs;
+    private boolean shiny;
+    private String heldItem;
+    private Set<String> aspects;
+    
     public String getSpecies() { return this.species; }
     public String getGender() { return this.gender; }
     public int getLevel() { return this.level; }
@@ -92,7 +119,45 @@ public class PokemonModel {
     /**
      * Creates a new pokemon model.
      */
-    protected PokemonModel() {}
+    public PokemonModel() {
+        this("", "GENDERLESS", 1, "", "", Set.of(), new StatsModel(), new StatsModel(), false, "", Set.of());
+    }
+
+    /**
+     * Creates a new pokemon model with the given properties.
+     * 
+     * @param species Pokemon species.
+     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
+     * @param level Pokemon level.
+     * @param nature Pokemon nature.
+     * @param ability Pokemon ability.
+     * @param moveset Set of moves.
+     * @param ivs Pokemon ivs.
+     * @param evs Pokemon evs.
+     * @param shiny If the pokemon is shiny or not.
+     * @param heldItem Item held by the pokemon.
+     * @param aspects Set of pokemon aspects.
+     */
+    public PokemonModel(
+        @NotNull String species, @NotNull String gender,
+        int level, @NotNull String nature,
+        @NotNull String ability, @NotNull Set<String> moveset,
+        @NotNull StatsModel ivs, @NotNull StatsModel evs,
+        boolean shiny, @NotNull String heldItem,
+        @NotNull Set<String> aspects)
+    {
+        this.species = species;
+        this.gender = gender;
+        this.level = level;
+        this.nature = nature;
+        this.ability = ability;
+        this.moveset = moveset;
+        this.ivs = ivs;
+        this.evs = evs;
+        this.shiny = shiny;
+        this.heldItem = heldItem;
+        this.aspects = aspects;
+    }
 
     /**
      * Creates a new pokemon model with its properties copied from the given pokemon.

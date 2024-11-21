@@ -17,7 +17,6 @@
  */
 package com.gitlab.srcmc.rctapi.api.models;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +27,32 @@ import com.gitlab.srcmc.rctapi.api.ai.AIType;
  * A pojo class for parsing {@link Trainer}.
  */
 public class TrainerModel {
-    private String name = "";
-    private AIType ai = AIType.LAI; // TODO: maybe global option for default
-    private List<BagItemModel> bag = new ArrayList<>();
-    private List<PokemonModel> team = new ArrayList<>();
+    private String name;
+    private AIType ai;
+    private List<BagItemModel> bag;
+    private List<PokemonModel> team;
+
+    /**
+     * Creates a new TrainerModel.
+     */
+    public TrainerModel() {
+        this("", AIType.LAI, List.of(), List.of());
+    }
+
+    /**
+     * Creates a new TrainerModel with the given properties.
+     * 
+     * @param name Name of the trainer.
+     * @param ai Battle AI type used by the trainer.
+     * @param bag Bag of items the trainer may use in a battle.
+     * @param team Pokemon party of the trainer.
+     */
+    public TrainerModel(@NotNull String name, @NotNull AIType ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
+        this.name = name;
+        this.ai = ai;
+        this.bag = bag;
+        this.team = team;
+    }
 
     @NotNull
     public String getName() {
