@@ -114,11 +114,10 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
 
         if(!model.getHeldItem().isBlank()) {
             var item = Locations.withNamespace("cobblemon", model.getHeldItem());
+            var rl = ResourceLocation.parse(item);
 
-            errors.doif(
-                BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)),
-                v -> v != null,
-                v -> pokemon.swapHeldItem(v.getDefaultInstance(), true),
+            errors.doif(BuiltInRegistries.ITEM.containsKey(rl), v -> v,
+                v -> pokemon.swapHeldItem(BuiltInRegistries.ITEM.get(rl).getDefaultInstance(), true),
                 "invalid held item '" + item + "'");
         }
 
