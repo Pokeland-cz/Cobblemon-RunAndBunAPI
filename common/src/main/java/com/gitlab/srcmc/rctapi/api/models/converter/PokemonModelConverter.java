@@ -25,8 +25,6 @@ import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.cobblemon.mod.common.pokemon.helditem.CobblemonHeldItemManager;
-
 import com.gitlab.srcmc.rctapi.api.errors.RCTError;
 import com.gitlab.srcmc.rctapi.api.errors.RCTErrors;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
@@ -119,7 +117,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
 
             errors.doif(
                 BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)),
-                v -> CobblemonHeldItemManager.INSTANCE.showdownIdOf(v) != null,
+                v -> v != null,
                 v -> pokemon.swapHeldItem(v.getDefaultInstance(), true),
                 "invalid held item '" + item + "'");
         }
