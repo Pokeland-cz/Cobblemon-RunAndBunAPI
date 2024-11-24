@@ -55,6 +55,143 @@ import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
     private Map<UUID, BattleState> battleStates = new HashMap<>();
+    private BattleRules defaultRules = new BattleRules();
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Singles' format with default
+     * {@link BattleRules} (see {@link BattleManager#setDefaultRules(BattleRules)}).
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startSingle(Trainer participant1, Trainer participant2) {
+        return this.startSingle(participant1, participant2, this.getDefaultRules());
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Singles' format with the given
+     * {@link BattleRules}.
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @param battleRules {@link BattleRules} applied to the battle.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startSingle(
+        @NotNull Trainer participant1,
+        @NotNull Trainer participant2,
+        @NotNull BattleRules battleRules)
+    {
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_SINGLES, battleRules);
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Doubles' format with default
+     * {@link BattleRules} (see {@link BattleManager#setDefaultRules(BattleRules)}).
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startDouble(@NotNull Trainer participant1, @NotNull Trainer participant2) {
+        return this.startDouble(participant1, participant2, this.getDefaultRules());
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Doubles' format with the given
+     * {@link BattleRules}.
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @param battleRules {@link BattleRules} applied to the battle.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startDouble(
+        @NotNull Trainer participant1,
+        @NotNull Trainer participant2,
+        @NotNull BattleRules battleRules)
+    {
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_DOUBLES, battleRules);
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Triples' format with default
+     * {@link BattleRules} (see {@link BattleManager#setDefaultRules(BattleRules)}).
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startTriple(@NotNull Trainer participant1, @NotNull Trainer participant2) {
+        return this.startTriple(participant1, participant2, this.getDefaultRules());
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Triples' format with the given
+     * {@link BattleRules}.
+     * 
+     * @param participant1 First participating {@link Trainer}.
+     * @param participant2 Second participating {@link Trainer}.
+     * @param battleRules {@link BattleRules} applied to the battle.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startTriple(
+        @NotNull Trainer participant1,
+        @NotNull Trainer participant2,
+        @NotNull BattleRules battleRules)
+    {
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_TRIPLES, battleRules);
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Multi' format with default
+     * {@link BattleRules} (see {@link BattleManager#setDefaultRules(BattleRules)}).
+     * 
+     * @param participant1_l Participating {@link Trainer} for the first team on the left side.
+     * @param participant2_r Participating {@link Trainer} for the first team on the right side.
+     * @param participant1_l Participating {@link Trainer} for the second team on the left side.
+     * @param participant2_r Participating {@link Trainer} for the second team on the right side.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startMulti(
+        @NotNull Trainer participant1_l,
+        @NotNull Trainer participant1_r,
+        @NotNull Trainer participant2_l,
+        @NotNull Trainer participant2_r)
+    {
+        return this.startMulti(participant1_l, participant1_r, participant2_l, participant2_r, this.getDefaultRules());
+    }
+
+
+    /**
+     * Starts a new {@link PokemonBattle} in the 'GEN 9 Multi' format with the given
+     * {@link BattleRules}.
+     * 
+     * @param participant1_l Participating {@link Trainer} for the first team on the left side.
+     * @param participant2_r Participating {@link Trainer} for the first team on the right side.
+     * @param participant1_l Participating {@link Trainer} for the second team on the left side.
+     * @param participant2_r Participating {@link Trainer} for the second team on the right side.
+     * @param battleRules {@link BattleRules} applied to the battle.
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     */
+    public boolean startMulti(
+        @NotNull Trainer participant1_l,
+        @NotNull Trainer participant1_r,
+        @NotNull Trainer participant2_l,
+        @NotNull Trainer participant2_r,
+        @NotNull BattleRules battleRules)
+    {
+        return this.start(List.of(participant1_l, participant1_r), List.of(participant2_l, participant2_r), BattleFormat.GEN_9_MULTI, battleRules);
+    }
 
     /**
      * Starts a new {@link PokemonBattle}. Potential errors that may occur at the start
@@ -81,7 +218,8 @@ public class BattleManager {
                 battleFormat.getCobblemonBattleFormat(),
                 side1, side2, false
             ).ifErrored(error -> {
-                // TODO: how to log on server?
+                // TODO: how to log reason on server?
+                ModCommon.LOG.error("Failed to start battle");
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
@@ -95,12 +233,32 @@ public class BattleManager {
                 return Unit.INSTANCE;
             });
         } else {
-            // TODO: how to log on server?
+            // TODO: how to log reason on server?
+            ModCommon.LOG.error("Failed to validate battle");
             sendErrors(errors, participants1, participants2);
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Retrieves the configured default {@link BattleRules}.
+     * 
+     * @return Default {@link BattleRules}.
+     */
+    @NotNull
+    public BattleRules getDefaultRules() {
+        return this.defaultRules;
+    }
+
+    /**
+     * Sets the default {@link BattleRules}.
+     * 
+     * @param defaultRules {@link BattleRules} to be used as new default.
+     */
+    public void setDefaultRules(@NotNull BattleRules defaultRules) {
+        this.defaultRules = defaultRules;
     }
 
     /**

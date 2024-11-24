@@ -92,7 +92,7 @@ public final class RCTApiCommands {
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format) {
-        var battleType = format.getCobblemonBattleFormat().component2();
+        var battleType = format.getCobblemonBattleFormat().getBattleType();
 
         return Commands.literal(format.name())
             .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), false))
@@ -147,7 +147,7 @@ public final class RCTApiCommands {
     private static int battle(CommandContext<CommandSourceStack> context, BattleFormat format, Tag rulesTag) {
         try {
             var registry = RCTApi.getInstance().getTrainerRegistry();
-            var actorsPerSide = format.getCobblemonBattleFormat().component2().getActorsPerSide();
+            var actorsPerSide = format.getCobblemonBattleFormat().getBattleType().getActorsPerSide();
             List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
             for(int side = 0; side < 2; side++) {

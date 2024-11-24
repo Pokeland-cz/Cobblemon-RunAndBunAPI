@@ -46,8 +46,9 @@ public class BattleContextValidator {
      * @return The provided {@link ErroredBattleStart} instance.
      */
     public ErroredBattleStart validate(ErroredBattleStart errors, BattleContext context) {
-        var actorsPersSide = context.getBattleFormat().getCobblemonBattleFormat().component2().getActorsPerSide();
-        var slotsPerActor = context.getBattleFormat().getCobblemonBattleFormat().component2().getSlotsPerActor();
+        var battleType = context.getBattleFormat().getCobblemonBattleFormat().getBattleType();
+        var actorsPersSide = battleType.getActorsPerSide();
+        var slotsPerActor = battleType.getSlotsPerActor();
         var actorIds = new HashSet<UUID>();
 
         for(var side : List.of(context.getBattleSide1(), context.getBattleSide2())) {
