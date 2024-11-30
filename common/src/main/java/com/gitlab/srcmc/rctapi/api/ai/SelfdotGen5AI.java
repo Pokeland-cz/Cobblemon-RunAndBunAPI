@@ -180,7 +180,7 @@ public class SelfdotGen5AI implements BattleAI {
             List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
                     .filter(BattlePokemon::canBeSentOut)
                     .toList();
-            if (canSwitchTo.isEmpty()) return new DefaultActionResponse();
+            if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
             if (opponentActiveBattlePokemon.isEmpty() || opponentActiveBattlePokemon.get().getBattlePokemon() == null) {
                 var nextPokemon = canSwitchTo.get(RANDOM.nextInt(canSwitchTo.size()));
                 nextPokemon.setWillBeSwitchedIn(true);
