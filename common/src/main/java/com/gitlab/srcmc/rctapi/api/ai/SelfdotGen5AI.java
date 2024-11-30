@@ -37,7 +37,7 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 /**
- * Gen5 battle ai originally developed by Selfdot for CobblemonTrainers (unchanged).
+ * Gen5 battle ai originally developed by Selfdot for CobblemonTrainers (slightly modified, bugfixes).
  */
 public class SelfdotGen5AI implements BattleAI {
 
@@ -182,7 +182,9 @@ public class SelfdotGen5AI implements BattleAI {
                     .toList();
             if (canSwitchTo.isEmpty()) return new DefaultActionResponse();
             if (opponentActiveBattlePokemon.isEmpty() || opponentActiveBattlePokemon.get().getBattlePokemon() == null) {
-                return new SwitchActionResponse(canSwitchTo.get(RANDOM.nextInt(canSwitchTo.size())).getUuid());
+                var nextPokemon = canSwitchTo.get(RANDOM.nextInt(canSwitchTo.size()));
+                nextPokemon.setWillBeSwitchedIn(true);
+                return new SwitchActionResponse(nextPokemon.getUuid());
             }
             BattlePokemon opponent = opponentActiveBattlePokemon.get().getBattlePokemon();
             BattlePokemon nextPokemon = canSwitchTo.stream()
