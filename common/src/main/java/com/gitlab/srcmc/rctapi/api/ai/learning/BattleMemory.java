@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.api.ai.learning;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Supplier;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
@@ -94,10 +95,12 @@ public class BattleMemory<T> extends SavedData {
      * Retrieves the best added (or known) action since the last start of the action
      * selection process (@see BattleMemory#next()).
      */
-    public T getChoice() {
-        this.dump();
-        ModCommon.LOG.info("## SELECTED ACTION RATING: " + this.previousAction.getRating());
-        return this.previousAction.get();
+    public Optional<T> getChoice() {
+        // this.dump();
+        // ModCommon.LOG.info("## SELECTED ACTION RATING: " + this.previousAction.getRating());
+        return this.previousAction != null
+            ? Optional.of(this.previousAction.get())
+            : Optional.empty();
     }
 
     /**
@@ -152,7 +155,7 @@ public class BattleMemory<T> extends SavedData {
     protected RatedAction<T> storeIfBest(RatedAction<T> nextAction) {
         var r = nextAction.getRating();
         var m = RATING_MARGIN * RNG.nextDouble();
-        ModCommon.LOG.info(String.format("prev: %s, next: %f, margin: %f, %b", this.previousAction == null ? "0" : String.valueOf(this.previousAction.getRating()), r, m, (this.previousAction == null || (r + m) > this.previousAction.getRating())));
+        // ModCommon.LOG.info(String.format("prev: %s, next: %f, margin: %f, %b", this.previousAction == null ? "0" : String.valueOf(this.previousAction.getRating()), r, m, (this.previousAction == null || (r + m) > this.previousAction.getRating())));
 
         if(this.previousAction == null || (r + m) > this.previousAction.getRating()) {
             this.previousAction = nextAction;

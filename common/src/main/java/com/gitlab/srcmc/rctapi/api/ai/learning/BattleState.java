@@ -24,8 +24,6 @@ import java.util.stream.Stream;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 
-import com.gitlab.srcmc.rctapi.ModCommon;
-
 class BattleState {
     public static final Set<String> BOOST_IDS = Set.of("hp", "atk", "def", "spa", "sde", "spd");
     public static final Set<String> STATUS_EFFECT_IDS = Set.of("slp", "brn", "psn", "par");
@@ -75,19 +73,19 @@ class BattleState {
         this.sourceAverageLevel = sourceAverageLevel;
         this.targetAverageLevel = targetAverageLevel;
 
-        ModCommon.LOG.info("## New BattleState");
-        ModCommon.LOG.info("sourcePartyCount: " + sourcePartyCount);
-        ModCommon.LOG.info("targetPartyCount: " + targetPartyCount);
-        ModCommon.LOG.info("sourcePartyHealth: " + sourcePartyHealth);
-        ModCommon.LOG.info("sourcePartyMaxHealth: " + sourcePartyMaxHealth);
-        ModCommon.LOG.info("targetPartyHealth: " + targetPartyHealth);
-        ModCommon.LOG.info("targetPartyMaxHealth: " + targetPartyMaxHealth);
-        ModCommon.LOG.info("sourcePartyStatBoosts: " + sourcePartyStatBoosts);
-        ModCommon.LOG.info("targetPartyStatBoosts: " + targetPartyStatBoosts);
-        ModCommon.LOG.info("sourcePartyStatusEffects: " + sourcePartyStatusEffects);
-        ModCommon.LOG.info("targetPartyStatusEffects: " + targetPartyStatusEffects);
-        ModCommon.LOG.info("sourceAverageLevel: " + sourceAverageLevel);
-        ModCommon.LOG.info("targetAverageLevel: " + targetAverageLevel);
+        // ModCommon.LOG.info("## New BattleState");
+        // ModCommon.LOG.info("sourcePartyCount: " + sourcePartyCount);
+        // ModCommon.LOG.info("targetPartyCount: " + targetPartyCount);
+        // ModCommon.LOG.info("sourcePartyHealth: " + sourcePartyHealth);
+        // ModCommon.LOG.info("sourcePartyMaxHealth: " + sourcePartyMaxHealth);
+        // ModCommon.LOG.info("targetPartyHealth: " + targetPartyHealth);
+        // ModCommon.LOG.info("targetPartyMaxHealth: " + targetPartyMaxHealth);
+        // ModCommon.LOG.info("sourcePartyStatBoosts: " + sourcePartyStatBoosts);
+        // ModCommon.LOG.info("targetPartyStatBoosts: " + targetPartyStatBoosts);
+        // ModCommon.LOG.info("sourcePartyStatusEffects: " + sourcePartyStatusEffects);
+        // ModCommon.LOG.info("targetPartyStatusEffects: " + targetPartyStatusEffects);
+        // ModCommon.LOG.info("sourceAverageLevel: " + sourceAverageLevel);
+        // ModCommon.LOG.info("targetAverageLevel: " + targetAverageLevel);
     }
 
     public static BattleState of(ActiveBattlePokemon pkmn) {

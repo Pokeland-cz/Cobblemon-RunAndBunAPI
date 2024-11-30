@@ -23,6 +23,7 @@ import com.cobblemon.mod.common.battles.BagItemActionResponse;
 import com.cobblemon.mod.common.battles.ForcePassActionResponse;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.MoveActionResponse;
+import com.cobblemon.mod.common.battles.PassActionResponse;
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
 import com.cobblemon.mod.common.battles.ShowdownMoveset;
 import com.cobblemon.mod.common.battles.SwitchActionResponse;
@@ -45,10 +46,13 @@ public class LearningBattleAI implements BattleAI {
             .filter(BattlePokemon::canBeSentOut).toList();
 
         for(var candidate : switchCandidates) {
-            this.battleMemory.getOrAdd(pkmn, candidate, () -> new SwitchActionResponse(candidate.getUuid()));
+            this.battleMemory.getOrAdd(pkmn, candidate, () -> {
+                candidate.setWillBeSwitchedIn(true);
+                return new SwitchActionResponse(candidate.getUuid());
+            });
         }
 
-        if(!forceSwitch) {
+        if(!forceSwitch && pkmn.hasPokemon()) {
             // all possible item usages
             if(pkmn.getActor().canFitForcedAction() && pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
                 for(var candidate : actor.getBag().getItems()) {
@@ -63,8 +67,8 @@ public class LearningBattleAI implements BattleAI {
                 }
             }
             
+            // all possible move usages
             if(moveset != null) {
-                // all possible move usages
                 var moveCandidates = moveset.moves.stream().filter(InBattleMove::canBeUsed).toList();
 
                 if(moveCandidates.isEmpty()) {
@@ -86,6 +90,6 @@ public class LearningBattleAI implements BattleAI {
         }
 
         // retrieve best known action
-        return this.battleMemory.getChoice();
+        return this.battleMemory.getChoice().orElse(PassActionResponse.INSTANCE);
     }
 }

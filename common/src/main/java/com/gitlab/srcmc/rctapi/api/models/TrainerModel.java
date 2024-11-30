@@ -36,7 +36,7 @@ public class TrainerModel {
      * Creates a new TrainerModel.
      */
     public TrainerModel() {
-        this("", AIType.LAI, List.of(), List.of());
+        this("", AIType.SD5, List.of(), List.of());
     }
 
     /**
