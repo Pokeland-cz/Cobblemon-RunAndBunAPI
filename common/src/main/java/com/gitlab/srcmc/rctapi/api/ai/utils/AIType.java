@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ai.RandomBattleAI;
 import com.cobblemon.mod.common.battles.ai.StrongBattleAI;
+import com.gitlab.srcmc.rctapi.api.ai.RCTBattleAI;
 import com.gitlab.srcmc.rctapi.api.ai.experimental.SelfdotGen5AI;
 import com.gitlab.srcmc.rctapi.api.ai.experimental.lai.BattleMemory;
 import com.gitlab.srcmc.rctapi.api.ai.experimental.lai.LearningBattleAI;
@@ -35,34 +36,39 @@ import net.minecraft.server.MinecraftServer;
  */
 public enum AIType {
     /**
-     * Learning AI (supports item usage).
+     * Successor to Selfdots Gen 5 AI implementation from CobblemonTrainers.
+     */
+    RCT(server -> new RCTBattleAI()),
+
+    /**
+     * Completely random (RCT) AI.
+     */
+    RNG(server -> new RandomBattleAI()),
+
+    /**
+     * Learning AI (supports item usage). EXPERIMENTAL (only SINGLEs format, not recommended!)
      */
     LAI(server -> new LearningBattleAI(BattleMemory.load(server))),
     
     /**
-     * Selfdots Gen5 AI from CobblemonTrainers.
+     * Selfdots Gen5 AI from CobblemonTrainers. DISCONTINUED (only SINGLEs format)
      */
     SD5(server -> new SelfdotGen5AI()),
 
     /**
-     * Experimental Cobblemon AI (easy)
+     * Experimental Cobblemon AI (easy). EXPERIMENTAL (only SINGLEs format)
      */
     CBE(server -> new StrongBattleAI(0)),
 
     /**
-     * Experimental Cobblemon AI (medium)
+     * Experimental Cobblemon AI (medium). EXPERIMENTAL (only SINGLEs format)
      */
     CBM(server -> new StrongBattleAI(3)),
 
     /**
-     * Experimental Cobblemon AI (hard)
+     * Experimental Cobblemon AI (hard). EXPERIMENTAL (only SINGLEs format)
      */
-    CBH(server -> new StrongBattleAI(5)),
-
-    /**
-     * Completely random AI.
-     */
-    RNG(server -> new RandomBattleAI());
+    CBH(server -> new StrongBattleAI(5));
 
     private final Function<MinecraftServer, BattleAI> supplier;
     private MinecraftServer server;
