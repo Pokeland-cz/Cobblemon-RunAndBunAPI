@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.api.ai.learning;
+package com.gitlab.srcmc.rctapi.api.ai.experimental.lai;
 
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
@@ -82,7 +82,9 @@ public class LearningBattleAI implements BattleAI {
                         this.battleMemory.getOrAdd(pkmn, move, null, () -> new MoveActionResponse(move.id, null, null));
                     } else {
                         for(var target : targets) {
-                            this.battleMemory.getOrAdd(pkmn, move, target, () -> new MoveActionResponse(move.id, target.getPNX(), null));
+                            if(target.hasPokemon()) {
+                                this.battleMemory.getOrAdd(pkmn, move, target, () -> new MoveActionResponse(move.id, target.getPNX(), null));
+                            }
                         }
                     }
                 }

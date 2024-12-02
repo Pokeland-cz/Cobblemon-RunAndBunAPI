@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.api.ai.learning;
+package com.gitlab.srcmc.rctapi.api.ai.experimental.lai;
 
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
@@ -30,7 +30,9 @@ final class ActionKeys {
         return String.format("s|%s|%s|%s",
             !from.isAlive() ? null : from.getBattlePokemon().getOriginalPokemon().getSpecies().getName(),
             to.getOriginalPokemon().getSpecies().getName(),
-            from.getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon().getOriginalPokemon().getSpecies().getName()).reduce("", (n1, n2) -> n2 + "," + n1));
+            from.getSide().getOppositeSide().getActivePokemon().stream()
+                .filter(ActiveBattlePokemon::isAlive)
+                .map(p -> p.getBattlePokemon().getOriginalPokemon().getSpecies().getName()).reduce("", (n1, n2) -> n2 + "," + n1));
     }
 
     // Format: i|<item_name>|<pkmn_name>|<health(11 states)>
@@ -47,7 +49,10 @@ final class ActionKeys {
             pkmn.getBattlePokemon().getOriginalPokemon().getSpecies().getName(),
             move.id,
             target != null ? target.getPNX() : "null",
-            pkmn.getSide().getOppositeSide().getActivePokemon().stream().map(p -> p.getBattlePokemon().getOriginalPokemon().getSpecies().getName()).reduce("", (n1, n2) -> n2 + "," + n1));
+            pkmn.getSide().getOppositeSide().getActivePokemon().stream()
+                .filter(ActiveBattlePokemon::isAlive)
+                .map(p -> p.getBattlePokemon().getOriginalPokemon().getSpecies().getName())
+                .reduce("", (n1, n2) -> n2 + "," + n1));
     }
 
     static String switchFuzzyKey(ActiveBattlePokemon from, BattlePokemon to) {
@@ -77,16 +82,18 @@ final class ActionKeys {
             toTypes.append(t.getName());
         }
 
-        from.getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).forEach(pkmn -> {
-            // TODO: deterministic order for multiple types (e.g. alphabetic)
-            for(var t : pkmn.getOriginalPokemon().getTypes()) {
-                if(!oppositeTypes.isEmpty()) {
-                    oppositeTypes.append(',');
-                }
+        from.getSide().getOppositeSide().getActivePokemon().stream()
+            .filter(ActiveBattlePokemon::isAlive)
+            .map(ActiveBattlePokemon::getBattlePokemon).forEach(pkmn -> {
+                // TODO: deterministic order for multiple types (e.g. alphabetic)
+                for(var t : pkmn.getOriginalPokemon().getTypes()) {
+                    if(!oppositeTypes.isEmpty()) {
+                        oppositeTypes.append(',');
+                    }
 
-                oppositeTypes.append(t.getName());
-            }
-        });
+                    oppositeTypes.append(t.getName());
+                }
+            });
 
         return String.format("sf|%s|%s|%s",
             fromTypes.toString(),
@@ -121,13 +128,15 @@ final class ActionKeys {
             for(var obj : target.getActorPokemon()) {
                 var targetPkmn = (ActiveBattlePokemon)obj;
 
-                // TODO: deterministic order for multiple types (e.g. alphabetic)
-                for(var t : targetPkmn.getBattlePokemon().getOriginalPokemon().getTypes()) {
-                    if(!targetTypes.isEmpty()) {
-                        targetTypes.append(',');
-                    }
+                if(targetPkmn.isAlive()) {
+                    // TODO: deterministic order for multiple types (e.g. alphabetic)
+                    for(var t : targetPkmn.getBattlePokemon().getOriginalPokemon().getTypes()) {
+                        if(!targetTypes.isEmpty()) {
+                            targetTypes.append(',');
+                        }
 
-                    targetTypes.append(t.getName());
+                        targetTypes.append(t.getName());
+                    }
                 }
             }
         } else {

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.api.ai.learning;
+package com.gitlab.srcmc.rctapi.api.ai.experimental.lai;
 
 public class BattleEvaluator {
     public static final double HEALTH_DIFF_WEIGHT = 0.8;

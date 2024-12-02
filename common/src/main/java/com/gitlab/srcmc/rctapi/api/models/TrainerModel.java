@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-import com.gitlab.srcmc.rctapi.api.ai.AIType;
+import com.gitlab.srcmc.rctapi.api.ai.utils.AIType;
 
 /**
  * A pojo class for parsing {@link Trainer}.

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.api.ai;
+package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.function.Function;
 
@@ -24,9 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ai.RandomBattleAI;
 import com.cobblemon.mod.common.battles.ai.StrongBattleAI;
+import com.gitlab.srcmc.rctapi.api.ai.experimental.SelfdotGen5AI;
+import com.gitlab.srcmc.rctapi.api.ai.experimental.lai.BattleMemory;
+import com.gitlab.srcmc.rctapi.api.ai.experimental.lai.LearningBattleAI;
 
-import com.gitlab.srcmc.rctapi.api.ai.learning.BattleMemory;
-import com.gitlab.srcmc.rctapi.api.ai.learning.LearningBattleAI;
 import net.minecraft.server.MinecraftServer;
 
 /**
