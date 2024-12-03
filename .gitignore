@@ -119,3 +119,4 @@ run/
 
 # Custom
 tmp/**/*
+.env
