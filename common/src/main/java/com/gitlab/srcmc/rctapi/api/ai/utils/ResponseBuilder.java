@@ -111,6 +111,10 @@ public class ResponseBuilder {
         if(this.forceSwitch || this.mustChoose) {
             consumer.apply(this.switchCandidates.get()).forEach(choice -> {
                 this.choices.add(new Choice<>(() -> {
+                    if(this.pkmn.hasPokemon()) {
+                        this.pkmn.getBattlePokemon().setWillBeSwitchedIn(false);
+                    }
+
                     choice.value.setWillBeSwitchedIn(true);
                     return new SwitchActionResponse(choice.value.getUuid());
                 }, choice.weight));
@@ -150,7 +154,7 @@ public class ResponseBuilder {
     public ShowdownActionResponse response(Consumer<ShowdownActionResponse> consumer) {
         var response = this.choices.isEmpty()
             ? this.mustChoose && this.pkmn.hasPokemon()
-                ? new MoveActionResponse("struggle", null, null)
+                ? new DefaultActionResponse()
                 : PassActionResponse.INSTANCE
             : getRandom(takeWithMargin(this.choices.stream().sorted(), this.margin), this.rng, this.margin, this.rdf)
                 .orElse(new Choice<>(DefaultActionResponse::new, 0)).value.get();
