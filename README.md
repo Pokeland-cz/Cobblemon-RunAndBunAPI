@@ -1,4 +1,4 @@
-# Radical Cobblemon Trainers - Api
+# Radical Cobblemon Trainers - API
 
 Trainer management and battle API for [Cobblemon](https://cobblemon.com/en).
 
