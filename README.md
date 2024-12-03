@@ -1,4 +1,4 @@
-# RCT - Api
+# Radical Cobblemon Trainers - Api
 
 Trainer management and battle API for [Cobblemon](https://cobblemon.com/en).
 
