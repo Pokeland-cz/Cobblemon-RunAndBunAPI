@@ -11,8 +11,7 @@ Yet it is desgined as independent library to provide a subset of similar feature
 - Trainer management and entity association (trainer registry)
 - Support for different battle formats (1v1 SINGLE, 1v1 DOUBLE, 2v2 MULTI, ...)
 - Custom battle rules (e.g. max item usages per battle)
-- *Learning* battle AI (LAI, EXPERIMENTAL)
-- Extended AI features (currently only supported by LAI):
+- Extended AI features (currently only supported by `RCTBattleAI`):
   - usual battle activities (move selection, switch, ...)
   - gimmicks: mega evolve, dynamax, z-moves, terastallize (TODO)
   - trainers can carry and use items
