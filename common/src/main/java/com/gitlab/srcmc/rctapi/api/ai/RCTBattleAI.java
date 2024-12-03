@@ -23,7 +23,6 @@ import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
@@ -60,7 +59,7 @@ public class RCTBattleAI implements BattleAI {
         builder.suggestSwitches(candidates -> candidates
             .map(bp -> new Choice<>(bp, 1.0 - evalSwitch(pkmn, bp))));
 
-        return builder.response(r -> ModCommon.LOG.info("RESPONSE: " + r.toShowdownString(pkmn, moveset)));
+        return builder.response();
     }
 
     private static double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
@@ -77,7 +76,7 @@ public class RCTBattleAI implements BattleAI {
             ? !hasStatus ? to.getHealth() * STATUS_MOVE_BIAS * (PokeMath.typeEffectiveness(move, to.getOriginalPokemon()) > 0 ? 1 : 0) : 0
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
         var d = 1.0 - (to.getHealth() - estDamage) / to.getHealth();
-        ModCommon.LOG.info(String.format("EVAL MOVE: from=%s, to=%s, move=%s/%s, estd: %.2f, d: %.2f", from.getName().getString(), to.getName().getString(), move.id, move.move, estDamage, d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d));
+
         return d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d;
     }
 
@@ -91,7 +90,7 @@ public class RCTBattleAI implements BattleAI {
 
             var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth()) / (double)amount;
-            ModCommon.LOG.info(String.format("EVAL ITEM: item=%s, to=%s, esth: %.2f, d: %.2f", item.getItemName(), to.getName().getString(), estHeal, Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1))));
+            
             return Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1));
         }
 
@@ -108,7 +107,6 @@ public class RCTBattleAI implements BattleAI {
             d[0] *= atk > spa ? to.getOriginalPokemon().getDefence() / (double)atk : to.getOriginalPokemon().getSpecialDefence() / (double) spa;
         });
 
-        ModCommon.LOG.info(String.format("EVAL SWITCH: from=%s, to=%s, d: %.2f", from.getBattlePokemon() != null ? from.getBattlePokemon().getName().getString() : "dead", to.getName().getString(), d[0]));
         return Math.min(1, d[0]);
     }
 }

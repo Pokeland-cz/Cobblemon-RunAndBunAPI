@@ -96,8 +96,6 @@ public class BattleMemory<T> extends SavedData {
      * selection process (@see BattleMemory#next()).
      */
     public Optional<T> getChoice() {
-        // this.dump();
-        // ModCommon.LOG.info("## SELECTED ACTION RATING: " + this.previousAction.getRating());
         return this.previousAction != null
             ? Optional.of(this.previousAction.get())
             : Optional.empty();
@@ -155,26 +153,11 @@ public class BattleMemory<T> extends SavedData {
     protected RatedAction<T> storeIfBest(RatedAction<T> nextAction) {
         var r = nextAction.getRating();
         var m = RATING_MARGIN * RNG.nextDouble();
-        // ModCommon.LOG.info(String.format("prev: %s, next: %f, margin: %f, %b", this.previousAction == null ? "0" : String.valueOf(this.previousAction.getRating()), r, m, (this.previousAction == null || (r + m) > this.previousAction.getRating())));
 
         if(this.previousAction == null || (r + m) > this.previousAction.getRating()) {
             this.previousAction = nextAction;
         }
 
         return nextAction;
-    }
-
-    private void dump() {
-        ModCommon.LOG.info("## EXACT:");
-
-        for(var p : this.exactActions.entrySet()) {
-            ModCommon.LOG.info(p.getKey() + ": " + p.getValue().getRating());
-        }
-
-        ModCommon.LOG.info("## FUZZY:");
-
-        for(var p : this.fuzzyActions.entrySet()) {
-            ModCommon.LOG.info(p.getKey() + ": " + p.getValue().getRating());
-        }
     }
 }

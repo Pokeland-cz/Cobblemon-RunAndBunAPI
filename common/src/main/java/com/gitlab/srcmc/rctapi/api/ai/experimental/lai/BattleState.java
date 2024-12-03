@@ -72,20 +72,6 @@ class BattleState {
         this.targetPartyStatusEffects = targetPartyStatusEffects;
         this.sourceAverageLevel = sourceAverageLevel;
         this.targetAverageLevel = targetAverageLevel;
-
-        // ModCommon.LOG.info("## New BattleState");
-        // ModCommon.LOG.info("sourcePartyCount: " + sourcePartyCount);
-        // ModCommon.LOG.info("targetPartyCount: " + targetPartyCount);
-        // ModCommon.LOG.info("sourcePartyHealth: " + sourcePartyHealth);
-        // ModCommon.LOG.info("sourcePartyMaxHealth: " + sourcePartyMaxHealth);
-        // ModCommon.LOG.info("targetPartyHealth: " + targetPartyHealth);
-        // ModCommon.LOG.info("targetPartyMaxHealth: " + targetPartyMaxHealth);
-        // ModCommon.LOG.info("sourcePartyStatBoosts: " + sourcePartyStatBoosts);
-        // ModCommon.LOG.info("targetPartyStatBoosts: " + targetPartyStatBoosts);
-        // ModCommon.LOG.info("sourcePartyStatusEffects: " + sourcePartyStatusEffects);
-        // ModCommon.LOG.info("targetPartyStatusEffects: " + targetPartyStatusEffects);
-        // ModCommon.LOG.info("sourceAverageLevel: " + sourceAverageLevel);
-        // ModCommon.LOG.info("targetAverageLevel: " + targetAverageLevel);
     }
 
     public static BattleState of(ActiveBattlePokemon pkmn) {

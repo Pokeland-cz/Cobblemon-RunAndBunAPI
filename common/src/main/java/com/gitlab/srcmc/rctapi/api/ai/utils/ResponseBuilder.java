@@ -38,7 +38,6 @@ import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager.TrainerEntityBattleActor;
 
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
@@ -57,8 +56,6 @@ public class ResponseBuilder {
     private double rdf = 3; // randomDistributionFactor >= 1
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
-        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")"));
-
         var builder = new ResponseBuilder();
         builder.mustChoose = pkmn.getActor().getMustChoose();
         builder.forceSwitch = forceSwitch;
@@ -105,10 +102,6 @@ public class ResponseBuilder {
                 .getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut);
         }
-
-        ModCommon.LOG.info("------ POSSIBLE SWITCHES: (" + builder.forceSwitch + ", " + builder.mustChoose + ", " + builder.forceMove + ")");
-        builder.switchCandidates.get().forEach(p -> ModCommon.LOG.info("  " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead") + " -> " + p.getName().getString()));
-        ModCommon.LOG.info("-------------------------");
 
         return builder;
     }
@@ -214,7 +207,6 @@ public class ResponseBuilder {
 
     private static <T> Stream<Choice<T>> takeWithMargin(Stream<Choice<T>> in, double margin) {
         double[] w = {Double.NEGATIVE_INFINITY};
-        ModCommon.LOG.info("-------- CHOICES:");
         
         return in.takeWhile(choice -> {
             if(w[0] == Double.NEGATIVE_INFINITY) {
@@ -222,8 +214,7 @@ public class ResponseBuilder {
             } else if(choice.weight - w[0] > margin) {
                 return false;
             }
-
-            ModCommon.LOG.info(" " + choice.value + ": " + choice.weight);
+            
             return true;
         });
     }
