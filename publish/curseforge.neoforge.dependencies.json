@@ -1,0 +1,12 @@
+{
+  "projects": [
+    {
+      "slug": "architectury-api",
+      "type": "requiredDependency"
+    },
+    {
+      "slug": "cobblemon",
+      "type": "requiredDependency"
+    }
+  ]
+}
