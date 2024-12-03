@@ -57,6 +57,8 @@ public class ResponseBuilder {
     private double rdf = 3; // randomDistributionFactor >= 1
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
+        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")"));
+
         var builder = new ResponseBuilder();
         builder.mustChoose = pkmn.getActor().getMustChoose();
         builder.forceSwitch = forceSwitch;
@@ -97,12 +99,16 @@ public class ResponseBuilder {
             }
         }
 
-        if(!builder.forceMove && (builder.forceSwitch || builder.mustChoose)) {
+        if(builder.forceSwitch || builder.mustChoose || !builder.forceMove) {
             // all possible switches
             builder.switchCandidates = () -> pkmn.getActor()
                 .getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut);
         }
+
+        ModCommon.LOG.info("------ POSSIBLE SWITCHES: (" + builder.forceSwitch + ", " + builder.mustChoose + ", " + builder.forceMove + ")");
+        builder.switchCandidates.get().forEach(p -> ModCommon.LOG.info("  " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead") + " -> " + p.getName().getString()));
+        ModCommon.LOG.info("-------------------------");
 
         return builder;
     }
