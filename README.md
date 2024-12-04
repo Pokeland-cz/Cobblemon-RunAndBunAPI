@@ -125,13 +125,13 @@ Starts a battle between the `trainerPlayer` and `trainerNPC` in the `GEN_9_SINGL
 
 ## Gradle dependency
 
-Available on [curse(forge)](todo.com) maven.
+Available on [cursemaven](https://www.curseforge.com/minecraft/mc-mods/radical-cobblemon-trainers-api/) (curseforge).
 
 **Common:**
 
 ```gradle
 dependencies {
-    modImplementation "com.gitlab.srcmc.rctapi-common:1.0.0"
+    modImplementation "curse.maven:radical-cobblemon-trainers-api-1152792:<fileId>"
 }
 ```
 
@@ -139,7 +139,7 @@ dependencies {
 
 ```gradle
 dependencies {
-    modImplementation "com.gitlab.srcmc.rctapi-fabric:1.0.0"
+    modImplementation "curse.maven:radical-cobblemon-trainers-api-1152792:<fileId>"
 }
 ```
 
@@ -147,6 +147,8 @@ dependencies {
 
 ```gradle
 dependencies {
-    modImplementation "com.gitlab.srcmc.rctapi-neoforge:1.0.0"
+    modImplementation "curse.maven:radical-cobblemon-trainers-api-1152792:<fileId>"
 }
 ```
+
+> You can find the `fileId` in the URL of the curseforge downlaod page for a specific version.
