@@ -31,6 +31,9 @@ import java.util.Random;
 
 public class RCTBattleAI implements BattleAI {
     private static final double STATUS_MOVE_BIAS = 0.1;
+    private static final double MOVE_BIAS = 1.0;
+    private static final double SWITCH_BIAS = 1.0;
+    private static final double ITEM_BIAS = 1.0;
 
     private double maxSelectMargin = 0.15;
     private Random rng = new Random();
@@ -77,8 +80,8 @@ public class RCTBattleAI implements BattleAI {
             ? !hasStatus ? to.getHealth() * STATUS_MOVE_BIAS * (PokeMath.typeEffectiveness(move, to.getOriginalPokemon()) > 0 ? 1 : 0) : 0
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
         var d = 1.0 - (to.getHealth() - estDamage) / to.getHealth();
-        ModCommon.LOG.info(String.format("EVAL MOVE: from=%s, to=%s, move=%s/%s, estd: %.2f, d: %.2f", from.getName().getString(), to.getName().getString(), move.id, move.move, estDamage, d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d));
-        return d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d;
+        ModCommon.LOG.info(String.format("EVAL MOVE: from=%s, to=%s, move=%s/%s, estd: %.2f, d: %.2f", from.getName().getString(), to.getName().getString(), move.id, move.move, estDamage, (d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d) * MOVE_BIAS));
+        return (d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d) * MOVE_BIAS;
     }
 
     private static double evalItem(BagItem item, BattlePokemon to) {
@@ -91,8 +94,8 @@ public class RCTBattleAI implements BattleAI {
 
             var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth()) / (double)amount;
-            ModCommon.LOG.info(String.format("EVAL ITEM: item=%s, to=%s, esth: %.2f, d: %.2f", item.getItemName(), to.getName().getString(), estHeal, Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1))));
-            return Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1));
+            ModCommon.LOG.info(String.format("EVAL ITEM: item=%s, to=%s, esth: %.2f, d: %.2f", item.getItemName(), to.getName().getString(), estHeal, Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS));
+            return Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS;
         }
 
         return 0;
@@ -102,13 +105,13 @@ public class RCTBattleAI implements BattleAI {
         double[] d = {to.getHealth() / (double)to.getMaxHealth()};
 
         from.getSide().getOppositeSide().getActivePokemon().stream().filter(ActiveBattlePokemon::hasPokemon).forEach(pkmn -> {
-            d[0] *= PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0; // max type effectiveness is actually 8 but its pretty uncommon
+            d[0] *= 1.0 - PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0; // max type effectiveness is actually 8 but its pretty uncommon
             var atk = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
             var spa = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
             d[0] *= atk > spa ? to.getOriginalPokemon().getDefence() / (double)atk : to.getOriginalPokemon().getSpecialDefence() / (double) spa;
         });
 
-        ModCommon.LOG.info(String.format("EVAL SWITCH: from=%s, to=%s, d: %.2f", from.getBattlePokemon() != null ? from.getBattlePokemon().getName().getString() : "dead", to.getName().getString(), d[0]));
-        return Math.min(1, d[0]);
+        ModCommon.LOG.info(String.format("EVAL SWITCH: from=%s, to=%s, d: %.2f", from.getBattlePokemon() != null ? from.getBattlePokemon().getName().getString() : "dead", to.getName().getString(), Math.min(1, d[0]) * SWITCH_BIAS));
+        return Math.min(1, d[0]) * SWITCH_BIAS;
     }
 }
