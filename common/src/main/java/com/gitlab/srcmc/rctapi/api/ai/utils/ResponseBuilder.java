@@ -57,7 +57,7 @@ public class ResponseBuilder {
     private double rdf = 3; // randomDistributionFactor >= 1
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
-        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")"));
+        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")") + ", turn: " + pkmn.getBattle().getTurn() + ", pvn: " +pkmn.getBattle().isPvN());
 
         var builder = new ResponseBuilder();
         builder.mustChoose = pkmn.getActor().getMustChoose();
@@ -99,14 +99,16 @@ public class ResponseBuilder {
             }
         }
 
-        if(builder.forceSwitch || builder.mustChoose || !builder.forceMove) {
+        if(!builder.forceMove && (builder.forceSwitch != builder.mustChoose)) {
             // all possible switches
             builder.switchCandidates = () -> pkmn.getActor()
                 .getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut);
         }
 
-        ModCommon.LOG.info("------ POSSIBLE SWITCHES: (" + builder.forceSwitch + ", " + builder.mustChoose + ", " + builder.forceMove + ")");
+        ModCommon.LOG.info("------ ACTOR POKEMON");
+        pkmn.getActor().getPokemonList().stream().forEach(p -> ModCommon.LOG.info("  " + p.getName().getString() + ": can: " + p.canBeSentOut() + ", is: " + p.isSentOut() + ", gone: " + p.getGone() + ", will: " + p.getWillBeSwitchedIn()));
+        ModCommon.LOG.info("------ POSSIBLE SWITCHES: (" + builder.forceSwitch + ", " + builder.mustChoose + ", " + builder.forceMove + ", has: " + pkmn.hasPokemon() + ", ali: " + pkmn.isAlive() + ", gon: " + pkmn.isGone() + ")");
         builder.switchCandidates.get().forEach(p -> ModCommon.LOG.info("  " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead") + " -> " + p.getName().getString()));
         ModCommon.LOG.info("-------------------------");
 
