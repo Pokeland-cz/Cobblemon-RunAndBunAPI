@@ -94,21 +94,29 @@ public class RCTBattleAI implements BattleAI {
 
             var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth()) / (double)amount;
-            ModCommon.LOG.info(String.format("EVAL ITEM: item=%s, to=%s, esth: %.2f, d: %.2f", item.getItemName(), to.getName().getString(), estHeal, Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS));
-            return Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS;
+            ModCommon.LOG.info(String.format("EVAL ITEM: item=%s, to=%s, esth: %.2f, d: %.2f", item.getItemName(), to.getName().getString(), estHeal, (amount / (double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS));
+            return (amount / (double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS;
         }
 
         return 0;
     }
 
     private static double evalSwitch(ActiveBattlePokemon from, BattlePokemon to) {
-        double[] d = {to.getHealth() / (double)to.getMaxHealth()};
+        // TODO: consider stat boosts/mali, status effects, etc.
+        var fromHealthBias = 0.5 + 0.5*(1.0 - (from.hasPokemon() ? from.getBattlePokemon().getHealth()/from.getBattlePokemon().getMaxHealth() : 0));
+        double[] d = {fromHealthBias * to.getHealth() / (double)to.getMaxHealth()};
 
         from.getSide().getOppositeSide().getActivePokemon().stream().filter(ActiveBattlePokemon::hasPokemon).forEach(pkmn -> {
+            var atkTo = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
+            var spaTo = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
             d[0] *= 1.0 - PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0; // max type effectiveness is actually 8 but its pretty uncommon
-            var atk = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
-            var spa = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
-            d[0] *= atk > spa ? to.getOriginalPokemon().getDefence() / (double)atk : to.getOriginalPokemon().getSpecialDefence() / (double) spa;
+            d[0] *= (atkTo > spaTo ? to.getOriginalPokemon().getDefence() / (double)atkTo : to.getOriginalPokemon().getSpecialDefence() / (double) spaTo) / 2;
+
+            // TODO: opposite for current pokemon
+            // var atkFrom = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
+            // var spaFrom = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
+            // d[0] *= PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0;
+            // d[0] *= Math.max(0, 1.0 - (atkFrom > spaFrom ? to.getOriginalPokemon().getDefence() / (double)atkFrom : to.getOriginalPokemon().getSpecialDefence() / (double) spaFrom) / 2);
         });
 
         ModCommon.LOG.info(String.format("EVAL SWITCH: from=%s, to=%s, d: %.2f", from.getBattlePokemon() != null ? from.getBattlePokemon().getName().getString() : "dead", to.getName().getString(), Math.min(1, d[0]) * SWITCH_BIAS));
