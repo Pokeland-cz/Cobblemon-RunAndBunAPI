@@ -31,7 +31,7 @@ import java.util.Random;
 public class RCTBattleAI implements BattleAI {
     private static final double STATUS_MOVE_BIAS = 0.1;
     private static final double MOVE_BIAS = 1.0;
-    private static final double SWITCH_BIAS = 1.0;
+    private static final double SWITCH_BIAS = 0.75;
     private static final double ITEM_BIAS = 1.0;
 
     private double maxSelectMargin = 0.15;
