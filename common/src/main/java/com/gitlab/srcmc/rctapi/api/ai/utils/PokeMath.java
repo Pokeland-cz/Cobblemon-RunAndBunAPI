@@ -32,6 +32,7 @@ import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.gitlab.srcmc.rctapi.ModCommon;
 
 /**
  * Pokemon math utilities derived from davo899s implementation of a 'Pokemon Gen5
@@ -49,7 +50,20 @@ public class PokeMath {
     private static final Map<String, Move> moveMap = new HashMap<>();
 
     private static Move getMove(InBattleMove move) {
-        return moveMap.computeIfAbsent(move.id, key -> Moves.INSTANCE.getByName(key).create());
+        return moveMap.computeIfAbsent(move.id, key -> {
+            var m = Moves.INSTANCE.getByName(key);
+
+            // In my experience this only happened with 'recharge' (not a problem).
+            if(m == null) {
+                if(!key.equals("recharge")) {
+                    ModCommon.LOG.error("Failed to create move template for '" + key + "'");
+                }
+
+                m = Moves.INSTANCE.getExceptional();
+            }
+
+            return m.create();
+        });
     }
 
     private static double typeEffectiveness(ElementalType attacker, ElementalType defender) {
