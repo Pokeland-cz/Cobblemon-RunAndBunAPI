@@ -96,7 +96,7 @@ public class ResponseBuilder {
             }
         }
 
-        if(builder.forceSwitch || builder.mustChoose || !builder.forceMove) {
+        if(!builder.forceMove && (pkmn.hasPokemon() || builder.forceSwitch != builder.mustChoose)) {
             // all possible switches
             builder.switchCandidates = () -> pkmn.getActor()
                 .getPokemonList().stream()
