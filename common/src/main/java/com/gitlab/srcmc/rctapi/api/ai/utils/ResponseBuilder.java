@@ -38,6 +38,7 @@ import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager.TrainerEntityBattleActor;
 
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
@@ -57,7 +58,7 @@ public class ResponseBuilder {
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
         var builder = new ResponseBuilder();
-        builder.mustChoose = pkmn.getActor().getMustChoose();
+        builder.mustChoose = pkmn.getActor().getMustChoose() && BattleStates.get(pkmn.getBattle()).isTurn(pkmn);
         builder.forceSwitch = forceSwitch;
         builder.forceMove = false;
         builder.moveset = moveset;
@@ -96,40 +97,51 @@ public class ResponseBuilder {
             }
         }
 
-        if(!builder.forceMove && (pkmn.hasPokemon() || builder.forceSwitch != builder.mustChoose)) {
+        if(!builder.forceMove && ((pkmn.hasPokemon() && builder.mustChoose) || builder.forceSwitch != builder.mustChoose)) {
             // all possible switches
             builder.switchCandidates = () -> pkmn.getActor()
                 .getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut);
         }
 
+        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")")  + ", turn : " + pkmn.getBattle().getTurn() + ", fs: " + builder.forceSwitch + ", mc: " + builder.mustChoose + ", fm: " + builder.forceMove + ")");
+        ModCommon.LOG.info("------ ACTOR POKEMON: still: turn: " + BattleStates.get(pkmn.getBattle()).isTurn(pkmn));
+        pkmn.getActor()
+            .getPokemonList().stream()
+            .forEach(p -> ModCommon.LOG.info(String.format("  %s, gon: %b, is: %b, can %b, will: %b",
+                p.getName().getString(),
+                p.getGone(),
+                p.isSentOut(),
+                p.canBeSentOut(),
+                p.getWillBeSwitchedIn())));
+        ModCommon.LOG.info("------ POSSIBLE SWITCHES:");
+        builder.switchCandidates.get().forEach(p -> ModCommon.LOG.info("  " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead") + " -> " + p.getName().getString()));
+        ModCommon.LOG.info("-------------------------");
+
+        BattleStates.setTurn(pkmn, false);
         return builder;
     }
 
     public ResponseBuilder suggestSwitches(Function<Stream<BattlePokemon>, Stream<Choice<BattlePokemon>>> consumer) {
-        if(this.forceSwitch || this.mustChoose) {
+        // if(!this.forceMove) {
             consumer.apply(this.switchCandidates.get()).forEach(choice -> {
                 this.choices.add(new Choice<>(() -> {
-                    if(this.pkmn.hasPokemon()) {
-                        this.pkmn.getBattlePokemon().setWillBeSwitchedIn(false);
-                    }
-
-                    choice.value.setWillBeSwitchedIn(true);
+                    BattleStates.setWillBeSwitchedInFor(choice.value, this.pkmn);
                     return new SwitchActionResponse(choice.value.getUuid());
                 }, choice.weight));
             });
-        }
+        // }
         
         return this;
     }
 
     public ResponseBuilder suggestItems(Function<Stream<Pair<BagItem, BattlePokemon>>, Stream<Choice<Pair<BagItem, BattlePokemon>>>> consumer) {
-        if(this.mustChoose && this.pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
+        if(/*!this.forceMove && */ this.pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
             consumer.apply(this.itemCandidates.get()).forEach(choice -> {
                 this.choices.add(new Choice<>(() -> {
                     var item = choice.value.first;
                     var pkmn = choice.value.second;
-                    actor.forceChoose(new BagItemActionResponse(actor.getBag().use(item), pkmn, pkmn.getUuid().toString()));
+                    this.pkmn.getActor().forceChoose(new BagItemActionResponse(actor.getBag().use(item), pkmn, pkmn.getUuid().toString()));
                     return new ForcePassActionResponse();
                 }, choice.weight));
             });
@@ -139,13 +151,13 @@ public class ResponseBuilder {
     }
 
     public ResponseBuilder suggestMoves(Function<Stream<Pair<InBattleMove, Targetable>>, Stream<Choice<Pair<InBattleMove, Targetable>>>> consumer) {
-        if(this.forceMove || this.mustChoose) {
+        // if(!this.forceSwitch && this.mustChoose) {
             consumer.apply(this.moveCandidates.get()).forEach(choice -> {
                 var move = choice.value.first;
                 var target = choice.value.second;
                 this.choices.add(new Choice<>(() -> new MoveActionResponse(move.id, target != null ? target.getPNX() : null, null), choice.weight));
             });
-        }
+        // }
 
         return this;
     }

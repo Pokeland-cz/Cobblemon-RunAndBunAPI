@@ -17,11 +17,14 @@
  */
 package com.gitlab.srcmc.rctapi.fabric;
 
+import com.gitlab.srcmc.rctapi.ModCommon;
+
 import net.fabricmc.api.ModInitializer;
 
 public final class FabricCommon implements ModInitializer {
     @Override
     public void onInitialize() {
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+        ModCommon.init();
     }
 }

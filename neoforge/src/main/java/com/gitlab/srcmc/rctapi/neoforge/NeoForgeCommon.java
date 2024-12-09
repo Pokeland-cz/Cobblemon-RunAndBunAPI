@@ -25,5 +25,6 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 public final class NeoForgeCommon {
     public NeoForgeCommon() {
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+        ModCommon.init();
     }
 }

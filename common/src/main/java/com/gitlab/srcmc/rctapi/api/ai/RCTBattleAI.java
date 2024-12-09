@@ -23,6 +23,7 @@ import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
@@ -31,7 +32,7 @@ import java.util.Random;
 public class RCTBattleAI implements BattleAI {
     private static final double STATUS_MOVE_BIAS = 0.1;
     private static final double MOVE_BIAS = 1.0;
-    private static final double SWITCH_BIAS = 0.75;
+    private static final double SWITCH_BIAS = 0.7;
     private static final double ITEM_BIAS = 1.0;
 
     private double maxSelectMargin = 0.15;
@@ -62,7 +63,8 @@ public class RCTBattleAI implements BattleAI {
         builder.suggestSwitches(candidates -> candidates
             .map(bp -> new Choice<>(bp, 1.0 - evalSwitch(pkmn, bp))));
 
-        return builder.response();
+        return builder.response(r -> ModCommon.LOG.info("RESPONSE: " + r.toShowdownString(pkmn, moveset)));
+        // return builder.response();
     }
 
     private static double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
