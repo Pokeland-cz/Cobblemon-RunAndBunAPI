@@ -19,7 +19,6 @@ package com.gitlab.srcmc.rctapi.api.models.converter;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.ai.RandomBattleAI;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
@@ -58,13 +57,11 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
             errors.add(RCTError.of("too many pokemon in party " + model.getTeam().size() + "/6"));
         }
 
-        BattleAI battleAI;
+        var battleAI = model.getAI().get();
 
-        if(model.getAI() == null) {
+        if(battleAI == null) {
             errors.add(RCTError.of("unknown AI type"));
             battleAI = new RandomBattleAI();
-        } else {
-            battleAI = model.getAI().getInstanceFor(this.server);
         }
 
         var team = model.getTeam().stream().limit(6)

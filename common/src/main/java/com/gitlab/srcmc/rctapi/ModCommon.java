@@ -25,6 +25,9 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.events.battles.BattleFaintedEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleFledEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleVictoryEvent;
+import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.config.SelfdotGen5AIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.config.StrongBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import kotlin.Unit;
 
@@ -36,6 +39,10 @@ public class ModCommon {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 
     public static void init() {
+        RCTBattleAIConfig.register();
+        StrongBattleAIConfig.register();
+        SelfdotGen5AIConfig.register();
+
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);

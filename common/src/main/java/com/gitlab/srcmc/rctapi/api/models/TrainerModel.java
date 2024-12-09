@@ -21,14 +21,16 @@ import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-import com.gitlab.srcmc.rctapi.api.ai.utils.AIType;
+import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.gitlab.srcmc.rctapi.api.ai.RCTBattleAI;
+import com.gitlab.srcmc.rctapi.api.util.JTO;
 
 /**
  * A pojo class for parsing {@link Trainer}.
  */
 public class TrainerModel {
     private String name;
-    private AIType ai;
+    private JTO<BattleAI> ai;
     private List<BagItemModel> bag;
     private List<PokemonModel> team;
 
@@ -36,7 +38,7 @@ public class TrainerModel {
      * Creates a new TrainerModel.
      */
     public TrainerModel() {
-        this("", AIType.RCT, List.of(), List.of());
+        this("", JTO.of(RCTBattleAI::new), List.of(), List.of());
     }
 
     /**
@@ -47,7 +49,7 @@ public class TrainerModel {
      * @param bag Bag of items the trainer may use in a battle.
      * @param team Pokemon party of the trainer.
      */
-    public TrainerModel(@NotNull String name, @NotNull AIType ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
+    public TrainerModel(@NotNull String name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
         this.name = name;
         this.ai = ai;
         this.bag = bag;
@@ -70,7 +72,7 @@ public class TrainerModel {
     }
 
     @NotNull
-    public AIType getAI() {
+    public JTO<BattleAI> getAI() {
         return this.ai;
     }
 

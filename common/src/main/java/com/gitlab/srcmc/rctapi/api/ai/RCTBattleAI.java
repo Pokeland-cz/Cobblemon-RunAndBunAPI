@@ -23,19 +23,33 @@ import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
+import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
 import java.util.Random;
 
-public class RCTBattleAI implements BattleAI {
-    private static final double STATUS_MOVE_BIAS = 0.1;
-    private static final double MOVE_BIAS = 1.0;
-    private static final double SWITCH_BIAS = 0.7;
-    private static final double ITEM_BIAS = 1.0;
+import org.jetbrains.annotations.NotNull;
 
-    private double maxSelectMargin = 0.15;
+public class RCTBattleAI implements BattleAI {
+    private double moveBias;
+    private double statusMoveBias;
+    private double switchBias;
+    private double itemBias;
+    private double maxSelectMargin;
     private Random rng = new Random();
+
+    public RCTBattleAI() {
+        this(new RCTBattleAIConfig());
+    }
+
+    public RCTBattleAI(@NotNull RCTBattleAIConfig config) {
+        this.moveBias = config.moveBias();
+        this.statusMoveBias = config.statusMoveBias();
+        this.switchBias = config.switchBias();
+        this.itemBias = config.itemBias();
+        this.maxSelectMargin = config.maxSelectMargin();
+    }
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
@@ -65,7 +79,7 @@ public class RCTBattleAI implements BattleAI {
         return builder.response();
     }
 
-    private static double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
+    private double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
         if(to == null) {
             return from.getActor().getSide().getOppositeSide()
                 .getActivePokemon().stream()
@@ -76,14 +90,14 @@ public class RCTBattleAI implements BattleAI {
 
         var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
         var estDamage = PokeMath.isStatus(move)
-            ? !hasStatus ? to.getHealth() * STATUS_MOVE_BIAS * (PokeMath.typeEffectiveness(move, to.getOriginalPokemon()) > 0 ? 1 : 0) : 0
+            ? !hasStatus ? to.getHealth() * this.statusMoveBias * (PokeMath.typeEffectiveness(move, to.getOriginalPokemon()) > 0 ? 1 : 0) : 0
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
         var d = 1.0 - (to.getHealth() - estDamage) / to.getHealth();
         
-        return (d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d) * MOVE_BIAS;
+        return (d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d) * this.moveBias;
     }
 
-    private static double evalItem(BagItem item, BattlePokemon to) {
+    private double evalItem(BagItem item, BattlePokemon to) {
         if(item instanceof PotionType potion) {
             var amount = potion == PotionType.POTION ? Math.min(20, to.getMaxHealth())
                 : potion == PotionType.SUPER_POTION ? Math.min(50, to.getMaxHealth())
@@ -94,13 +108,13 @@ public class RCTBattleAI implements BattleAI {
             var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth()) / (double)amount;
 
-            return (amount / (double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * ITEM_BIAS;
+            return (amount / (double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias;
         }
 
         return 0;
     }
 
-    private static double evalSwitch(ActiveBattlePokemon from, BattlePokemon to) {
+    private double evalSwitch(ActiveBattlePokemon from, BattlePokemon to) {
         // TODO: consider stat boosts/mali, status effects, etc.
         var fromHealthBias = 0.5 + 0.5*(1.0 - (from.hasPokemon() ? from.getBattlePokemon().getHealth()/from.getBattlePokemon().getMaxHealth() : 0));
         double[] d = {fromHealthBias * to.getHealth() / (double)to.getMaxHealth()};
@@ -118,6 +132,6 @@ public class RCTBattleAI implements BattleAI {
             // d[0] *= Math.max(0, 1.0 - (atkFrom > spaFrom ? to.getOriginalPokemon().getDefence() / (double)atkFrom : to.getOriginalPokemon().getSpecialDefence() / (double) spaFrom) / 2);
         });
 
-        return Math.min(1, d[0]) * SWITCH_BIAS;
+        return Math.min(1, d[0]) * this.switchBias;
     }
 }

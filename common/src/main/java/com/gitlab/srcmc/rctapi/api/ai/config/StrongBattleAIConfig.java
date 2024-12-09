@@ -15,16 +15,28 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.fabric;
+package com.gitlab.srcmc.rctapi.api.ai.config;
 
+import com.cobblemon.mod.common.battles.ai.StrongBattleAI;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.util.JTO;
 
-import net.fabricmc.api.ModInitializer;
+public record StrongBattleAIConfig(Integer skill) {
+    private static final int DEFAULT_SKILL = 2;
 
-public final class FabricCommon implements ModInitializer {
-    @Override
-    public void onInitialize() {
-        ModCommon.init();
-        // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+    public StrongBattleAIConfig() {
+        this(DEFAULT_SKILL);
+    }
+
+    public StrongBattleAIConfig {
+        if(skill == null) skill = DEFAULT_SKILL;
+    }
+
+    /**
+     * Registers the json parser for this config type. Needs to be called as early as
+     * possible (e.g. in {@link ModCommon#init()}).
+     */
+    public static void register() {
+        JTO.registerParser("cbl", m -> new StrongBattleAI(m.skill()), StrongBattleAIConfig::new, StrongBattleAIConfig.class);
     }
 }

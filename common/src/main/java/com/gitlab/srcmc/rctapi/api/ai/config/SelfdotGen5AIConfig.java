@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.fabric;
+package com.gitlab.srcmc.rctapi.api.ai.config;
 
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.ai.experimental.SelfdotGen5AI;
+import com.gitlab.srcmc.rctapi.api.util.JTO;
 
-import net.fabricmc.api.ModInitializer;
-
-public final class FabricCommon implements ModInitializer {
-    @Override
-    public void onInitialize() {
-        ModCommon.init();
-        // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+public record SelfdotGen5AIConfig() {
+    /**
+     * Registers the json parser for this config type. Needs to be called as early as
+     * possible (e.g. in {@link ModCommon#init()}).
+     */
+    public static void register() {
+        JTO.registerParser("sd5", m -> new SelfdotGen5AI(), SelfdotGen5AIConfig::new, SelfdotGen5AIConfig.class);
     }
 }
