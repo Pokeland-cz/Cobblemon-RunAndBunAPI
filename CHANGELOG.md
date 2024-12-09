@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.10.x-beta] - 2024-12-09
+
+***Added***
+
+- Added ai configs `RCTBattleAIConfig`, `SelfdotGen5AIConfig`, `StrongBattleAIConfig` and registered corresponding `JTO` parsers (`rct`, `sd5` and `cbl`)
+- Generic `JTO` (json to object) flexible parser system
+
+***Removed***
+
+- `AIType` enum (`TrainerModel.ai` is now defined as `JTO<BattleAI>`)
+
 ## [0.9.1-beta] - 2024-12-09
 
 ***Changed***
