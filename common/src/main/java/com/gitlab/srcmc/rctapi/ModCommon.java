@@ -25,10 +25,14 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.events.battles.BattleFaintedEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleFledEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleVictoryEvent;
+import com.cobblemon.mod.common.api.events.entity.PokemonEntitySaveToWorldEvent;
+import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.SelfdotGen5AIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.StrongBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
+import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
+
 import kotlin.Unit;
 
 /**
@@ -43,9 +47,20 @@ public class ModCommon {
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();
 
+        CobblemonEvents.POKEMON_ENTITY_SAVE_TO_WORLD.subscribe(Priority.HIGH, ModCommon::handlePokemonEntitySaveToWorld);
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
+    }
+
+    static Unit handlePokemonEntitySaveToWorld(PokemonEntitySaveToWorldEvent event) {
+        var ot = event.getPokemonEntity().getPokemon().getOriginalTrainer();
+
+        if(ot != null && (RCTApi.getInstance().getTrainerRegistry().getById(ot) instanceof TrainerNPC)) {
+            event.cancel();
+        }
+        
+        return Unit.INSTANCE;
     }
 
     static Unit handleBattleFainted(BattleFaintedEvent event) {

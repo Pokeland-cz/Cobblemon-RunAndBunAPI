@@ -8,8 +8,7 @@
   "mixins": [
     "BagItemInstructionMixin",
     "BattleActorMixin",
-    "PokemonMixin",
-    "PokemonEntityMixin"
+    "PokemonMixin"
   ],
   "injectors": {
     "defaultRequire": 1
