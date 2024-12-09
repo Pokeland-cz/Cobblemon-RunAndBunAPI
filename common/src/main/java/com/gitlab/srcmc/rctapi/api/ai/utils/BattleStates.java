@@ -51,8 +51,8 @@ public final class BattleStates {
     public static void setTurn(ActiveBattlePokemon pkmn, boolean turn) {
         var bs = BattleStates.get(pkmn.getBattle());
 
-        if(turn) {
-            bs.switchReplacements.clear();
+        if(turn && pkmn.hasPokemon()) {
+            bs.switchReplacements.remove(pkmn.getBattlePokemon());
         }
         
         bs.turnStates.put(pkmn, turn);
