@@ -5,6 +5,7 @@
 ***Fixed***
 
 - Missing Cobblemon (version) dependency check
+- Replaced redundant `PokemonEntityMixin` with event handler (which also fixed a crash caused by that mixin on startup)
 
 ## [0.10.0-beta] - 2024-12-09
 
