@@ -39,12 +39,7 @@ public class ModCommon {
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
-        // CobblemonEvents.COBBLEMON_INITIALISED.subscribe(Priority.NORMAL, ModCommon::handleCobblemonInitialized);
     }
-
-    // static Unit handleCobblemonInitialized(Unit unit) {
-    //     return unit;
-    // }
 
     static Unit handleBattleFainted(BattleFaintedEvent event) {
         BattleStates.notifyPokemonFainted(event.getBattle(), event.getKilled());

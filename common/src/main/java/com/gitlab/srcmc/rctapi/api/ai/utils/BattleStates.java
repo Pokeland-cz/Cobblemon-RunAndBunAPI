@@ -24,7 +24,6 @@ import java.util.UUID;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.gitlab.srcmc.rctapi.ModCommon;
 
 /**
  * Utility class to keep track of information throughout a battle.
@@ -69,23 +68,19 @@ public final class BattleStates {
     }
 
     public static void notifyPokemonFainted(PokemonBattle battle, BattlePokemon pkmn) {
-        ModCommon.LOG.info("############# A POKEMON DIED: " + pkmn.getName().getString());
         if(BattleStates.STATES.containsKey(battle.getBattleId())) {
             var replacement = BattleStates.STATES
                 .get(battle.getBattleId())
                 .switchReplacements.remove(pkmn);
 
             if(replacement != null) {
-                ModCommon.LOG.info("############# RESET REPLACEMENT: " + replacement.getName().getString());
                 replacement.setWillBeSwitchedIn(false);
             }
         }
     }
 
     public static void notifyBattleEnded(PokemonBattle battle) {
-        ModCommon.LOG.info("############# A BATTLE ENDED: " +
-        BattleStates.STATES.remove(battle.getBattleId())
-        );
+        BattleStates.STATES.remove(battle.getBattleId());
     }
 
     private static Map<UUID, State> STATES = new HashMap<>();

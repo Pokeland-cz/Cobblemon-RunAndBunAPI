@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 
@@ -38,17 +37,11 @@ public class BattleActorMixin {
     // Keeping track of the 'turn' instructions helps the RCTBattleAI to circumvent
     // issues with switch moves and similar in double/triple battles. Additionaly
     // calling setWillBeSwitchedIn(false) here should ensure that the value is as
-    // exptected on the start of every turn.
+    // expected on the start of every turn.
     @Inject(method = "turn", at = @At("HEAD"), remap = false)
     private void injectTurn(CallbackInfo ci) {
         var self = (BattleActor)(Object)this;
-        ModCommon.LOG.info("----> TURN: " + self.getName().getString());
-
-        self.getPokemonList().forEach(pkmn -> {
-            ModCommon.LOG.info("  " + pkmn.getName().getString());
-            pkmn.setWillBeSwitchedIn(false);
-        });
-
+        self.getPokemonList().forEach(pkmn -> pkmn.setWillBeSwitchedIn(false));
         self.getActivePokemon().forEach(pkmn  -> BattleStates.setTurn(pkmn, true));
     }
 

@@ -38,7 +38,6 @@ import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager.TrainerEntityBattleActor;
 
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
@@ -104,39 +103,23 @@ public class ResponseBuilder {
                 .filter(BattlePokemon::canBeSentOut);
         }
 
-        ModCommon.LOG.info("##### NEW RESPONSE BUILDER FOR " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead (" + pkmn.getPNX() + ")")  + ", turn : " + pkmn.getBattle().getTurn() + ", fs: " + builder.forceSwitch + ", mc: " + builder.mustChoose + ", fm: " + builder.forceMove + ")");
-        ModCommon.LOG.info("------ ACTOR POKEMON: still: turn: " + BattleStates.get(pkmn.getBattle()).isTurn(pkmn));
-        pkmn.getActor()
-            .getPokemonList().stream()
-            .forEach(p -> ModCommon.LOG.info(String.format("  %s, gon: %b, is: %b, can %b, will: %b",
-                p.getName().getString(),
-                p.getGone(),
-                p.isSentOut(),
-                p.canBeSentOut(),
-                p.getWillBeSwitchedIn())));
-        ModCommon.LOG.info("------ POSSIBLE SWITCHES:");
-        builder.switchCandidates.get().forEach(p -> ModCommon.LOG.info("  " + (pkmn.hasPokemon() ? pkmn.getBattlePokemon().getName().getString() : "dead") + " -> " + p.getName().getString()));
-        ModCommon.LOG.info("-------------------------");
-
         BattleStates.setTurn(pkmn, false);
         return builder;
     }
 
     public ResponseBuilder suggestSwitches(Function<Stream<BattlePokemon>, Stream<Choice<BattlePokemon>>> consumer) {
-        // if(!this.forceMove) {
-            consumer.apply(this.switchCandidates.get()).forEach(choice -> {
-                this.choices.add(new Choice<>(() -> {
-                    BattleStates.setWillBeSwitchedInFor(choice.value, this.pkmn);
-                    return new SwitchActionResponse(choice.value.getUuid());
-                }, choice.weight));
-            });
-        // }
+        consumer.apply(this.switchCandidates.get()).forEach(choice -> {
+            this.choices.add(new Choice<>(() -> {
+                BattleStates.setWillBeSwitchedInFor(choice.value, this.pkmn);
+                return new SwitchActionResponse(choice.value.getUuid());
+            }, choice.weight));
+        });
         
         return this;
     }
 
     public ResponseBuilder suggestItems(Function<Stream<Pair<BagItem, BattlePokemon>>, Stream<Choice<Pair<BagItem, BattlePokemon>>>> consumer) {
-        if(/*!this.forceMove && */ this.pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
+        if(this.pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
             consumer.apply(this.itemCandidates.get()).forEach(choice -> {
                 this.choices.add(new Choice<>(() -> {
                     var item = choice.value.first;
@@ -151,13 +134,11 @@ public class ResponseBuilder {
     }
 
     public ResponseBuilder suggestMoves(Function<Stream<Pair<InBattleMove, Targetable>>, Stream<Choice<Pair<InBattleMove, Targetable>>>> consumer) {
-        // if(!this.forceSwitch && this.mustChoose) {
-            consumer.apply(this.moveCandidates.get()).forEach(choice -> {
-                var move = choice.value.first;
-                var target = choice.value.second;
-                this.choices.add(new Choice<>(() -> new MoveActionResponse(move.id, target != null ? target.getPNX() : null, null), choice.weight));
-            });
-        // }
+        consumer.apply(this.moveCandidates.get()).forEach(choice -> {
+            var move = choice.value.first;
+            var target = choice.value.second;
+            this.choices.add(new Choice<>(() -> new MoveActionResponse(move.id, target != null ? target.getPNX() : null, null), choice.weight));
+        });
 
         return this;
     }
