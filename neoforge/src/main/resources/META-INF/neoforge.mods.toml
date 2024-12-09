@@ -34,5 +34,12 @@ versionRange = "[${architectury_api_version},)"
 ordering = "AFTER"
 side = "BOTH"
 
+[[dependencies.${mod_id}]]
+modId="cobblemon"
+type = "required"
+versionRange="[${cobblemon_min_version},)"
+ordering="NONE"
+side="BOTH"
+
 [[mixins]]
 config = "${mod_id}.mixins.json"

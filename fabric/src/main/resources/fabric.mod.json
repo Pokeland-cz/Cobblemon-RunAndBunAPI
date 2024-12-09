@@ -26,6 +26,7 @@
     "minecraft": "~${minecraft_version}",
     "java": ">=21",
     "architectury": ">=${architectury_api_version}",
+    "cobblemon": ">=${cobblemon_min_version}",
     "fabric-api": "*"
   },
   "suggests": {

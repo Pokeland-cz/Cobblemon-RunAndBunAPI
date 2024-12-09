@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.x-beta] - 2024-12-09
+
+***Fixed***
+
+- Missing Cobblemon (version) dependency check
+
 ## [0.10.0-beta] - 2024-12-09
 
 ***Added***
