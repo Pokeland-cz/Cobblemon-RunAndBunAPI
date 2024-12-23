@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0] - 2024-12-23
+
+***Fixed***
+
+- Battle music themes not playing in trainer battles (`battle.pvn`)
+
 ## [0.10.1-beta] - 2024-12-09
 
 ***Fixed***

@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.CobblemonSounds;
 import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
@@ -42,6 +43,7 @@ import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerBag;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerPlayer;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
@@ -322,7 +324,9 @@ public class BattleManager {
     }
 
     private static BattleActor toBattleActor(TrainerPlayer participant) {
-        return new PlayerBattleActor(participant.getPlayer().getUUID(), toBattlePokemons(participant.getTeam()));
+        var actor = new PlayerBattleActor(participant.getPlayer().getUUID(), toBattlePokemons(participant.getTeam()));
+        actor.setBattleTheme(CobblemonSounds.PVN_BATTLE);
+        return actor;
     }
 
     private static BattleActor toBattleActor(TrainerNPC participant) {
