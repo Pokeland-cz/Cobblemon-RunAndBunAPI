@@ -150,4 +150,4 @@ dependencies {
 }
 ```
 
-> You can find the `fileId` in the URL of the curseforge downlaod page for a specific version.
+> You can find the `fileId` in the URL of the curseforge download page for a specific version.
