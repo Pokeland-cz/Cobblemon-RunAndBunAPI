@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.gson.Gson;
@@ -55,6 +56,8 @@ import net.minecraft.world.entity.LivingEntity;
 public final class RCTApiCommands {
     private static Gson GSON = new Gson();
 
+    private static String prefix;
+
     private static final String CMD_BATTLE = "battle";
     private static final String ARG_PARTICIPANT = "participant";
     private static final String ARG_VS = "vs";
@@ -67,9 +70,19 @@ public final class RCTApiCommands {
     private RCTApiCommands() {}
 
     /**
-     * Registers all commands provided by this mod.
+     * Prepares commands for registration and sets the command prefix to 'rctapi'.
      */
     public static void register() {
+        RCTApiCommands.register(ModCommon.MOD_ID);
+    }
+
+    /**
+     * Prepares commands for registration and sets the command prefix.
+     * 
+     * @param prefix Prefix of all commands.
+     */
+    public static void register(String prefix) {
+        RCTApiCommands.prefix = prefix;
         CommandRegistrationEvent.EVENT.register(RCTApiCommands::onCommandRegistration);
     }
 
@@ -77,10 +90,13 @@ public final class RCTApiCommands {
         var builder = Commands.literal(CMD_BATTLE);
 
         for(var format : BattleFormat.values()) {
-            builder.then(builderFormat(format));
+            builder.then(builderFormat(format, false, false));
+            builder.then(builderFormat(format, false, true));
+            builder.then(builderFormat(format, true, false));
+            builder.then(builderFormat(format, true, true));
         }
 
-        dispatcher.register(Commands.literal(ModCommon.MOD_ID)
+        dispatcher.register(Commands.literal(RCTApiCommands.prefix)
             .requires(css -> css.hasPermission(2))
             .then(Commands.literal(CMD_ATTACH)
                 .then(Commands
@@ -91,23 +107,25 @@ public final class RCTApiCommands {
             .then(builder));
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format) {
+    private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format, boolean entities1, boolean entities2) {
         var battleType = format.getCobblemonBattleFormat().getBattleType();
 
         return Commands.literal(format.name())
-            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), false))
-            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), true));
+            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), false, entities1, entities2))
+            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), true, entities1, entities2));
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide, boolean withRules) {
+    private static ArgumentBuilder<CommandSourceStack, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide, boolean withRules, boolean entities1, boolean entities2) {
         if(actor < actorsPerSide) {
-            var arg = RequiredArgumentBuilder
-                .<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                .suggests(RCTApiCommands::get_trainer_id_suggestions);
+            var arg = entities1
+                ? Commands.argument(getParticipantEntityId(side, actor), EntityArgument.entity())
+                : RequiredArgumentBuilder
+                    .<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string())
+                    .suggests(RCTApiCommands::get_trainer_id_suggestions);
 
             return actor + 1 < actorsPerSide
-                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, withRules)) : side < 1
-                ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, withRules)))
+                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, withRules, entities1, entities2)) : side < 1
+                ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, withRules, entities2, entities1)))
                 : withRules
                     ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> RCTApiCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
                     : arg.executes(context -> RCTApiCommands.battle(context, format, null));
@@ -118,6 +136,10 @@ public final class RCTApiCommands {
 
     private static String getParticipantId(int side, int actor) {
         return String.format("%s_%d_%d", ARG_PARTICIPANT, side, actor);
+    }
+
+    private static String getParticipantEntityId(int side, int actor) {
+        return String.format("%s_%d_%d_E", ARG_PARTICIPANT, side, actor);
     }
 
     private static int handleError(CommandContext<CommandSourceStack> context, Exception e) {
@@ -153,13 +175,42 @@ public final class RCTApiCommands {
             for(int side = 0; side < 2; side++) {
                 var list = participants.get(side);
 
-                try {
-                    for(int actor = 0; actor < actorsPerSide; actor++) {
-                        var trainerId = context.getArgument(getParticipantId(side, actor), String.class);
-                        list.add(registry.getById(trainerId));
+                for(int actor = 0; actor < actorsPerSide; actor++) {
+                    String trainerId;
+
+                    try {
+                        var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, getParticipantEntityId(side, actor));
+                        trainerId = RCTApi.getInstance().getTrainerRegistry().getId(trainerEntity);
+
+                        if(trainerId == null) {
+                            throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
+                        }
+                    } catch(IllegalArgumentException e) {
+                        // either no argument or wrong type -> try again
+                        trainerId = context.getArgument(getParticipantId(side, actor), String.class);
+
+                        try {                            
+                            // command syntax for trainer id and entity selector is the same hence minecraft
+                            // fails to treat uuids as entity selectors (but rather as trainer ids).
+                            var entityUUID = UUID.fromString(trainerId);
+                            var trainerEntity = (LivingEntity)context.getSource().getLevel().getEntity(entityUUID);
+                            trainerId = RCTApi.getInstance().getTrainerRegistry().getId(trainerEntity);
+    
+                            if(trainerId == null) {
+                                throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
+                            }
+                        } catch(IllegalArgumentException _e) {
+                            // argument is a trainer id
+                        }
                     }
-                } catch(IllegalArgumentException e) {
-                    // ignore (assume mixed battle -> validation in BattleManager)
+
+                    var trainer = registry.getById(trainerId);
+
+                    if(trainer == null) {
+                        throw new Exception(String.format("No such trainer registered '%s'", trainerId));
+                    }
+
+                    list.add(trainer);
                 }
             }
 

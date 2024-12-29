@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0] - 2024-12-29
+
+***Added***
+
+- `RCTApiCommands.register(String)` allows to register `RCTApi` commands with a different prefix
+- `TrainerRegistry#getId(LivingEntity)` retrieves the trainer id for any given `LivingEntity`
+
+***Changed***
+
+- `battle` command now supports entity selectors
+
 ## [0.10.2-beta] - 2024-12-23
 
 ***Fixed***

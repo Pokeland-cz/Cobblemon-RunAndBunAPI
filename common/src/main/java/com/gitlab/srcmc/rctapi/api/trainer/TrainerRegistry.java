@@ -30,6 +30,7 @@ import com.gitlab.srcmc.rctapi.api.models.converter.PokemonModelConverter;
 import com.gitlab.srcmc.rctapi.api.models.converter.TrainerModelConverter;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Key/value trainer storage.
@@ -172,8 +173,29 @@ public class TrainerRegistry {
      */
     @NotNull
     public Set<String> getIds() {
-        // return Collections.unmodifiableSet(this.trainerIds);
         return this.trainers.keySet();
+    }
+
+    /**
+     * Retrieves the trainer id for the given {@link LivingEntity}. Note that the id
+     * for an entity can change at any time if either a different {@link Trainer} is
+     * attached to that entity or, in case of players for potential other reasons (the
+     * id handling of trainer players is not defined by this api).
+     * 
+     * @param entity {@link LivingEntity} to retreive the trainer id from.
+     * @return Id of the attached {@link Trainer} or the id of the {@link
+     * TrainerPlayer} if entity is a player. Returns null if no trainer was found.
+     */
+    public String getId(LivingEntity entity) {
+        for(var entry : this.trainers.entrySet()) {
+            var tnpc = entry.getValue().getEntity();
+
+            if(tnpc != null && tnpc.equals(entity)) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
     }
 
     /**
