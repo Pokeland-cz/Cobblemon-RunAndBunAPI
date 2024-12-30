@@ -21,11 +21,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor;
 import com.cobblemon.mod.common.battles.AlreadyInBattleError;
 import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.battles.BattleStartError;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
+import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 
 import net.minecraft.network.chat.Component;
 
@@ -41,6 +43,8 @@ public class BattleContextValidator {
      * {@link BattleActor}s must implement {@link EntityBackedBattleActor} and may not
      * return null when retrieving the attached entity with {@link EntityBackedBattleActor#getEntity()}.
      * 
+     * Note: The first participant in participants1 must be a player!
+     * 
      * @param errors {@link ErroredBattleStart} to collect errors.
      * @param context {@link BattleContext} to check.
      * @return The provided {@link ErroredBattleStart} instance.
@@ -50,6 +54,14 @@ public class BattleContextValidator {
         var actorsPersSide = battleType.getActorsPerSide();
         var slotsPerActor = battleType.getSlotsPerActor();
         var actorIds = new HashSet<UUID>();
+
+        if(context.getBattleSide1().getActors().length > 0) {
+            var primaryActor = context.getBattleSide1().getActors()[0];
+
+            if(!(primaryActor instanceof PlayerBattleActor)) {
+                errors.getParticipantErrors().get(primaryActor).add(BattleStartError.Companion.canceledByEvent(Component.literal(String.format("Primary actor '%s' is not a player", primaryActor.getName().getString()))));
+            }
+        }
 
         for(var side : List.of(context.getBattleSide1(), context.getBattleSide2())) {
             if(side.getActors().length != actorsPersSide) {

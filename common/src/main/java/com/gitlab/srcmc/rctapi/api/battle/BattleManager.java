@@ -199,6 +199,8 @@ public class BattleManager {
      * Starts a new {@link PokemonBattle}. Potential errors that may occur at the start
      * or during a battle are sent to all participating players.
      * 
+     * Note: The first participant in participants1 must be a player!
+     * 
      * @param participants1 List of {@link Trainer} participants for one side.
      * @param participants2 List of {@link Trainer} participants for the other side.
      * @param battleFormat {@link BattleFormat} to use.
@@ -220,8 +222,7 @@ public class BattleManager {
                 battleFormat.getCobblemonBattleFormat(),
                 side1, side2, false
             ).ifErrored(error -> {
-                // TODO: how to log reason on server?
-                ModCommon.LOG.error("Failed to start battle");
+                ModCommon.LOG.error("Failed to start battle: " + toBattleArgsString(participants1, participants2));
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
@@ -235,8 +236,7 @@ public class BattleManager {
                 return Unit.INSTANCE;
             });
         } else {
-            // TODO: how to log reason on server?
-            ModCommon.LOG.error("Failed to validate battle");
+            ModCommon.LOG.error("Failed to validate battle: " + toBattleArgsString(participants1, participants2));
             sendErrors(errors, participants1, participants2);
             return false;
         }
@@ -336,6 +336,24 @@ public class BattleManager {
             toBattlePokemons(true, participant.getTeam()),
             participant.getBag().clone(),
             participant.getBattleAI());
+    }
+
+    private static String toBattleArgsString(List<Trainer> participants1, List<Trainer> participants2) {
+        var sb = new StringBuilder();
+
+        if(participants1.size() > 0) {
+            sb.append(participants1.getFirst().getName());
+        }
+
+        participants1.stream().skip(1).forEach(p -> sb.append(", ").append(p.getName()));
+        sb.append(" vs ");
+
+        if(participants2.size() > 0) {
+            sb.append(participants2.getFirst().getName());
+        }
+
+        participants2.stream().skip(1).forEach(p -> sb.append(", ").append(p.getName()));
+        return sb.toString();
     }
 
     // TODO: move to different package
