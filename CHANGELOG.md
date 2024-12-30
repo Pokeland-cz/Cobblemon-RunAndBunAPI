@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0] - 2024-12-30
+
+***Fixed***
+
+- Issues with entity selector in battle command for formats with multiple participants
+
 ## [0.10.3-beta] - 2024-12-29
 
 ***Added***

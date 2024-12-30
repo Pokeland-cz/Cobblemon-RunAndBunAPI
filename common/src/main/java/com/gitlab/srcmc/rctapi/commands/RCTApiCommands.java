@@ -90,10 +90,7 @@ public final class RCTApiCommands {
         var builder = Commands.literal(CMD_BATTLE);
 
         for(var format : BattleFormat.values()) {
-            builder.then(builderFormat(format, false, false));
-            builder.then(builderFormat(format, false, true));
-            builder.then(builderFormat(format, true, false));
-            builder.then(builderFormat(format, true, true));
+            builder.then(builderFormat(format));
         }
 
         dispatcher.register(Commands.literal(RCTApiCommands.prefix)
@@ -107,28 +104,37 @@ public final class RCTApiCommands {
             .then(builder));
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format, boolean entities1, boolean entities2) {
+    private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format) {
         var battleType = format.getCobblemonBattleFormat().getBattleType();
+        var actorsPerSide = battleType.getActorsPerSide();
+        var builder = Commands.literal(format.name())
+            .then(builderParticipants(format, 0, 0, actorsPerSide, 0, false))
+            .then(builderParticipants(format, 0, 0, actorsPerSide, 0, true));
 
-        return Commands.literal(format.name())
-            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), false, entities1, entities2))
-            .then(builderParticipants(format, 0, 0, battleType.getActorsPerSide(), true, entities1, entities2));
+        var p = (long)Math.pow(2, 2*actorsPerSide);
+
+        for(long i = 1; i < p; i++) {
+            builder = builder
+                .then(builderParticipants(format, 0, 0, actorsPerSide, i, false))
+                .then(builderParticipants(format, 0, 0, actorsPerSide, i, true));
+        }
+
+        return builder;
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide, boolean withRules, boolean entities1, boolean entities2) {
+    private static ArgumentBuilder<CommandSourceStack, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide, long entityArg, boolean withRules) {
         if(actor < actorsPerSide) {
-            var arg = entities1
+            var arg = ((1L<<(side*actorsPerSide + actor)) & entityArg) != 0
                 ? Commands.argument(getParticipantEntityId(side, actor), EntityArgument.entity())
-                : RequiredArgumentBuilder
-                    .<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string())
-                    .suggests(RCTApiCommands::get_trainer_id_suggestions);
+                : RequiredArgumentBuilder.<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string()).suggests(RCTApiCommands::get_trainer_id_suggestions);
 
             return actor + 1 < actorsPerSide
-                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, withRules, entities1, entities2)) : side < 1
-                ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, withRules, entities2, entities1)))
-                : withRules
-                    ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> RCTApiCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
-                    : arg.executes(context -> RCTApiCommands.battle(context, format, null));
+                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, entityArg, withRules))
+                : side < 1
+                    ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, entityArg, withRules)))
+                    : withRules
+                        ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> RCTApiCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
+                        : arg.executes(context -> RCTApiCommands.battle(context, format, null));
         }
 
         throw new IllegalArgumentException("invalid battle actor index: " + actor);
