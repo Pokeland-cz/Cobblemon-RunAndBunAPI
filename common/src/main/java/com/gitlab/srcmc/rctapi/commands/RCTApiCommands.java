@@ -155,7 +155,7 @@ public final class RCTApiCommands {
     }
 
     private static CompletableFuture<Suggestions> get_trainer_id_suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) throws CommandSyntaxException {
-        RCTApi.getInstance().getTrainerRegistry().getIds().forEach(builder::suggest);
+        RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getIds().forEach(builder::suggest);
         return builder.buildFuture();
     }
 
@@ -163,7 +163,7 @@ public final class RCTApiCommands {
         try {
             var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
             var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
-            RCTApi.getInstance().getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
+            RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
             context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
         } catch(Exception e) {
             return handleError(context, e);
@@ -174,7 +174,7 @@ public final class RCTApiCommands {
 
     private static int battle(CommandContext<CommandSourceStack> context, BattleFormat format, Tag rulesTag) {
         try {
-            var registry = RCTApi.getInstance().getTrainerRegistry();
+            var registry = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry();
             var actorsPerSide = format.getCobblemonBattleFormat().getBattleType().getActorsPerSide();
             List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
@@ -186,7 +186,7 @@ public final class RCTApiCommands {
 
                     try {
                         var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, getParticipantEntityId(side, actor));
-                        trainerId = RCTApi.getInstance().getTrainerRegistry().getId(trainerEntity);
+                        trainerId = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getId(trainerEntity);
 
                         if(trainerId == null) {
                             throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
@@ -200,7 +200,7 @@ public final class RCTApiCommands {
                             // fails to treat uuids as entity selectors (but rather as trainer ids).
                             var entityUUID = UUID.fromString(trainerId);
                             var trainerEntity = (LivingEntity)context.getSource().getLevel().getEntity(entityUUID);
-                            trainerId = RCTApi.getInstance().getTrainerRegistry().getId(trainerEntity);
+                            trainerId = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getId(trainerEntity);
     
                             if(trainerId == null) {
                                 throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
@@ -221,7 +221,7 @@ public final class RCTApiCommands {
             }
 
             var rules = rulesTag != null ? GSON.fromJson(rulesTag.getAsString(), BattleRules.class) : new BattleRules();
-            RCTApi.getInstance().getBattleManager().start(participants.get(0), participants.get(1), format, rules);
+            RCTApi.getInstance(RCTApiCommands.prefix).getBattleManager().start(participants.get(0), participants.get(1), format, rules);
         } catch(Exception e) {
             return handleError(context, e);
         }

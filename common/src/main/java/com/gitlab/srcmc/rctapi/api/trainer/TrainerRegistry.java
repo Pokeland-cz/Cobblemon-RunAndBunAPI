@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.gitlab.srcmc.rctapi.api.errors.RCTErrors;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
 import com.gitlab.srcmc.rctapi.api.models.TrainerModel;
@@ -40,6 +41,15 @@ public class TrainerRegistry {
     private Set<String> trainerNPCs = new HashSet<>();
     private Set<String> trainerPlayers = new HashSet<>();
     private TrainerModelConverter tmc;
+    private String id;
+    
+    public TrainerRegistry() {
+        this("");
+    }
+
+    public TrainerRegistry(String id) {
+        this.id = id;
+    }
 
     /**
      * Initializes and clears the trainer registry.
@@ -112,7 +122,7 @@ public class TrainerRegistry {
     public <T extends TrainerNPC> T registerNPC(@NotNull String trainerId, @NotNull T trainer) {
         this.register(trainerId, trainer);
         this.trainerNPCs.add(trainerId);
-        trainer.initTeam(trainerId);
+        trainer.initTeam(toOTId(trainerId));
         return trainer;
     }
 
@@ -164,6 +174,37 @@ public class TrainerRegistry {
         }
 
         return type.cast(trainer);
+    }
+
+    /**
+     * Retrieves the original {@link Trainer} instance for the given {@link Pokemon}.
+     * 
+     * @param pkmn Pokemon to retrieve the original {@link Trainer} for.
+     * @throws IllegalArgumentException If the trainer is not from the given type.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
+     */
+    public Trainer getByOT(@NotNull Pokemon pkmn) {        
+        return this.getByOT(pkmn, Trainer.class);
+    }
+
+    /**
+     * Retrieves the original {@link Trainer} instance for the given {@link Pokemon}.
+     * 
+     * @param <T> Target {@link Trainer} type.
+     * @param pkmn Pokemon to retrieve the original {@link Trainer} for.
+     * @param type Target {@link Trainer} type class instance.
+     * @throws IllegalArgumentException If the trainer is not from the given type.
+     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
+     */
+    public <T extends Trainer> T getByOT(@NotNull Pokemon pkmn, @NotNull Class<T> type) {
+        var otId = pkmn.getOriginalTrainer();
+        var parts = otId != null ? otId.split(":") : new String[0];
+
+        if(parts.length == 2 && parts[0].equals(this.id)) {
+            return this.getById(parts[1], type);
+        }
+        
+        return null;
     }
 
     /**
@@ -220,6 +261,17 @@ public class TrainerRegistry {
     public void clearPlayers() {
         this.trainerPlayers.forEach(this.trainers::remove);
         this.trainerPlayers.clear();
+    }
+
+    /**
+     * Constructs the original trainer id, which is used by this mod to associate
+     * trainers to entities.
+     * 
+     * @param trainerId Trainer id to construct the OT id for.
+     * @return Original trainer id.
+     */
+    protected String toOTId(String trainerId) {
+        return String.format("%s:%s", this.id, trainerId);
     }
 
     private void register(String trainerId, Trainer trainer) {

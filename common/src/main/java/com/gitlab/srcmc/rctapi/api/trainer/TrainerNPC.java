@@ -97,9 +97,9 @@ public class TrainerNPC implements Trainer {
         return this.entity;
     }
 
-    void initTeam(String trainerId) {
+    void initTeam(String otId) {
         for(var pkmn : this.team) {
-            pkmn.setOriginalTrainer(trainerId);
+            pkmn.setOriginalTrainer(otId);
             pkmn.setOriginalTrainerName(this.getName());
             pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
         }

@@ -38,10 +38,9 @@ public abstract class PokemonMixin {
     private void injectGetOwnerEntity(CallbackInfoReturnable<LivingEntity> cir) {
         if(cir.getReturnValue() == null) {
             var self = (Pokemon)(Object)this;
-            var ot = self.getOriginalTrainer();
             Trainer npc;
 
-            if(ot != null && (npc = RCTApi.getInstance().getTrainerRegistry().getById(ot)) != null) {
+            if((npc = RCTApi.getInstances().map(e -> e.getValue().getTrainerRegistry().getByOT(self)).dropWhile(n -> n == null).findFirst().orElse(null)) != null) {
                 cir.setReturnValue(npc.getEntity());
             }
         }

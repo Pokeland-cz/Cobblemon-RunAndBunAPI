@@ -39,6 +39,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.LevelResource;
 
 public class ExampleMod {
+    private static final String MOD_ID = "example_mod";
+
     private static final Gson GSON = new GsonBuilder()
         .setPrettyPrinting()
         .disableHtmlEscaping()
@@ -47,20 +49,17 @@ public class ExampleMod {
     private static String fileToId(File file) {
         var name = file.getName().toLowerCase().trim();
         var i = name.lastIndexOf('.');
-        return i < 0 ? name : name.substring(0, i);
+        return (i < 0 ? name : name.substring(0, i)).replace(' ', '_');
     }
+
+    // Our own instance of the service.
+    private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        // We may initialize the RCTApi singleton with custom implementations of
-        // TrainerRegistry and BattleManager. If not explicitly initialized (i.e. with
-        // RCTApi#init(TrainerRegistry, BattleManager)) a RCTApi instance will be lazily
-        // instantiated on first retrieval with RCTApi#getInstance() using a default
-        // constructed TrainerRegistry and BattleManager.
-
-        RCTApiCommands.register(); // commands are not registered unless explicitly doing so.
+        RCTApiCommands.register(MOD_ID); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 
@@ -75,11 +74,11 @@ public class ExampleMod {
     }
 
     static void onServerStarting(MinecraftServer server) {
-        // Initialize (and clear) the trainer registry for the server
-        var trainerRegistry = RCTApi.getInstance().getTrainerRegistry();
+        // Initialize (and clear) the trainer registry for the server.
+        var trainerRegistry = RCT.getTrainerRegistry();
         trainerRegistry.init(server); // this is required
 
-        // We look for trainer json files in 'minecraft/trainers'
+        // We look for trainer json files in 'minecraft/trainers'.
         var trainerDir = Path.of(server.getWorldPath(LevelResource.ROOT).toString(), "..", "..", "trainers").toFile();
         var files = trainerDir.listFiles(f -> f.getName().toLowerCase().endsWith(".json"));
 
@@ -92,11 +91,11 @@ public class ExampleMod {
                     var trainerId = fileToId(trainerFile);
                     trainerRegistry.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class));
                 } catch(RCTException errors) {
-                    // This will log all issues that the model may has (the trainer was registered regardless)
+                    // This will log all issues that the model may has (the trainer was registered regardless).
                     ModCommon.LOG.error("Model validation failure in: " + trainerFile.getPath());
                     errors.getErrors().forEach(error -> ModCommon.LOG.error(error.message));
                 } catch(IOException e) {
-                    // The trainer was not registered
+                    // The trainer was not registered.
                     ModCommon.LOG.error("Failed to parse trainer", e);
                 }
             }
@@ -109,10 +108,10 @@ public class ExampleMod {
     // course possible to use any other string as id to circumvent this issue (e.g. a
     // players uuid).
     static void onPlayerJoin(ServerPlayer player) {
-        RCTApi.getInstance().getTrainerRegistry().registerPlayer(player.getName().getString(), player);
+        RCT.getTrainerRegistry().registerPlayer(player.getName().getString(), player);
     }
 
     static void onPlayerQuit(Player player) {
-        RCTApi.getInstance().getTrainerRegistry().unregisterById(player.getName().getString());
+        RCT.getTrainerRegistry().unregisterById(player.getName().getString());
     }
 }
