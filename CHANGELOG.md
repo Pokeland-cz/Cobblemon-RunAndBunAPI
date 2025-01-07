@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.6-beta] - 2025-01-07
+
+**Fixed:**
+
+- *#17* Trainer pokemon being saved to the world
+
 ## [0.10.5-beta] - 2025-01-07
 
 **Added:**
