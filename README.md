@@ -2,7 +2,7 @@
 
 Trainer management and battle API for [Cobblemon](https://cobblemon.com/en).
 
-This API was developed as foundation for the [Radical CobblemonTrainers](https://gitlab.com/srcmc/rct/mod) mod and as replacement for the discontinued dependency [CobblemonTrainers](https://github.com/davo899/CobblemonTrainers) for Minecraft >= `1.21` and Cobblemon >= `1.6`.
+This API was developed as foundation for the [Radical Cobblemon Trainers](https://gitlab.com/srcmc/rct/mod) mod and as replacement for the discontinued dependency [CobblemonTrainers](https://github.com/davo899/CobblemonTrainers) for Minecraft >= `1.21` and Cobblemon >= `1.6`.
 
 Yet it is designed as independent library to provide a subset of similar features for everyone to use.
 
