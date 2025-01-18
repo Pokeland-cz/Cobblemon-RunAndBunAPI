@@ -4,14 +4,15 @@
 
 **Added:**
 
-- *#22* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
-- *#21* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#23* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
+- *#22* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#20* Improved commands (api)
+- *#21* Improved commands (api)
   - Better suggestions
   - Win commands support
+- *#20* The mod is now also a requirement for clients (for now)
 
 **Fixed:**
 
