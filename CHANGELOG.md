@@ -15,7 +15,7 @@
 
 **Fixed:**
 
-- *#18* Slight changes to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
+- *#18* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
 
 ## [0.10.6-beta] - 2025-01-07
 
