@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.7-beta] - 2025-01-17
+
+**Added:**
+
+- *#20* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
+- *#19* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+
+**Changed:**
+
+- *#18* Improved commands (api)
+  - Better suggestions
+  - Win commands support
+
 ## [0.10.6-beta] - 2025-01-07
 
 **Fixed:**

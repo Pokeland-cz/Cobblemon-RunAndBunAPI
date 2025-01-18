@@ -1,6 +1,6 @@
 /*
  * This file is part of Radical Cobblemon Trainers API.
- * Copyright (c) 2024, HDainester, All rights reserved.
+ * Copyright (c) 2025, HDainester, All rights reserved.
  *
  * Radical Cobblemon Trainers API is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -43,6 +43,7 @@ public class ModCommon {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 
     public static void init() {
+        ModRegistries.init();
         RCTBattleAIConfig.register();
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();
@@ -69,7 +70,11 @@ public class ModCommon {
     }
 
     static Unit handleBattleVictory(BattleVictoryEvent event) {
+        // TODO: why does Cobblemon not do this?
+        event.getBattle().setWinners(event.getWinners());
+        event.getBattle().setLosers(event.getLosers());
         BattleStates.notifyBattleEnded(event.getBattle());
+        RCTApi.getInstance().getBattleManager().end(event.getBattle().getBattleId());
         return Unit.INSTANCE;
     }
 

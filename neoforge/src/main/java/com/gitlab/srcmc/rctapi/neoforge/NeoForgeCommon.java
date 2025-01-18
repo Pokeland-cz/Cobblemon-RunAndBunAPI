@@ -1,6 +1,6 @@
 /*
  * This file is part of Radical Cobblemon Trainers API.
- * Copyright (c) 2024, HDainester, All rights reserved.
+ * Copyright (c) 2025, HDainester, All rights reserved.
  *
  * Radical Cobblemon Trainers API is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,14 +17,26 @@
  */
 package com.gitlab.srcmc.rctapi.neoforge;
 
+import net.minecraft.commands.synchronization.ArgumentTypeInfos;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.ModRegistries;
+import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
+import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
 
 @Mod(ModCommon.MOD_ID)
 public final class NeoForgeCommon {
-    public NeoForgeCommon() {
+    public NeoForgeCommon(ModContainer container) {
         ModCommon.init();
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+        container.getEventBus().addListener(this::onCommonSetup);
+    }
+
+    void onCommonSetup(FMLCommonSetupEvent event) {
+        ArgumentTypeInfos.registerByClass(BattleEndCommandMapArgument.class, ModRegistries.ArgumentTypes.BATTLE_END_COMMAND_MAP.get());
+        ArgumentTypeInfos.registerByClass(BattleRulesArgument.class, ModRegistries.ArgumentTypes.BATTLE_RULES.get());
     }
 }

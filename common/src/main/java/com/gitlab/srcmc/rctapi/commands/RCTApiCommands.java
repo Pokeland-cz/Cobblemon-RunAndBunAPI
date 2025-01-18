@@ -1,6 +1,6 @@
 /*
  * This file is part of Radical Cobblemon Trainers API.
- * Copyright (c) 2024, HDainester, All rights reserved.
+ * Copyright (c) 2025, HDainester, All rights reserved.
  *
  * Radical Cobblemon Trainers API is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,215 +17,56 @@
  */
 package com.gitlab.srcmc.rctapi.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
-import com.google.gson.Gson;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.util.HashSet;
+import java.util.Set;
+import org.jetbrains.annotations.NotNull;
 
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
-import com.gitlab.srcmc.rctapi.api.battle.BattleFormat;
-import com.gitlab.srcmc.rctapi.api.battle.BattleRules;
-import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
-import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
-
-import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.Commands.CommandSelection;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.NbtTagArgument;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Ingame commands provided by this mod.
  */
 public final class RCTApiCommands {
-    private static Gson GSON = new Gson();
-
-    private static String prefix;
-
-    private static final String CMD_BATTLE = "battle";
-    private static final String ARG_PARTICIPANT = "participant";
-    private static final String ARG_VS = "vs";
-    private static final String ARG_RULES = "rules";
-    
-    private static final String CMD_ATTACH = "attach";
-    private static final String ARG_TRAINER_ID = "trainerId";
-    private static final String ARG_TRAINER_ENTITY = "trainerEntity";
-
+    private static Set<CommandsContext> contexts = new HashSet<>();
     private RCTApiCommands() {}
 
     /**
-     * Prepares commands for registration and sets the command prefix to 'rctapi'.
+     * Registers a default initialized {@link CommandsContext} instance with the 'rctapi' prefix.
+     * 
+     * @deprecated Use {@link RCTApiCommands#register(CommandsContext)} instead.
      */
     public static void register() {
         RCTApiCommands.register(ModCommon.MOD_ID);
     }
-
+    
     /**
-     * Prepares commands for registration and sets the command prefix.
+     * Registers a default initialized {@link CommandsContext} instance with the given
+     * prefix.
      * 
-     * @param prefix Prefix of all commands.
+     * @param prefix Prefix of the commands context.
+     * @deprecated Use {@link RCTApiCommands#register(CommandsContext)} instead.
      */
     public static void register(String prefix) {
-        RCTApiCommands.prefix = prefix;
-        CommandRegistrationEvent.EVENT.register(RCTApiCommands::onCommandRegistration);
+        RCTApiCommands.register(new CommandsContext() {
+            @Override public int getBattleEndCommandPermission() { return 1; }
+            @Override public String getPrefix() { return prefix; }
+        });
     }
-
-    static void onCommandRegistration(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, CommandSelection env) {
-        var builder = Commands.literal(CMD_BATTLE);
-
-        for(var format : BattleFormat.values()) {
-            builder.then(builderFormat(format));
-        }
-
-        dispatcher.register(Commands.literal(RCTApiCommands.prefix)
-            .requires(css -> css.hasPermission(2))
-            .then(Commands.literal(CMD_ATTACH)
-                .then(Commands
-                    .argument(ARG_TRAINER_ID, StringArgumentType.string())
-                    .suggests(RCTApiCommands::get_trainer_id_suggestions)
-                    .then(Commands.argument(ARG_TRAINER_ENTITY, EntityArgument.entity())
-                        .executes(RCTApiCommands::attach))))
-            .then(builder));
-    }
-
-    private static ArgumentBuilder<CommandSourceStack, ?> builderFormat(BattleFormat format) {
-        var battleType = format.getCobblemonBattleFormat().getBattleType();
-        var actorsPerSide = battleType.getActorsPerSide();
-        var builder = Commands.literal(format.name())
-            .then(builderParticipants(format, 0, 0, actorsPerSide, 0, false))
-            .then(builderParticipants(format, 0, 0, actorsPerSide, 0, true));
-
-        var p = (long)Math.pow(2, 2*actorsPerSide);
-
-        for(long i = 1; i < p; i++) {
-            builder = builder
-                .then(builderParticipants(format, 0, 0, actorsPerSide, i, false))
-                .then(builderParticipants(format, 0, 0, actorsPerSide, i, true));
-        }
-
-        return builder;
-    }
-
-    private static ArgumentBuilder<CommandSourceStack, ?> builderParticipants(BattleFormat format, int side, int actor, int actorsPerSide, long entityArg, boolean withRules) {
-        if(actor < actorsPerSide) {
-            var arg = ((1L<<(side*actorsPerSide + actor)) & entityArg) != 0
-                ? Commands.argument(getParticipantEntityId(side, actor), EntityArgument.entity())
-                : RequiredArgumentBuilder.<CommandSourceStack, String>argument(getParticipantId(side, actor), StringArgumentType.string()).suggests(RCTApiCommands::get_trainer_id_suggestions);
-
-            return actor + 1 < actorsPerSide
-                ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, entityArg, withRules))
-                : side < 1
-                    ? arg.then(Commands.literal(ARG_VS).then(builderParticipants(format, side + 1, 0, actorsPerSide, entityArg, withRules)))
-                    : withRules
-                        ? arg.then(Commands.argument(ARG_RULES, NbtTagArgument.nbtTag()).executes(context -> RCTApiCommands.battle(context, format, context.getArgument(ARG_RULES, Tag.class))))
-                        : arg.executes(context -> RCTApiCommands.battle(context, format, null));
-        }
-
-        throw new IllegalArgumentException("invalid battle actor index: " + actor);
-    }
-
-    private static String getParticipantId(int side, int actor) {
-        return String.format("%s_%d_%d", ARG_PARTICIPANT, side, actor);
-    }
-
-    private static String getParticipantEntityId(int side, int actor) {
-        return String.format("%s_%d_%d_E", ARG_PARTICIPANT, side, actor);
-    }
-
-    private static int handleError(CommandContext<CommandSourceStack> context, Exception e) {
-        ModCommon.LOG.error(e.getMessage(), e);
-        context.getSource().sendFailure(Component.nullToEmpty(e.getMessage()));
-        return 1;
-    }
-
-    private static CompletableFuture<Suggestions> get_trainer_id_suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) throws CommandSyntaxException {
-        RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getIds().forEach(builder::suggest);
-        return builder.buildFuture();
-    }
-
-    private static int attach(CommandContext<CommandSourceStack> context) {
-        try {
-            var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
-            var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
-            RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
-            context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
-        } catch(Exception e) {
-            return handleError(context, e);
-        }
-
-        return 0;
-    }
-
-    private static int battle(CommandContext<CommandSourceStack> context, BattleFormat format, Tag rulesTag) {
-        try {
-            var registry = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry();
-            var actorsPerSide = format.getCobblemonBattleFormat().getBattleType().getActorsPerSide();
-            List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
-
-            for(int side = 0; side < 2; side++) {
-                var list = participants.get(side);
-
-                for(int actor = 0; actor < actorsPerSide; actor++) {
-                    String trainerId;
-
-                    try {
-                        var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, getParticipantEntityId(side, actor));
-                        trainerId = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getId(trainerEntity);
-
-                        if(trainerId == null) {
-                            throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
-                        }
-                    } catch(IllegalArgumentException e) {
-                        // either no argument or wrong type -> try again
-                        trainerId = context.getArgument(getParticipantId(side, actor), String.class);
-
-                        try {                            
-                            // command syntax for trainer id and entity selector is the same hence minecraft
-                            // fails to treat uuids as entity selectors (but rather as trainer ids).
-                            var entityUUID = UUID.fromString(trainerId);
-                            var trainerEntity = (LivingEntity)context.getSource().getLevel().getEntity(entityUUID);
-                            trainerId = RCTApi.getInstance(RCTApiCommands.prefix).getTrainerRegistry().getId(trainerEntity);
     
-                            if(trainerId == null) {
-                                throw new Exception(String.format("'%s' has no trainer attached", trainerEntity.getName().getString()));
-                            }
-                        } catch(IllegalArgumentException _e) {
-                            // argument is a trainer id
-                        }
-                    }
-
-                    var trainer = registry.getById(trainerId);
-
-                    if(trainer == null) {
-                        throw new Exception(String.format("No such trainer registered '%s'", trainerId));
-                    }
-
-                    list.add(trainer);
-                }
-            }
-
-            var rules = rulesTag != null ? GSON.fromJson(rulesTag.getAsString(), BattleRules.class) : new BattleRules();
-            RCTApi.getInstance(RCTApiCommands.prefix).getBattleManager().start(participants.get(0), participants.get(1), format, rules);
-        } catch(Exception e) {
-            return handleError(context, e);
+    /**
+     * Registers a {@link CommandsContext} instance for the given prefix (should match
+     * the id used to register a {@link RCTApi} instance).
+     * 
+     * @throws IllegalArgumentException If the {@link CommandsContext} instance was already registered.
+     * @see {@link RCTApi#initInstance(String)}
+     */
+    public static void register(@NotNull CommandsContext context) {
+        if(!RCTApiCommands.contexts.add(context)) {
+            throw new IllegalArgumentException("Commands context '" + context.getPrefix() + "' already registered");
         }
 
-        return 0;
+        CommandRegistrationEvent.EVENT.register(context::onCommandRegistration);
     }
 }

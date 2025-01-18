@@ -1,6 +1,6 @@
 /*
  * This file is part of Radical Cobblemon Trainers API.
- * Copyright (c) 2024, HDainester, All rights reserved.
+ * Copyright (c) 2025, HDainester, All rights reserved.
  *
  * Radical Cobblemon Trainers API is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,6 +32,7 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
 import com.gitlab.srcmc.rctapi.api.models.TrainerModel;
+import com.gitlab.srcmc.rctapi.commands.CommandsContext;
 import com.gitlab.srcmc.rctapi.commands.RCTApiCommands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,11 +56,17 @@ public class ExampleMod {
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
+    // Our own commands context.
+    static class ExampleCommandsContext extends CommandsContext {
+        @Override public String getPrefix() { return MOD_ID; }
+        @Override public int getBattleEndCommandPermission() { return 2; }
+    }
+
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        RCTApiCommands.register(MOD_ID); // commands are not registered unless explicitly doing so.
+        RCTApiCommands.register(new ExampleCommandsContext()); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 
@@ -103,10 +110,8 @@ public class ExampleMod {
     }
 
     // Note: The TrainerRegistry does not allow to implicitly overwrite an existing
-    // trainer id. Using a players name may be sufficient for this example but in real
-    // scenarios a custom resolution of duplicate ids would be necessary. It is of
-    // course possible to use any other string as id to circumvent this issue (e.g. a
-    // players uuid).
+    // trainer id. Using a players name should be sufficient in most scenarios (an
+    // alternative could be a players uuid).
     static void onPlayerJoin(ServerPlayer player) {
         RCT.getTrainerRegistry().registerPlayer(player.getName().getString(), player);
     }
