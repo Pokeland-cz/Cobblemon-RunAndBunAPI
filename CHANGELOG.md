@@ -4,18 +4,22 @@
 
 **Added:**
 
-- *#21* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
-- *#20* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#22* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
+- *#21* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#19* Improved commands (api)
+- *#20* Improved commands (api)
   - Better suggestions
   - Win commands support
 
 **Fixed:**
 
-- *#18* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
+- *#19* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
+
+**Removed:**
+
+- *#18* `GEN_9_ROYAL` battle format for now (as it appears to not be implemented yet in Cobblemon)
 
 ## [0.10.6-beta] - 2025-01-07
 
