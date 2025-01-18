@@ -26,6 +26,10 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 
 public final class FabricCommon implements ModInitializer {
+    public FabricCommon() {
+        ModRegistries.init();
+    }
+
     @Override
     public void onInitialize() {
         ModCommon.init();

@@ -30,13 +30,14 @@ import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
 @Mod(ModCommon.MOD_ID)
 public final class NeoForgeCommon {
     public NeoForgeCommon(ModContainer container) {
-        ModCommon.init();
-        // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
+        ModRegistries.init();
         container.getEventBus().addListener(this::onCommonSetup);
     }
 
     void onCommonSetup(FMLCommonSetupEvent event) {
         ArgumentTypeInfos.registerByClass(BattleEndCommandMapArgument.class, ModRegistries.ArgumentTypes.BATTLE_END_COMMAND_MAP.get());
         ArgumentTypeInfos.registerByClass(BattleRulesArgument.class, ModRegistries.ArgumentTypes.BATTLE_RULES.get());
+        ModCommon.init();
+        // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
     }
 }

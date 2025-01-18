@@ -43,7 +43,6 @@ public class ModCommon {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
 
     public static void init() {
-        ModRegistries.init();
         RCTBattleAIConfig.register();
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();

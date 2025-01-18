@@ -4,14 +4,18 @@
 
 **Added:**
 
-- *#20* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
-- *#19* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#21* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
+- *#20* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#18* Improved commands (api)
+- *#19* Improved commands (api)
   - Better suggestions
   - Win commands support
+
+**Fixed:**
+
+- *#18* Slight changes to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
 
 ## [0.10.6-beta] - 2025-01-07
 
