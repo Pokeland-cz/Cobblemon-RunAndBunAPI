@@ -61,8 +61,8 @@ public abstract class CommandsContext {
     private static final String ARG_TRAINER_ID = "trainerId";
     private static final String ARG_TRAINER_ENTITY = "trainerEntity";
 
-    public abstract int getBattleEndCommandPermission();
     public abstract String getPrefix();
+    public abstract int getWinCommandsPermission();
 
     void onCommandRegistration(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, CommandSelection env) {
         var builder = Commands.literal(CMD_BATTLE);
@@ -204,7 +204,7 @@ public abstract class CommandsContext {
 
             if(commands != null) {
                 commands.values().stream().flatMap(Stream::of).forEach(c -> {
-                    c.setPermissionSupplier(this::getBattleEndCommandPermission);
+                    c.setPermissionSupplier(this::getWinCommandsPermission);
                     c.setTitleSupplier(this::getPrefix);
                 });
 

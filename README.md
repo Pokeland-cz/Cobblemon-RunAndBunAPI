@@ -41,11 +41,17 @@ public class ExampleMod {
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
+    // Our own commands context.
+    static class ExampleCommandsContext extends CommandsContext {
+        @Override public String getPrefix() { return MOD_ID; }
+        @Override public int getWinCommandsPermission() { return 2; }
+    }
+
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        RCTApiCommands.register(MOD_ID); // commands are not registered unless explicitly doing so.
+        RCTApiCommands.register(new ExampleCommandsContext()); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 
@@ -64,7 +70,7 @@ public class ExampleMod {
         var trainerRegistry = RCT.getTrainerRegistry();
         trainerRegistry.init(server); // this is required
 
-        // We look for trainer json files in 'minecraft/trainers'
+        // We look for trainer json files in 'minecraft/trainers'.
         var trainerDir = Path.of(server.getWorldPath(LevelResource.ROOT).toString(), "..", "..", "trainers").toFile();
         var files = trainerDir.listFiles(f -> f.getName().toLowerCase().endsWith(".json"));
 
@@ -77,11 +83,11 @@ public class ExampleMod {
                     var trainerId = fileToId(trainerFile);
                     trainerRegistry.registerNPC(trainerId, GSON.fromJson(rd, TrainerModel.class));
                 } catch(RCTException errors) {
-                    // This will log all issues that the model may has (the trainer was registered regardless)
+                    // This will log all issues that the model may has (the trainer was registered regardless).
                     ModCommon.LOG.error("Model validation failure in: " + trainerFile.getPath());
                     errors.getErrors().forEach(error -> ModCommon.LOG.error(error.message));
                 } catch(IOException e) {
-                    // The trainer was not registered
+                    // The trainer was not registered.
                     ModCommon.LOG.error("Failed to parse trainer", e);
                 }
             }
@@ -89,10 +95,8 @@ public class ExampleMod {
     }
 
     // Note: The TrainerRegistry does not allow to implicitly overwrite an existing
-    // trainer id. Using a players name may be sufficient for this example but in real
-    // scenarios a custom resolution of duplicate ids would be necessary. It is of
-    // course possible to use any other string as id to circumvent this issue (e.g. a
-    // players uuid).
+    // trainer id. Using a players name should be sufficient in most scenarios (an
+    // alternative could be a players uuid).
     static void onPlayerJoin(ServerPlayer player) {
         RCT.getTrainerRegistry().registerPlayer(player.getName().getString(), player);
     }

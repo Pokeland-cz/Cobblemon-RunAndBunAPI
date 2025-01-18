@@ -50,7 +50,7 @@ public final class RCTApiCommands {
      */
     public static void register(String prefix) {
         RCTApiCommands.register(new CommandsContext() {
-            @Override public int getBattleEndCommandPermission() { return 1; }
+            @Override public int getWinCommandsPermission() { return 1; }
             @Override public String getPrefix() { return prefix; }
         });
     }

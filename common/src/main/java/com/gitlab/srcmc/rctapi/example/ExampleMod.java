@@ -59,7 +59,7 @@ public class ExampleMod {
     // Our own commands context.
     static class ExampleCommandsContext extends CommandsContext {
         @Override public String getPrefix() { return MOD_ID; }
-        @Override public int getBattleEndCommandPermission() { return 2; }
+        @Override public int getWinCommandsPermission() { return 2; }
     }
 
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
