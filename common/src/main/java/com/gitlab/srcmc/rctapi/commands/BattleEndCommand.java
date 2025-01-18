@@ -52,14 +52,22 @@ public class BattleEndCommand {
     }
 
     public void execute(@NotNull MinecraftServer server, @NotNull LivingEntity... actorEntities) {
-        var c = this.command;
+        var c = this.command.trim();
         var pos = new Vec3(0, 0, 0);
+        LivingEntity source = null;
 
         for(int i = 0; i < actorEntities.length; i++) {
             var uuid = actorEntities[i].getUUID();
             var player = server.getPlayerList().getPlayer(uuid);
             var repl = player != null ? player.getName().getString() : uuid.toString();
-            c = c.replaceAll("@"+(i+1), repl);
+            var id = "@" + (i + 1);
+
+            if(source == null && c.startsWith(id)) {
+                source = actorEntities[i];
+                c = c.substring(id.length()).trim();
+            }
+
+            c = c.replaceAll(id, repl);
             pos = pos.add(actorEntities[i].getEyePosition());
         }
         
@@ -70,20 +78,22 @@ public class BattleEndCommand {
         }
 
         try {
-            cmds.getDispatcher().execute(c, this.createCommandSourceStack(server, pos));
+            cmds.getDispatcher().execute(c, this.createCommandSourceStack(server, pos, source));
         } catch (CommandSyntaxException e) {
             ModCommon.LOG.error(e.getMessage(), e);
         }
     }
 
-    private CommandSourceStack createCommandSourceStack(MinecraftServer server, Vec3 pos) {
+    private CommandSourceStack createCommandSourceStack(MinecraftServer server, Vec3 pos, LivingEntity source) {
         var level = server.overworld();
         var permission = this.permissionSupplier.get();
         var title = this.titleSupplier.get();
 
         return new CommandSourceStack(
-            server, pos, Vec2.ZERO, level, permission,
-            title, Component.literal(title), server, null);
+            source != null ? source : server,
+            source != null ? source.position() : pos, Vec2.ZERO, level, permission,
+            source != null ? source.getName().getString() : title,
+            source != null ? source.getDisplayName() : Component.literal(title), server, source).withSuppressedOutput();
     }
 
     public static class Map extends HashMap<Integer, BattleEndCommand[]> {}
