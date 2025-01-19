@@ -18,6 +18,7 @@
 package com.gitlab.srcmc.rctapi.api.battle;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -309,6 +310,17 @@ public class BattleManager {
      */
     public BattleState getState(UUID battleId) {
         return this.battleStates.get(battleId);
+    }
+
+    /**
+     * Retrieves a unmodiable collection of all {@link BattleState}s for an ongoing
+     * {@link PokemonBattle}s that were previously started with {@link
+     * BattleManager#start(List, List, BattleFormat, BattleRules)}.
+     * 
+     * @return Collection of active {@link BattleState}s.
+     */
+    public Collection<BattleState> getStates() {
+        return this.battleStates.values();
     }
 
     private static void sendErrors(ErroredBattleStart errors, List<Trainer> participants1, List<Trainer> participants2) {

@@ -4,12 +4,13 @@
 
 **Added:**
 
-- *#24* Simple Event API
+- *#25* Simple Event API
   - Event `BATTLE_ENDED`
   - Event `BATTLE_STARTED`
   - Event `TRAINER_REGISTRED`
   - Event `TRAINER_UNREGISTRED`
   - `EventContext` shared between the `TrainerRegistry` and `BattleManager` of an `RCTApi` service (but distinct of those from other services)
+- *#24* `BattleManager#getStates()` to retrieve all active battle states
 - *#23* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**

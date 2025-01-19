@@ -20,14 +20,13 @@ package com.gitlab.srcmc.rctapi.api.battle;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor;
 import com.cobblemon.mod.common.battles.AlreadyInBattleError;
-import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.battles.BattleStartError;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
+import com.gitlab.srcmc.rctapi.api.RCTApi;
 
 import net.minecraft.network.chat.Component;
 
@@ -69,14 +68,20 @@ public class BattleContextValidator {
             }
 
             for(var actor : side.getActors()) {
+                var it = RCTApi.getInstances().map(e -> e.getValue()).iterator();
+
+                while(it.hasNext()) {
+                    var bm = it.next().getBattleManager();                    
+
+                    if(bm.getStates().stream().anyMatch(bs -> bs.getBattle().getActor(actor.getUuid()) != null)) {
+                        errors.getParticipantErrors().get(actor).add(AlreadyInBattleError.Companion.alreadyInBattle(actor));
+                        break;
+                    }
+                }
+
                 if(actor instanceof EntityBackedBattleActor entityBacked && entityBacked.getEntity() != null) {
                     if(actor.getPokemonList().size() < slotsPerActor) {
                         errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.insufficientPokemon(entityBacked.getEntity(), slotsPerActor, actor.getPokemonList().size()));
-                    }
-
-                    // TODO: check BattleManagers for running battles with any of the participants instead
-                    if(BattleRegistry.INSTANCE.getBattleByParticipatingPlayerId(entityBacked.getEntity().getUUID()) != null) {
-                        errors.getParticipantErrors().get(actor).add(AlreadyInBattleError.Companion.alreadyInBattle(actor));
                     }
 
                     if(actorIds.contains(actor.getUuid())) {
