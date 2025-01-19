@@ -91,6 +91,7 @@ public class RCTApi {
      * 
      * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
+    @Deprecated(since = "0.10.5-beta")
     public static void init(TrainerRegistry trainerRegistry, BattleManager battleManager) {
     }
 
@@ -100,6 +101,7 @@ public class RCTApi {
      * @return Default {@link RCTApi} instance.
      * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
+    @Deprecated(since = "0.10.7-beta")
     public static RCTApi getInstance() {
         return RCTApi.DEFEAULT_INSTANCE;
     }
@@ -148,6 +150,7 @@ public class RCTApi {
      * @return Registered {@link RCTApi} instance.
      * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
+    @Deprecated(since = "0.10.7-beta")
     public static RCTApi initInstance(String id, TrainerRegistry trainerRegistry) {
         return RCTApi.initInstance(id, trainerRegistry, new BattleManager());
     }
@@ -162,6 +165,7 @@ public class RCTApi {
      * @return Registered {@link RCTApi} instance.
      * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
+    @Deprecated(since = "0.10.7-beta")
     public static RCTApi initInstance(String id, TrainerRegistry trainerRegistry, BattleManager battleManager) {
         return RCTApi.instances.computeIfAbsent(id, s -> new RCTApi(trainerRegistry, battleManager, new EventContext()));
     }

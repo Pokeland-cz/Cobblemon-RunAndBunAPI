@@ -37,6 +37,7 @@ public final class RCTApiCommands {
      * 
      * @deprecated Use {@link RCTApiCommands#register(CommandsContext)} instead.
      */
+    @Deprecated(since = "0.10.3-beta")
     public static void register() {
         RCTApiCommands.register(ModCommon.MOD_ID);
     }
@@ -48,6 +49,7 @@ public final class RCTApiCommands {
      * @param prefix Prefix of the commands context.
      * @deprecated Use {@link RCTApiCommands#register(CommandsContext)} instead.
      */
+    @Deprecated(since = "0.10.7-beta")
     public static void register(String prefix) {
         RCTApiCommands.register(new CommandsContext() {
             @Override public int getWinCommandsPermission() { return 1; }

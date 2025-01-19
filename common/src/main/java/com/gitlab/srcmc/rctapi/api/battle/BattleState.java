@@ -46,6 +46,7 @@ public class BattleState {
      * @param rules {@link BattleRules} enforced on the battle.
      * @deprecated Use {@link BattleState#BattleState(PokemonBattle, BattleFormat, BattleRules, List, List)} instead.
      */
+    @Deprecated(since = "0.10.7-beta")
     public BattleState(
         @NotNull PokemonBattle battle,
         @NotNull BattleRules rules)
