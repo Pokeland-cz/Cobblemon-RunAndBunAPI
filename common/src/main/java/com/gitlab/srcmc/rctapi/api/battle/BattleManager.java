@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonSounds;
@@ -111,27 +110,7 @@ public class BattleManager {
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
     {
-        return this.startSingle(participant1, participant2, battleRules, state -> {});
-    }
-
-    /**
-     * Starts a new {@link PokemonBattle} in the 'GEN 9 Singles' format with the given
-     * {@link BattleRules}.
-     * 
-     * @param participant1 First participating {@link Trainer}.
-     * @param participant2 Second participating {@link Trainer}.
-     * @param battleRules {@link BattleRules} applied to the battle.
-     * @param onEnd A callback consumer that receives the {@link BattleState} when the battle has ended.
-     * @return True if a battle was started.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
-     */
-    public boolean startSingle(
-        @NotNull Trainer participant1,
-        @NotNull Trainer participant2,
-        @NotNull BattleRules battleRules,
-        @NotNull Consumer<BattleState> onEnd)
-    {
-        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_SINGLES, battleRules, onEnd);
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_SINGLES, battleRules);
     }
 
     /**
@@ -162,27 +141,7 @@ public class BattleManager {
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
     {
-        return this.startDouble(participant1, participant2, battleRules, state -> {});
-    }
-
-    /**
-     * Starts a new {@link PokemonBattle} in the 'GEN 9 Doubles' format with the given
-     * {@link BattleRules}.
-     * 
-     * @param participant1 First participating {@link Trainer}.
-     * @param participant2 Second participating {@link Trainer}.
-     * @param battleRules {@link BattleRules} applied to the battle.
-     * @param onEnd A callback consumer that receives the {@link BattleState} when the battle has ended.
-     * @return True if a battle was started.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
-     */
-    public boolean startDouble(
-        @NotNull Trainer participant1,
-        @NotNull Trainer participant2,
-        @NotNull BattleRules battleRules,
-        @NotNull Consumer<BattleState> onEnd)
-    {
-        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_DOUBLES, battleRules, onEnd);
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_DOUBLES, battleRules);
     }
 
     /**
@@ -213,27 +172,7 @@ public class BattleManager {
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
     {
-        return this.startTriple(participant1, participant2, battleRules, state -> {});
-    }
-
-    /**
-     * Starts a new {@link PokemonBattle} in the 'GEN 9 Triples' format with the given
-     * {@link BattleRules}.
-     * 
-     * @param participant1 First participating {@link Trainer}.
-     * @param participant2 Second participating {@link Trainer}.
-     * @param battleRules {@link BattleRules} applied to the battle.
-     * @param onEnd A callback consumer that receives the {@link BattleState} when the battle has ended.
-     * @return True if a battle was started.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
-     */
-    public boolean startTriple(
-        @NotNull Trainer participant1,
-        @NotNull Trainer participant2,
-        @NotNull BattleRules battleRules,
-        @NotNull Consumer<BattleState> onEnd)
-    {
-        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_TRIPLES, battleRules, onEnd);
+        return this.start(List.of(participant1), List.of(participant2), BattleFormat.GEN_9_TRIPLES, battleRules);
     }
 
     /**
@@ -276,31 +215,7 @@ public class BattleManager {
         @NotNull Trainer participant2_r,
         @NotNull BattleRules battleRules)
     {
-        return this.startMulti(participant1_l, participant1_r, participant2_l, participant2_r, battleRules, state -> {});
-    }
-
-    /**
-     * Starts a new {@link PokemonBattle} in the 'GEN 9 Multi' format with the given
-     * {@link BattleRules}.
-     * 
-     * @param participant1_l Participating {@link Trainer} for the first team on the left side.
-     * @param participant2_r Participating {@link Trainer} for the first team on the right side.
-     * @param participant1_l Participating {@link Trainer} for the second team on the left side.
-     * @param participant2_r Participating {@link Trainer} for the second team on the right side.
-     * @param battleRules {@link BattleRules} applied to the battle.
-     * @param onEnd A callback consumer that receives the {@link BattleState} when the battle has ended.
-     * @return True if a battle was started.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
-     */
-    public boolean startMulti(
-        @NotNull Trainer participant1_l,
-        @NotNull Trainer participant1_r,
-        @NotNull Trainer participant2_l,
-        @NotNull Trainer participant2_r,
-        @NotNull BattleRules battleRules,
-        @NotNull Consumer<BattleState> onEnd)
-    {
-        return this.start(List.of(participant1_l, participant1_r), List.of(participant2_l, participant2_r), BattleFormat.GEN_9_MULTI, battleRules, onEnd);
+        return this.start(List.of(participant1_l, participant1_r), List.of(participant2_l, participant2_r), BattleFormat.GEN_9_MULTI, battleRules);
     }
 
     /**
@@ -321,29 +236,6 @@ public class BattleManager {
         @NotNull BattleFormat battleFormat,
         @NotNull BattleRules battleRules)
     {
-        return this.start(participants1, participants2, battleFormat, battleRules, state -> {});
-    }
-
-    /**
-     * Starts a new {@link PokemonBattle}. Potential errors that may occur at the start
-     * or during a battle are sent to all participating players.
-     * 
-     * Note: The first participant in participants1 must be a player!
-     * 
-     * @param participants1 List of {@link Trainer} participants for one side.
-     * @param participants2 List of {@link Trainer} participants for the other side.
-     * @param battleFormat {@link BattleFormat} to use.
-     * @param battleRules {@link BattleRules} enforced on the battle.
-     * @param onEnd A callback consumer that receives the {@link BattleState} when the battle has ended.
-     * @return True if a battle was started.
-     */
-    public boolean start(
-        @NotNull List<Trainer> participants1,
-        @NotNull List<Trainer> participants2,
-        @NotNull BattleFormat battleFormat,
-        @NotNull BattleRules battleRules,
-        @NotNull Consumer<BattleState> onEnd)
-    {
         var side1 = toBattleSide(participants1);
         var side2 = toBattleSide(participants2);
         var errors = this.validator.validate(new ErroredBattleStart(), new BattleContext(participants1, participants2, side1, side2, battleFormat));
@@ -357,7 +249,7 @@ public class BattleManager {
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
-                this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2, onEnd))));
+                this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2))));
                 return Unit.INSTANCE;
             });
         } else {
@@ -382,7 +274,6 @@ public class BattleManager {
 
         if(state != null && state.getBattle().getEnded()) {
             this.battleStates.remove(battleId);
-            state.onEnd.accept(state);
             this.eventContext.fire(Events.BATTLE_ENDED.create(state));
             return true;
         }

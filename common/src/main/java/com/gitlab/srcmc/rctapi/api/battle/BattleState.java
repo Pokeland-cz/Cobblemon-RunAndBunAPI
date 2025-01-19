@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
-
 import org.jetbrains.annotations.NotNull;
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
@@ -40,7 +38,6 @@ public class BattleState {
     private final BattleRules rules;
     private final List<Trainer> participants1;
     private final List<Trainer> participants2;
-    final Consumer<BattleState> onEnd;
 
     /**
      * Creates a new battle state for the given {@link PokemonBattle}.
@@ -53,7 +50,7 @@ public class BattleState {
         @NotNull PokemonBattle battle,
         @NotNull BattleRules rules)
     {
-        this(battle, BattleFormat.GEN_9_SINGLES, rules, List.of(), List.of(), state -> {});
+        this(battle, BattleFormat.GEN_9_SINGLES, rules, List.of(), List.of());
     }
 
     /**
@@ -72,33 +69,11 @@ public class BattleState {
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2)
     {
-        this(battle, format, rules, participants1, participants2, state -> {});
-    }
-
-    /**
-     * Creates a new battle state for the given {@link PokemonBattle}.
-     * 
-     * @param battle {@link PokemonBattle} referenced by this battle state.
-     * @param format {@link BattleFormat} of the battle.
-     * @param rules {@link BattleRules} enforced on the battle.
-     * @param participants1 Trainer participants from the first side.
-     * @param participants2 Trainer participants from the second side.
-     * @param onEnd Callback consumer for this {@link BattleState} once the battle has ended.
-     */
-    public BattleState(
-        @NotNull PokemonBattle battle,
-        @NotNull BattleFormat format,
-        @NotNull BattleRules rules,
-        @NotNull List<Trainer> participants1,
-        @NotNull List<Trainer> participants2,
-        @NotNull Consumer<BattleState> onEnd)
-    {
         this.battle = battle;
         this.format = format;
         this.rules = rules;
         this.participants1 = Collections.unmodifiableList(participants1);
         this.participants2 = Collections.unmodifiableList(participants2);
-        this.onEnd = onEnd;
     }
 
     /**

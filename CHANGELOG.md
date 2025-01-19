@@ -4,7 +4,6 @@
 
 **Added:**
 
-- *#25* Extended `BattleManager#start` by a parameter for a callback consumer that receives the `BattleState` at the end of a battle
 - *#24* Simple Event API
   - Event `BATTLE_ENDED`
   - Event `BATTLE_STARTED`
@@ -18,7 +17,7 @@
 - *#22* Improved commands (api)
   - Better suggestions
   - Win commands support
-- *#21* Some design adjustment to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
+- *#21* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
 - *#20* The mod is now also a requirement for clients (for now)
 
 **Fixed:**

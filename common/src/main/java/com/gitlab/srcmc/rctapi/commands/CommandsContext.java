@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import com.gitlab.srcmc.rctapi.ModCommon;
@@ -29,6 +28,8 @@ import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.battle.BattleFormat;
 import com.gitlab.srcmc.rctapi.api.battle.BattleRules;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
+import com.gitlab.srcmc.rctapi.api.events.EventListener;
+import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
@@ -148,9 +149,11 @@ public abstract class CommandsContext {
         return 0;
     }
 
+    @SuppressWarnings("unchecked")
     private int battle(CommandContext<CommandSourceStack> context, BattleFormat format, BattleRules rules, BattleEndCommand.Map commands) {
         try {
-            var registry = RCTApi.getInstance(this.getPrefix()).getTrainerRegistry();
+            var rct = RCTApi.getInstance(this.getPrefix());
+            var registry = rct.getTrainerRegistry();
             var actorsPerSide = format.getCobblemonBattleFormat().getBattleType().getActorsPerSide();
             List<List<Trainer>> participants = List.of(new ArrayList<>(), new ArrayList<>());
 
@@ -200,7 +203,7 @@ public abstract class CommandsContext {
                 rules = new BattleRules();
             }
 
-            Consumer<BattleState> onEnd = state -> {};
+            EventListener<?>[] onEnd = new EventListener[1];
 
             if(commands != null) {
                 commands.values().stream().flatMap(Stream::of).forEach(c -> {
@@ -208,10 +211,11 @@ public abstract class CommandsContext {
                     c.setTitleSupplier(this::getPrefix);
                 });
 
-                onEnd = state -> {
+                onEnd[0] = e -> {
                     var server = context.getSource().getServer();
 
                     if(server != null) {
+                        var state = (BattleState)e.getValue();
                         var winnersFirst = Stream
                             .concat(state.getWinners().stream(), state.getLosers().stream())
                             .map(Trainer::getEntity).toArray(l -> new LivingEntity[l]);
@@ -220,12 +224,14 @@ public abstract class CommandsContext {
                             .of(commands.getOrDefault(state.getWinnerSide(), new BattleEndCommand[0]))
                             .forEach(c -> c.execute(server, winnersFirst));
                     }
+
+                    rct.getEventContext().unregister(Events.BATTLE_ENDED, (EventListener<BattleState>)onEnd[0]);
                 };
+
+                rct.getEventContext().register(Events.BATTLE_ENDED, (EventListener<BattleState>)onEnd[0]);
             }
 
-            RCTApi.getInstance(this.getPrefix()).getBattleManager().start(
-                participants.get(0), participants.get(1),
-                format, rules, onEnd);
+            RCTApi.getInstance(this.getPrefix()).getBattleManager().start(participants.get(0), participants.get(1), format, rules);
         } catch(Exception e) {
             return handleError(context, e);
         }
