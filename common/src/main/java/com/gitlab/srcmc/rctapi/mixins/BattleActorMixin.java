@@ -52,12 +52,11 @@ public class BattleActorMixin {
     @Inject(method = "canFitForcedAction", at = @At("RETURN"), cancellable = true, remap = false)
     private void injectCanFitForcedAction(CallbackInfoReturnable<Boolean> cir) {
         var self = (BattleActor)(Object)this;
-
-        // TODO:
-        // This will always use the RCTApi.DEFAULT_BATTLE_MANAGER, i.e. this mixin will not
-        // work if RCTApi instances are initialized with custom BattleManagers (probably
-        // deprecate that option).
-        var battleState = RCTApi.getInstance().getBattleManager().getState(self.battle.getBattleId());
+        var battleState = RCTApi.getInstances()
+            .map(e -> e.getValue().getBattleManager()
+            .getState(self.battle.getBattleId()))
+            .filter(bs -> bs != null)
+            .findFirst().orElse(null);
         
         if(cir.getReturnValue() && battleState != null) {
             var maxItems = battleState.getRules().getMaxItemUses();

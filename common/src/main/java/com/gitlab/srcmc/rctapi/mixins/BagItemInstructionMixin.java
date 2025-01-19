@@ -37,12 +37,11 @@ public abstract class BagItemInstructionMixin {
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
         var self = (BagItemInstruction)(Object)this;
-
-        // TODO:
-        // This will always use the RCTApi.DEFAULT_BATTLE_MANAGER, i.e. this mixin will not
-        // work if RCTApi instances are initialized with custom BattleManagers (probably
-        // deprecate that option).
-        var battleState = RCTApi.getInstance().getBattleManager().getState(battle.getBattleId());
+        var battleState = RCTApi.getInstances()
+            .map(e -> e.getValue().getBattleManager()
+            .getState(battle.getBattleId()))
+            .filter(bs -> bs != null)
+            .findFirst().orElse(null);
 
         if(battleState != null) {
             var message = self.getMessage();

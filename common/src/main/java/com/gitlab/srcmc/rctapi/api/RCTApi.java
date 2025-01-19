@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
+import com.gitlab.srcmc.rctapi.api.events.EventContext;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
 
 /**
@@ -31,14 +32,12 @@ import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
 public class RCTApi {
     private TrainerRegistry trainerRegistry;
     private BattleManager battleManager;
+    private EventContext eventContext;
 
-    private RCTApi(TrainerRegistry trainerRegistry) {
-        this(trainerRegistry, RCTApi.DEFAULT_BATTLE_MANAGER);
-    }
-
-    private RCTApi(TrainerRegistry trainerRegistry, BattleManager battleManager) {
+    private RCTApi(TrainerRegistry trainerRegistry, BattleManager battleManager, EventContext eventContext) {
         this.trainerRegistry = trainerRegistry;
         this.battleManager = battleManager;
+        this.eventContext = eventContext;
     }
 
     /**
@@ -59,22 +58,30 @@ public class RCTApi {
         return this.battleManager;
     }
 
+    /**
+     * Retrieves the {@link EventContext} of this service.
+     * 
+     * @return {@link EventContext} of this service.
+     */
+    public EventContext getEventContext() {
+        return this.eventContext;
+    }
+
     //////////////////////////////////////////////////////////////////////////////////
     //                                    STATIC                                    //
     //////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The default {@link BattleManager} used by {@link RCTApi#DEFEAULT_INSTANCE} and
-     * any {@link RCTApi} instances that have not explicitly been initialized with a
-     * different {@link BattleManager}.
+     * The default {@link EventContext} used by the {@link TrainerRegistry} and {@link
+     * BattleManager} of the {@link RCTApi#DEFEAULT_INSTANCE}.
      */
-    private static final BattleManager DEFAULT_BATTLE_MANAGER = new BattleManager();
+    private static final EventContext DEFAULT_EVENT_CONTEXT = new EventContext();
 
     /**
      * The singleton instance that is returned by {@link RCTApi#getInstance()} and by
      * {@link RCTApi#getInstance(String)} if no registered instance was found.
      */
-    private static final RCTApi DEFEAULT_INSTANCE = new RCTApi(new TrainerRegistry());
+    private static final RCTApi DEFEAULT_INSTANCE = new RCTApi(new TrainerRegistry("", DEFAULT_EVENT_CONTEXT), new BattleManager(DEFAULT_EVENT_CONTEXT), DEFAULT_EVENT_CONTEXT);
 
     // All registered instances (does not include DEFAULT_INSTANCE).
     private static Map<String, RCTApi> instances = new HashMap<String, RCTApi>();
@@ -82,7 +89,7 @@ public class RCTApi {
     /**
      * Does nothing.
      * 
-     * @deprecated Use {@link RCTApi#initInstance()} instead.
+     * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
     public static void init(TrainerRegistry trainerRegistry, BattleManager battleManager) {
     }
@@ -91,6 +98,7 @@ public class RCTApi {
      * Retrieves the {@link RCTApi#DEFEAULT_INSTANCE} singleton.
      * 
      * @return Default {@link RCTApi} instance.
+     * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
     public static RCTApi getInstance() {
         return RCTApi.DEFEAULT_INSTANCE;
@@ -117,28 +125,31 @@ public class RCTApi {
     }
 
     /**
-     * Creates and registers a new instance of the {@link RCTApi} service, which uses a
-     * newly created instance of {@link TrainerRegistry} and the {@link RCTApi#DEFAULT_BATTLE_MANAGER}.
-     * Does nothing if an instance for the given id is already registered.
+     * Creates and registers a new instance of the {@link RCTApi} service, utilizing a
+     * newly instantiated {@link TrainerRegistry} and {@link BattleManager} that share
+     * the same {@link EventContext}. If an instance with the specified id is already
+     * registered, no action is taken.
      * 
      * @param id Unique id to register the {@link RCTApi} instance for (usually a mod id).
      * @return Registered {@link RCTApi} instance.
      */
     public static RCTApi initInstance(String id) {
-        return RCTApi.initInstance(id, new TrainerRegistry(id), RCTApi.DEFAULT_BATTLE_MANAGER);
+        var eventContext = new EventContext();
+        return RCTApi.initInstance(id, new TrainerRegistry(id, eventContext), new BattleManager(eventContext), eventContext);
     }
 
     /**
-     * Creates and registers a new instance of the {@link RCTApi} service, which uses
-     * the {@link RCTApi#DEFAULT_BATTLE_MANAGER}. Does nothing if an instance for the
+     * Creates and registers a new instance of the {@link RCTApi} service, utilizing a
+     * newly instantiated {@link BattleManager}. Does nothing if an instance for the
      * given id is already registered.
      * 
      * @param id Unique id to register the {@link RCTApi} instance for (usually a mod id).
      * @param trainerRegistry {@link TrainerRegistry} used by the service.
      * @return Registered {@link RCTApi} instance.
+     * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
     public static RCTApi initInstance(String id, TrainerRegistry trainerRegistry) {
-        return RCTApi.initInstance(id, trainerRegistry, RCTApi.DEFAULT_BATTLE_MANAGER);
+        return RCTApi.initInstance(id, trainerRegistry, new BattleManager());
     }
 
     /**
@@ -149,8 +160,23 @@ public class RCTApi {
      * @param trainerRegistry {@link TrainerRegistry} used by the service.
      * @param battleManager {@link BattleManager} used by the service.
      * @return Registered {@link RCTApi} instance.
+     * @deprecated Use {@link RCTApi#initInstance(String)} instead.
      */
     public static RCTApi initInstance(String id, TrainerRegistry trainerRegistry, BattleManager battleManager) {
-        return RCTApi.instances.computeIfAbsent(id, s -> new RCTApi(trainerRegistry, battleManager));
+        return RCTApi.instances.computeIfAbsent(id, s -> new RCTApi(trainerRegistry, battleManager, new EventContext()));
+    }
+
+    /**
+     * Creates and registers a new instance of the {@link RCTApi} service. Does nothing
+     * if an instance for the given id is already registered.
+     * 
+     * @param id Unique id to register the {@link RCTApi} instance for (usually a mod id).
+     * @param trainerRegistry {@link TrainerRegistry} used by the service.
+     * @param battleManager {@link BattleManager} used by the service.
+     * @param eventContext {@link EventContext} used by the {@link TrainerRegistry} and {@link BattleManager}.
+     * @return Registered {@link RCTApi} instance.
+     */
+    static RCTApi initInstance(String id, TrainerRegistry trainerRegistry, BattleManager battleManager, EventContext eventContext) {
+        return RCTApi.instances.computeIfAbsent(id, s -> new RCTApi(trainerRegistry, battleManager, eventContext));
     }
 }

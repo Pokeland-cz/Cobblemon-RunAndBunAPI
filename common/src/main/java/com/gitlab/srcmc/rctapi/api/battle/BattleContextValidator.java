@@ -74,6 +74,7 @@ public class BattleContextValidator {
                         errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.insufficientPokemon(entityBacked.getEntity(), slotsPerActor, actor.getPokemonList().size()));
                     }
 
+                    // TODO: check BattleManagers for running battles with any of the participants instead
                     if(BattleRegistry.INSTANCE.getBattleByParticipatingPlayerId(entityBacked.getEntity().getUUID()) != null) {
                         errors.getParticipantErrors().get(actor).add(AlreadyInBattleError.Companion.alreadyInBattle(actor));
                     }

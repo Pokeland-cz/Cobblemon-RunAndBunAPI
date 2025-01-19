@@ -40,6 +40,8 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.events.EventContext;
+import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerBag;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
@@ -60,6 +62,23 @@ public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
     private Map<UUID, BattleState> battleStates = new HashMap<>();
     private BattleRules defaultRules = new BattleRules();
+    private EventContext eventContext;
+
+    /**
+     * Constructs a new {@link BattleManager} with its own {@link EventContext}.
+     */
+    public BattleManager() {
+        this(new EventContext());
+    }
+
+    /**
+     * Constructs a new {@link BattleManager} for the given {@link EventContext}.
+     * 
+     * @param eventContext {@link EventContext} used by the {@link BattleManager}.
+     */
+    public BattleManager(EventContext eventContext) {
+        this.eventContext = eventContext;
+    }
 
     /**
      * Starts a new {@link PokemonBattle} in the 'GEN 9 Singles' format with default
@@ -338,7 +357,7 @@ public class BattleManager {
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
-                this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2, onEnd));
+                this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2, onEnd))));
                 return Unit.INSTANCE;
             });
         } else {
@@ -364,6 +383,7 @@ public class BattleManager {
         if(state != null && state.getBattle().getEnded()) {
             this.battleStates.remove(battleId);
             state.onEnd.accept(state);
+            this.eventContext.fire(Events.BATTLE_ENDED.create(state));
             return true;
         }
 

@@ -73,7 +73,7 @@ public class ModCommon {
         event.getBattle().setWinners(event.getWinners());
         event.getBattle().setLosers(event.getLosers());
         BattleStates.notifyBattleEnded(event.getBattle());
-        RCTApi.getInstance().getBattleManager().end(event.getBattle().getBattleId());
+        RCTApi.getInstances().forEach(e -> e.getValue().getBattleManager().end(event.getBattle().getBattleId()));
         return Unit.INSTANCE;
     }
 

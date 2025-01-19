@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.gitlab.srcmc.rctapi.api.errors.RCTErrors;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
+import com.gitlab.srcmc.rctapi.api.events.EventContext;
+import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.models.TrainerModel;
 import com.gitlab.srcmc.rctapi.api.models.converter.PokemonModelConverter;
 import com.gitlab.srcmc.rctapi.api.models.converter.TrainerModelConverter;
@@ -41,18 +43,41 @@ public class TrainerRegistry {
     private Set<String> trainerNPCs = new HashSet<>();
     private Set<String> trainerPlayers = new HashSet<>();
     private TrainerModelConverter tmc;
+    private EventContext eventContext;
     private String id;
     
+    /**
+     * Constructs a new {@link TrainerRegistry} with an empty string a id and its own
+     * {@link EventContext}.
+     */
     public TrainerRegistry() {
         this("");
     }
 
-    public TrainerRegistry(String id) {
-        this.id = id;
+    /**
+     * Constructs a new {@link TrainerRegistry} with the given id and its own {@link
+     * EventContext}.
+     * 
+     * @param id Id of the {@link TrainerRegistry}.
+     */
+    public TrainerRegistry(@NotNull String id) {
+        this(id, new EventContext());
     }
 
     /**
-     * Initializes and clears the trainer registry.
+     * Constructs a new {@link TrainerRegistry} with the given id and for the given
+     * {@link EventContext}.
+     * 
+     * @param id Id of the {@link TrainerRegistry}
+     * @param eventContext {@link EventContext} used by the {@link TrainerRegistry}.
+     */
+    public TrainerRegistry(@NotNull String id, @NotNull EventContext eventContext) {
+        this.id = id;
+        this.eventContext = eventContext;
+    }
+
+    /**
+     * Initializes and clears the {@link TrainerRegistry}.
      * 
      * @param server Minecraft server.
      */
@@ -62,7 +87,7 @@ public class TrainerRegistry {
     }
 
     /**
-     * Instantiates and registers a {@link TrainerPlayer} to the trainer registry.
+     * Instantiates and registers a {@link TrainerPlayer} to the {@link TrainerRegistry}.
      * 
      * @param trainerId Unique id of the {@link TrainerPlayer} to register.
      * @param player {@link ServerPlayer} to associate with the trainer.
@@ -75,7 +100,7 @@ public class TrainerRegistry {
     }
 
     /**
-     * Registers the given {@link TrainerPlayer} to the trainer registry.
+     * Registers the given {@link TrainerPlayer} to the {@link TrainerRegistry}.
      * 
      * @param <T> {@link TrainerPlayer} type.
      * @param trainerId Unique id of the {@link TrainerPlayer} to register.
@@ -85,13 +110,13 @@ public class TrainerRegistry {
      */
     @NotNull
     public <T extends TrainerPlayer> T registerPlayer(@NotNull String trainerId, @NotNull T trainer) {
-        this.register(trainerId, trainer);
         this.trainerPlayers.add(trainerId);
+        this.register(trainerId, trainer);
         return trainer;
     }
 
     /**
-     * Instantiates and registers a {@link TrainerNPC} to the trainer registry. Uses a
+     * Instantiates and registers a {@link TrainerNPC} to the {@link TrainerRegistry}. Uses a
      * default {@link PokemonModelConverter} to create the pokemon party.
      * 
      * @param trainerId Unique id of the {@link TrainerNPC} to register.
@@ -110,7 +135,7 @@ public class TrainerRegistry {
     }
 
     /**
-     * Registers the given {@link TrainerNPC} to the trainer registry.
+     * Registers the given {@link TrainerNPC} to the {@link TrainerRegistry}.
      * 
      * @param <T> {@link TrainerNPC} type.
      * @param trainerId Unique id of the {@link TrainerNPC} to register.
@@ -120,9 +145,9 @@ public class TrainerRegistry {
      */
     @NotNull
     public <T extends TrainerNPC> T registerNPC(@NotNull String trainerId, @NotNull T trainer) {
-        this.register(trainerId, trainer);
-        this.trainerNPCs.add(trainerId);
         trainer.initTeam(toOTId(trainerId));
+        this.trainerNPCs.add(trainerId);
+        this.register(trainerId, trainer);
         return trainer;
     }
 
@@ -136,8 +161,9 @@ public class TrainerRegistry {
         var trainer = this.trainers.remove(trainerId);
 
         if(trainer != null) {
-            this.trainerPlayers.remove(trainerId);
-            this.trainerNPCs.remove(trainerId);
+            if(this.trainerPlayers.remove(trainerId) | this.trainerNPCs.remove(trainerId)) {
+                this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(trainer));
+            }
         }
 
         return trainer;
@@ -147,7 +173,7 @@ public class TrainerRegistry {
      * Retrieves the trainer with the given id.
      * 
      * @param trainerId Id of the trainer to retrieve.
-     * @return Trainer instance from the trainer registry or null if no such {@link Trainer} is registered.
+     * @return Trainer instance from the {@link TrainerRegistry} or null if no such {@link Trainer} is registered.
      */
     public Trainer getById(@NotNull String trainerId) {
         return this.getById(trainerId, Trainer.class);
@@ -160,7 +186,7 @@ public class TrainerRegistry {
      * @param trainerId Id of the {@link Trainer} to retrieve.
      * @param type Target {@link Trainer} type class instance.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
+     * @return {@link Trainer} instance from the {@link TrainerRegistry} or null if no such {@link Trainer} is registered.
      */
     public <T extends Trainer> T getById(@NotNull String trainerId, @NotNull Class<T> type) {
         var trainer = this.trainers.get(trainerId);
@@ -181,7 +207,7 @@ public class TrainerRegistry {
      * 
      * @param pkmn Pokemon to retrieve the original {@link Trainer} for.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
+     * @return {@link Trainer} instance from the {@link TrainerRegistry} or null if no such {@link Trainer} is registered.
      */
     public Trainer getByOT(@NotNull Pokemon pkmn) {        
         return this.getByOT(pkmn, Trainer.class);
@@ -194,7 +220,7 @@ public class TrainerRegistry {
      * @param pkmn Pokemon to retrieve the original {@link Trainer} for.
      * @param type Target {@link Trainer} type class instance.
      * @throws IllegalArgumentException If the trainer is not from the given type.
-     * @return {@link Trainer} instance from the trainer registry or null if no such {@link Trainer} is registered.
+     * @return {@link Trainer} instance from the {@link TrainerRegistry} or null if no such {@link Trainer} is registered.
      */
     public <T extends Trainer> T getByOT(@NotNull Pokemon pkmn, @NotNull Class<T> type) {
         var otId = pkmn.getOriginalTrainer();
@@ -251,7 +277,7 @@ public class TrainerRegistry {
      * Removes all registered {@link TrainerNPC}s.
      */
     public void clearNPCs() {
-        this.trainerNPCs.forEach(this.trainers::remove);
+        this.trainerNPCs.forEach(trainer -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(this.trainers.remove(trainer))));
         this.trainerNPCs.clear();
     }
 
@@ -259,7 +285,7 @@ public class TrainerRegistry {
      * Removes all registered {@link TrainerPlayer}s.
      */
     public void clearPlayers() {
-        this.trainerPlayers.forEach(this.trainers::remove);
+        this.trainerPlayers.forEach(trainer -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(this.trainers.remove(trainer))));
         this.trainerPlayers.clear();
     }
 
@@ -278,5 +304,7 @@ public class TrainerRegistry {
         if(this.trainers.putIfAbsent(trainerId, trainer) != null) {
             throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
         }
+
+        this.eventContext.fire(Events.TRAINER_REGISTRED.create(trainer));
     }
 }
