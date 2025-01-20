@@ -24,7 +24,9 @@ import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Gender;
+import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.gitlab.srcmc.rctapi.api.errors.RCTError;
 import com.gitlab.srcmc.rctapi.api.errors.RCTErrors;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
@@ -120,6 +122,9 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
                 v -> pokemon.swapHeldItem(BuiltInRegistries.ITEM.get(rl).getDefaultInstance(), true),
                 "invalid held item '" + item + "'");
         }
+
+        pokemon.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
+        pokemon.setOriginalTrainerType$common(OriginalTrainerType.NPC);
 
         return pokemon;
     }

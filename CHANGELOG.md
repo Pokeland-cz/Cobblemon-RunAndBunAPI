@@ -4,27 +4,28 @@
 
 **Added:**
 
-- *#26* Simple Event API
+- *#27* Simple Event API
   - Event `BATTLE_ENDED`
   - Event `BATTLE_STARTED`
   - Event `TRAINER_REGISTRED`
   - Event `TRAINER_UNREGISTRED`
   - `EventContext` shared between the `TrainerRegistry` and `BattleManager` of an `RCTApi` service (but distinct of those from other services)
-- *#25* `BattleManager#getStates()` to retrieve all active battle states
-- *#24* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#26* `BattleManager#getStates()` to retrieve all active battle states
+- *#25* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#23* Improved commands (api)
+- *#24* Improved commands (api)
   - Better suggestions
   - Win commands support
-- *#22* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
-- *#21* The mod is now also a requirement for clients (for now)
-- *#20* `BattleManager#end(UUID, boolean)` overload to forcefully end battles
+- *#23* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
+- *#22* The mod is now also a requirement for clients (for now)
+- *#21* `BattleManager#end(UUID, boolean)` overload to forcefully end battles
 
 **Fixed:**
 
-- *#19* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
+- *#20* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
+- *#19* Trainer pokemon being catchable in certain circumstances
 
 **Removed:**
 
