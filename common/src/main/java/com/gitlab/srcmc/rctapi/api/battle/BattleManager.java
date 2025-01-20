@@ -299,13 +299,13 @@ public class BattleManager {
 
             if(forced || battle == null || battle.getEnded()) {
                 if(battle != null) {
-                    if(forced) {
-                        battle.stop(); // should force tie
-                    } else { // battle ended
+                    if(battle.getEnded()) {
                         this.eventContext.fire(Events.BATTLE_ENDED.create(state));
+                    } else { // forced
+                        battle.stop(); // should force tie
                     }
                 }
-                
+
                 this.battleStates.remove(battleId);
                 return true;
             }
