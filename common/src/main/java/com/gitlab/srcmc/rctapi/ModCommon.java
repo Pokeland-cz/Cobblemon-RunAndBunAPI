@@ -56,7 +56,7 @@ public class ModCommon {
     static Unit handlePokemonEntitySaveToWorld(PokemonEntitySaveToWorldEvent event) {
         var pkmn = event.getPokemonEntity().getPokemon();
 
-        if(RCTApi.getInstances().map(e -> e.getValue()).anyMatch(api -> api.getTrainerRegistry().getByOT(pkmn) instanceof TrainerNPC)) {
+        if(pkmn.getOriginalTrainer() != null && RCTApi.getInstances().map(e -> e.getValue()).anyMatch(api -> api.getTrainerRegistry().getByOT(pkmn) instanceof TrainerNPC)) {
             event.cancel();
         }
         

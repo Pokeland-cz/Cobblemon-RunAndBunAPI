@@ -35,7 +35,7 @@ public class TrainerNPC implements Trainer {
     private Pokemon[] team;
     private TrainerBag bag;
     private BattleAI battleAI;
-    private LivingEntity entity;
+    private LivingEntity entity, backupEntity;
 
     /**
      * Constructs a new trainer npc with a random {@link UUID}.
@@ -44,7 +44,7 @@ public class TrainerNPC implements Trainer {
      * @param team The {@link Pokemon} party of the trainer.
      * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
      * @param battleAI {@link BattleAI} used by this trainer.
-     * @param entity {@link LivingEntity} this trainer is (initially) attached to.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
         this.name = name;
@@ -52,6 +52,7 @@ public class TrainerNPC implements Trainer {
         this.bag = bag;
         this.battleAI = battleAI;
         this.entity = entity;
+        this.backupEntity = entity;
     }
 
     /**
@@ -95,7 +96,7 @@ public class TrainerNPC implements Trainer {
 
     @Override @NotNull
     public LivingEntity getEntity() {
-        return this.entity;
+        return this.entity.isAlive() ? this.entity : this.backupEntity;
     }
 
     void initTeam(String otId) {

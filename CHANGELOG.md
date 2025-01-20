@@ -25,7 +25,7 @@
 **Fixed:**
 
 - *#20* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
-- *#19* Trainer pokemon being catchable in certain circumstances
+- *#19* Trainer pokemon being catchable and/or not recalled in some scenarios
 
 **Removed:**
 
