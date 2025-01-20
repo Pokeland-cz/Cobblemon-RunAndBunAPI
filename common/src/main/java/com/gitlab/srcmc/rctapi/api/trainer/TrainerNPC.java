@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 
 import net.minecraft.world.entity.LivingEntity;
 
@@ -102,6 +103,7 @@ public class TrainerNPC implements Trainer {
             pkmn.setOriginalTrainer(otId);
             pkmn.setOriginalTrainerName(this.getName());
             pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
+            pkmn.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
         }
     }
 }
