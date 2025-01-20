@@ -1,25 +1,26 @@
 # Changelog
 
-## [0.10.7-beta] - 2025-01-19
+## [0.10.7-beta] - 2025-01-20
 
 **Added:**
 
-- *#25* Simple Event API
+- *#26* Simple Event API
   - Event `BATTLE_ENDED`
   - Event `BATTLE_STARTED`
   - Event `TRAINER_REGISTRED`
   - Event `TRAINER_UNREGISTRED`
   - `EventContext` shared between the `TrainerRegistry` and `BattleManager` of an `RCTApi` service (but distinct of those from other services)
-- *#24* `BattleManager#getStates()` to retrieve all active battle states
-- *#23* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#25* `BattleManager#getStates()` to retrieve all active battle states
+- *#24* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#22* Improved commands (api)
+- *#23* Improved commands (api)
   - Better suggestions
   - Win commands support
-- *#21* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
-- *#20* The mod is now also a requirement for clients (for now)
+- *#22* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
+- *#21* The mod is now also a requirement for clients (for now)
+- *#20* `BattleManager#end(UUID, boolean)` overload to forcefully end battles
 
 **Fixed:**
 

@@ -42,6 +42,11 @@ dependencies {
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }
 
+tasks.named('runClient') {
+    // Set the username here
+    args '--username', 'Dev'
+}
+
 shadowJar {
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'

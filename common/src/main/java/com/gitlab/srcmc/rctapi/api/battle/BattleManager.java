@@ -46,8 +46,6 @@ import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerBag;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerPlayer;
-import com.gitlab.srcmc.rctapi.commands.BattleEndCommand;
-
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
@@ -263,20 +261,46 @@ public class BattleManager {
     }
 
     /**
-     * Finishes and unregisters a previously started battle that has ended and executes
-     * all {@link BattleEndCommand}s for the winning side. Does nothing if the battle
-     * has not ended or was not registered by this battle manager.
+     * Finishes and unregisters a previously started {@link PokemonBattle} that has
+     * ended and fires a {@link Events#BATTLE_ENDED} event on success. Does nothing if
+     * the {@link PokemonBattle} has not ended or was not registered by this {@link
+     * BattleManager}.
      * 
      * @param battleId Id of the {@link PokemonBattle} to finish and unregister.
-     * @return True if the battle was finished and unregistered.
+     * @return True if the {@link PokemonBattle} was finished and unregistered.
      */
     public boolean end(UUID battleId) {
+        return this.end(battleId, false);
+    }
+
+    /**
+     * Finishes and unregisters a previously started {@link PokemonBattle} that has
+     * ended. Does nothing if the {@link PokemonBattle} has not ended or was not
+     * registered by this {@link BattleManager}.
+     * 
+     * @param battleId Id of the {@link PokemonBattle} to finish and unregister.
+     * @param forced If true the {@link PokemonBattle} will be forcefully stopped if it
+     * has not ended. A {@link Events#BATTLE_ENDED} event will not be fired in that
+     * case.
+     * @return True if the {@link PokemonBattle} was finished and unregistered.
+     */
+    public boolean end(UUID battleId, boolean forced) {
         var state = this.battleStates.get(battleId);
 
-        if(state != null && state.getBattle().getEnded()) {
-            this.battleStates.remove(battleId);
-            this.eventContext.fire(Events.BATTLE_ENDED.create(state));
-            return true;
+        if(state != null) {
+            var battle = state.getBattle();
+
+            if(forced || battle == null || battle.getEnded()) {
+                this.battleStates.remove(battleId);
+
+                if(battle != null && battle.getEnded()) {
+                    this.eventContext.fire(Events.BATTLE_ENDED.create(state));
+                } else if(forced) {
+                    state.getBattle().stop(); // should force tie
+                }
+
+                return true;
+            }
         }
 
         return false;
