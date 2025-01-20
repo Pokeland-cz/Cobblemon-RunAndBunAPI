@@ -17,9 +17,12 @@
  */
 package com.gitlab.srcmc.rctapi.api.events;
 
+import java.util.Map;
+
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
+import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
 
 /**
  * Provides access to all {@link EventType}s defined by this api.
@@ -28,12 +31,12 @@ public final class Events {
     /**
      * Fired whenever a {@link Trainer} is registred to a {@link TrainerRegistry}.
      */
-    public static final EventType<Trainer> TRAINER_REGISTRED = new EventType<>();
+    public static final EventType<Map.Entry<String,Trainer>> TRAINER_REGISTRED = new EventType<>();
 
     /**
      * Fired whenever a {@link Trainer} is unregistered from a {@link TrainerRegistry}.
      */
-    public static final EventType<Trainer> TRAINER_UNREGISTRED = new EventType<>();
+    public static final EventType<Map.Entry<String,Trainer>> TRAINER_UNREGISTRED = new EventType<>();
 
     /**
      * Fired whenever a battle was successfully started with a {@link BattleManager}.

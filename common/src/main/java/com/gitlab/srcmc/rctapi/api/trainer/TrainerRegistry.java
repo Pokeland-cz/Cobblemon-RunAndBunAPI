@@ -162,7 +162,7 @@ public class TrainerRegistry {
 
         if(trainer != null) {
             if(this.trainerPlayers.remove(trainerId) | this.trainerNPCs.remove(trainerId)) {
-                this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(trainer));
+                this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(Map.entry(trainerId, trainer)));
             }
         }
 
@@ -277,7 +277,7 @@ public class TrainerRegistry {
      * Removes all registered {@link TrainerNPC}s.
      */
     public void clearNPCs() {
-        this.trainerNPCs.forEach(trainer -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(this.trainers.remove(trainer))));
+        this.trainerNPCs.forEach(trainerId -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(Map.entry(trainerId, this.trainers.remove(trainerId)))));
         this.trainerNPCs.clear();
     }
 
@@ -285,7 +285,7 @@ public class TrainerRegistry {
      * Removes all registered {@link TrainerPlayer}s.
      */
     public void clearPlayers() {
-        this.trainerPlayers.forEach(trainer -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(this.trainers.remove(trainer))));
+        this.trainerPlayers.forEach(trainerId -> this.eventContext.fire(Events.TRAINER_UNREGISTRED.create(Map.entry(trainerId, this.trainers.remove(trainerId)))));
         this.trainerPlayers.clear();
     }
 
@@ -305,6 +305,6 @@ public class TrainerRegistry {
             throw new IllegalArgumentException(String.format("trainer already registered '%s'", trainerId));
         }
 
-        this.eventContext.fire(Events.TRAINER_REGISTRED.create(trainer));
+        this.eventContext.fire(Events.TRAINER_REGISTRED.create(Map.entry(trainerId, trainer)));
     }
 }
