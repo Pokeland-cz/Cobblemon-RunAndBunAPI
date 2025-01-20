@@ -40,6 +40,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
 import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
@@ -248,6 +249,12 @@ public class BattleManager {
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
+                battle.getOnEndHandlers().add(b -> {
+                    BattleManager.this.end(b.getBattleId(), true);
+                    BattleStates.notifyBattleEnded(b);
+                    return Unit.INSTANCE;
+                });
+
                 this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2))));
                 return Unit.INSTANCE;
             });
@@ -291,14 +298,15 @@ public class BattleManager {
             var battle = state.getBattle();
 
             if(forced || battle == null || battle.getEnded()) {
-                this.battleStates.remove(battleId);
-
-                if(battle != null && battle.getEnded()) {
-                    this.eventContext.fire(Events.BATTLE_ENDED.create(state));
-                } else if(forced) {
-                    state.getBattle().stop(); // should force tie
+                if(battle != null) {
+                    if(forced) {
+                        battle.stop(); // should force tie
+                    } else { // battle ended
+                        this.eventContext.fire(Events.BATTLE_ENDED.create(state));
+                    }
                 }
-
+                
+                this.battleStates.remove(battleId);
                 return true;
             }
         }

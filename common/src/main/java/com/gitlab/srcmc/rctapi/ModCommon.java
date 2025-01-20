@@ -72,8 +72,6 @@ public class ModCommon {
         // TODO: why does Cobblemon not do this?
         event.getBattle().setWinners(event.getWinners());
         event.getBattle().setLosers(event.getLosers());
-        BattleStates.notifyBattleEnded(event.getBattle());
-        RCTApi.getInstances().forEach(e -> e.getValue().getBattleManager().end(event.getBattle().getBattleId()));
         return Unit.INSTANCE;
     }
 
