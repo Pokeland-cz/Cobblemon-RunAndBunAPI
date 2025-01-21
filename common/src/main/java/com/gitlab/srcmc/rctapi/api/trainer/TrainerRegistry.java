@@ -224,7 +224,7 @@ public class TrainerRegistry {
      */
     public <T extends Trainer> T getByOT(@NotNull Pokemon pkmn, @NotNull Class<T> type) {
         var otId = pkmn.getOriginalTrainer();
-        var parts = otId != null ? otId.split(":") : new String[0];
+        var parts = otId != null ? otId.split(String.valueOf(OTID_SEPARATOR)) : new String[0];
 
         if(parts.length == 2 && parts[0].equals(this.id)) {
             return this.getById(parts[1], type);
@@ -297,7 +297,7 @@ public class TrainerRegistry {
      * @return Original trainer id.
      */
     protected String toOTId(String trainerId) {
-        return String.format("%s:%s", this.id, trainerId);
+        return String.format("%s%c%s", this.id, OTID_SEPARATOR, trainerId);
     }
 
     private void register(String trainerId, Trainer trainer) {
@@ -307,4 +307,7 @@ public class TrainerRegistry {
 
         this.eventContext.fire(Events.TRAINER_REGISTRED.create(Map.entry(trainerId, trainer)));
     }
+
+    // separator char to split the registry id from a trainer id
+    private static char OTID_SEPARATOR = '#';
 }

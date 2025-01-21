@@ -128,13 +128,16 @@ public class TrainerNPC implements Trainer {
                 dummyEntity.discard();
             }
 
-            dummyEntity = EntityType.VILLAGER.create(server.overworld());
-            dummyEntity.addTag(TrainerNPC.DUMMY_TAG);
-            dummyEntity.setNoGravity(true);
-            dummyEntity.setInvulnerable(true);
-            dummyEntity.setInvisible(true);
-            dummyEntity.noPhysics = true;
-            dummyEntity.setPos(0, Integer.MAX_VALUE/2, 0);
+            var dummy = EntityType.VILLAGER.create(server.overworld());
+            dummy = EntityType.VILLAGER.create(server.overworld());
+            dummy.addTag(TrainerNPC.DUMMY_TAG);
+            dummy.setNoGravity(true);
+            dummy.setInvulnerable(true);
+            dummy.setInvisible(true);
+            dummy.setNoAi(true);
+            dummy.noPhysics = true;
+            dummy.setPos(0, Integer.MAX_VALUE/2, 0);
+            dummyEntity = dummy;
         }
 
         return dummyEntity;
