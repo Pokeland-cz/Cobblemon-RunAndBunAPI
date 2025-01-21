@@ -322,7 +322,7 @@ public class BattleManager {
                 while(it.hasNext()) {
                     var actor = it.next();
 
-                    if(actor instanceof TrainerEntityBattleActor) {
+                    if((actor instanceof TrainerEntityBattleActor eb) && !eb.getEntity().isAlive()) {
                         actor.getActivePokemon().stream()
                             .filter(ActiveBattlePokemon::hasPokemon)
                             .map(ap -> ap.getBattlePokemon().getEffectedPokemon())
