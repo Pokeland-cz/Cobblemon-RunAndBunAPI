@@ -32,6 +32,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BattleSide;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
@@ -303,6 +304,29 @@ public class BattleManager {
                         this.eventContext.fire(Events.BATTLE_ENDED.create(state));
                     } else { // forced
                         battle.stop(); // should force tie
+                    }
+                }
+
+                // attach trainers to the DUMMY_ENTITY if they npcs have died
+                state.getParticipants1().stream()
+                    .filter(t -> (t instanceof TrainerNPC n) && !n.getEntity().isAlive()).map(t -> (TrainerNPC)t)
+                    .forEach(t -> t.setEntity(TrainerNPC.getDummyEntity(t.getEntity().getServer())));
+
+                state.getParticipants2().stream()
+                    .filter(t -> (t instanceof TrainerNPC n) && !n.getEntity().isAlive()).map(t -> (TrainerNPC)t)
+                    .forEach(t -> t.setEntity(TrainerNPC.getDummyEntity(t.getEntity().getServer())));
+
+                // try recall again in case it failed for npcs that have died
+                var it = state.getBattle().getActors().iterator();
+
+                while(it.hasNext()) {
+                    var actor = it.next();
+
+                    if(actor instanceof TrainerEntityBattleActor) {
+                        actor.getActivePokemon().stream()
+                            .filter(ActiveBattlePokemon::hasPokemon)
+                            .map(ap -> ap.getBattlePokemon().getEffectedPokemon())
+                            .forEach(Pokemon::tryRecallWithAnimation);
                     }
                 }
 

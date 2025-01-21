@@ -31,8 +31,6 @@ import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.api.util.Locations;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Defines a conversion from {@link TrainerModel} to {@link Trainer}.
@@ -79,29 +77,6 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
             }
         });
 
-        return new TrainerNPC(model.getName(), team, bag, battleAI, getDummy(this.server));
+        return new TrainerNPC(model.getName(), team, bag, battleAI, TrainerNPC.getDummyEntity(this.server));
     }
-
-    //////////////////////////////////////////////
-    //                  STATIC                  //
-    //////////////////////////////////////////////
-
-    private static LivingEntity dummyEntity;
-
-    private static LivingEntity getDummy(MinecraftServer server) {
-        if(dummyEntity == null || dummyEntity.getServer() != server) {
-            if(dummyEntity != null) {
-                dummyEntity.discard();
-            }
-
-            dummyEntity = EntityType.VILLAGER.create(server.overworld());
-            dummyEntity.addTag(TrainerNPC.DUMMY_TAG);
-            dummyEntity.setNoGravity(true);
-            dummyEntity.setInvulnerable(true);
-            dummyEntity.setInvisible(true);
-            dummyEntity.setPos(0, Integer.MAX_VALUE/2, 0);
-        }
-
-        return dummyEntity;
-    };
 }

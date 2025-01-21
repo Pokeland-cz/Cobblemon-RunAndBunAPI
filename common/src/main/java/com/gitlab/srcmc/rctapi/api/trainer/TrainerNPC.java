@@ -26,6 +26,8 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.gitlab.srcmc.rctapi.ModCommon;
 
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -42,7 +44,7 @@ public class TrainerNPC implements Trainer {
     private Pokemon[] team;
     private TrainerBag bag;
     private BattleAI battleAI;
-    private LivingEntity entity, backupEntity;
+    private LivingEntity entity;
 
     /**
      * Constructs a new trainer npc with a random {@link UUID}.
@@ -59,7 +61,6 @@ public class TrainerNPC implements Trainer {
         this.bag = bag;
         this.battleAI = battleAI;
         this.entity = entity;
-        this.backupEntity = entity;
     }
 
     /**
@@ -103,7 +104,7 @@ public class TrainerNPC implements Trainer {
 
     @Override @NotNull
     public LivingEntity getEntity() {
-        return this.entity.isAlive() ? this.entity : this.backupEntity;
+        return this.entity;
     }
 
     void initTeam(String otId) {
@@ -114,4 +115,28 @@ public class TrainerNPC implements Trainer {
             pkmn.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
         }
     }
+
+    //////////////////////////////////////////////
+    //                  STATIC                  //
+    //////////////////////////////////////////////
+
+    private static LivingEntity dummyEntity;
+
+    public static LivingEntity getDummyEntity(MinecraftServer server) {
+        if(dummyEntity == null || dummyEntity.getServer() != server || !dummyEntity.isAlive()) {
+            if(dummyEntity != null) {
+                dummyEntity.discard();
+            }
+
+            dummyEntity = EntityType.VILLAGER.create(server.overworld());
+            dummyEntity.addTag(TrainerNPC.DUMMY_TAG);
+            dummyEntity.setNoGravity(true);
+            dummyEntity.setInvulnerable(true);
+            dummyEntity.setInvisible(true);
+            dummyEntity.noPhysics = true;
+            dummyEntity.setPos(0, Integer.MAX_VALUE/2, 0);
+        }
+
+        return dummyEntity;
+    };
 }

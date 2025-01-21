@@ -81,6 +81,11 @@ public class BattleContextValidator {
                 }
 
                 if(actor instanceof EntityBackedBattleActor entityBacked && entityBacked.getEntity() != null && !entityBacked.getEntity().getTags().contains(TrainerNPC.DUMMY_TAG)) {
+                    // TODO: Apparently doesn't work (does Cobblemon force tick the chunk?) -> potential workaround: check distance between actors?
+                    if(!entityBacked.getEntity().level().isLoaded(entityBacked.getEntity().blockPosition())) {
+                        errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.canceledByEvent(Component.literal(String.format("%s is too far away (not loaded)", actor.getName().getString()))));
+                    }
+
                     if(actor.getPokemonList().size() < slotsPerActor) {
                         errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.insufficientPokemon(entityBacked.getEntity(), slotsPerActor, actor.getPokemonList().size()));
                     }
