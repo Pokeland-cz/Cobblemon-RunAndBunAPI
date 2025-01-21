@@ -17,8 +17,6 @@
  */
 package com.gitlab.srcmc.rctapi.api.trainer;
 
-import java.util.UUID;
-
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
@@ -47,7 +45,7 @@ public class TrainerNPC implements Trainer {
     private LivingEntity entity;
 
     /**
-     * Constructs a new trainer npc with a random {@link UUID}.
+     * Constructs a new {@link TrainerNPC}.
      * 
      * @param name The name of the trainer.
      * @param team The {@link Pokemon} party of the trainer.
@@ -61,6 +59,20 @@ public class TrainerNPC implements Trainer {
         this.bag = bag;
         this.battleAI = battleAI;
         this.entity = entity;
+    }
+
+    /**
+     * Constructs a new {@link TrainerNPC} with a deep copy of the {@link Pokemon} team
+     * from other and a shallow copy of the remaining properties.
+     * 
+     * @param other {@link TrainerNPC} to copy.
+     */
+    public TrainerNPC(@NotNull TrainerNPC other) {
+        this.name = other.name;
+        this.team = copyTeam(other.team);
+        this.bag = other.bag;
+        this.battleAI = other.battleAI;
+        this.entity = other.entity;
     }
 
     /**
@@ -121,6 +133,16 @@ public class TrainerNPC implements Trainer {
     //////////////////////////////////////////////
 
     private static LivingEntity dummyEntity;
+
+    private static Pokemon[] copyTeam(Pokemon[] team) {
+        var copy = new Pokemon[team.length];
+
+        for(int i = 0; i < team.length; i++) {
+            copy[i] = team[i].clone(true);
+        }
+
+        return copy;
+    }
 
     public static LivingEntity getDummyEntity(MinecraftServer server) {
         if(dummyEntity == null || dummyEntity.getServer() != server || !dummyEntity.isAlive()) {
