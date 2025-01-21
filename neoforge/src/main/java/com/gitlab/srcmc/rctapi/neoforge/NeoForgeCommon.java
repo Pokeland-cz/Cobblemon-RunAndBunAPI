@@ -26,6 +26,7 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.ModRegistries;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
+import com.gitlab.srcmc.rctapi.commands.arguments.TrainerIdArgument;
 
 @Mod(ModCommon.MOD_ID)
 public final class NeoForgeCommon {
@@ -37,6 +38,7 @@ public final class NeoForgeCommon {
     void onCommonSetup(FMLCommonSetupEvent event) {
         ArgumentTypeInfos.registerByClass(BattleEndCommandMapArgument.class, ModRegistries.ArgumentTypes.BATTLE_END_COMMAND_MAP.get());
         ArgumentTypeInfos.registerByClass(BattleRulesArgument.class, ModRegistries.ArgumentTypes.BATTLE_RULES.get());
+        ArgumentTypeInfos.registerByClass(TrainerIdArgument.class, ModRegistries.ArgumentTypes.TRAINER_ID.get());
         ModCommon.init();
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
     }

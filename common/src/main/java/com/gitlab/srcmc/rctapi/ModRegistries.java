@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi;
 
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
+import com.gitlab.srcmc.rctapi.commands.arguments.TrainerIdArgument;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -32,10 +33,12 @@ public class ModRegistries {
         public static final DeferredRegister<ArgumentTypeInfo<?, ?>> REGISTRY = DeferredRegister.create(ModCommon.MOD_ID, Registries.COMMAND_ARGUMENT_TYPE);
         public static final RegistrySupplier<ArgumentTypeInfo<BattleEndCommandMapArgument, ?>> BATTLE_END_COMMAND_MAP;
         public static final RegistrySupplier<ArgumentTypeInfo<BattleRulesArgument, ?>> BATTLE_RULES;
+        public static final RegistrySupplier<ArgumentTypeInfo<TrainerIdArgument, ?>> TRAINER_ID;
 
         static {
             BATTLE_END_COMMAND_MAP = REGISTRY.register(location("battle_end_command_map"), () -> SingletonArgumentInfo.contextFree(BattleEndCommandMapArgument::map));
             BATTLE_RULES = REGISTRY.register(location("battle_rules"), () -> SingletonArgumentInfo.contextFree(BattleRulesArgument::battleRules));
+            TRAINER_ID = REGISTRY.register(location("trainer_id"), () -> SingletonArgumentInfo.contextFree(TrainerIdArgument::id));
         }
     }
 

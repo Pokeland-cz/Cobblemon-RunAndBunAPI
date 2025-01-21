@@ -1,29 +1,30 @@
 # Changelog
 
-## [0.10.7-beta] - 2025-01-20
+## [0.10.7-beta] - 2025-01-21
 
 **Added:**
 
-- *#27* Simple Event API
+- *#28* Simple Event API
   - Event `BATTLE_ENDED`
   - Event `BATTLE_STARTED`
   - Event `TRAINER_REGISTRED`
   - Event `TRAINER_UNREGISTRED`
   - `EventContext` shared between the `TrainerRegistry` and `BattleManager` of an `RCTApi` service (but distinct of those from other services)
-- *#26* `BattleManager#getStates()` to retrieve all active battle states
-- *#25* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
+- *#27* `BattleManager#getStates()` to retrieve all active battle states
+- *#26* `CommandsContext` to allow registration of commands for different contexts without interfering with each other
 
 **Changed:**
 
-- *#24* Improved commands (api)
+- *#25* Improved commands (api)
   - Better suggestions
   - Win commands support
-- *#23* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
-- *#22* The mod is now also a requirement for clients (for now)
-- *#21* `BattleManager#end(UUID, boolean)` overload to forcefully end battles
+- *#24* Some design adjustments to how `BattleManager` instances are handled (now distinct for each registered `RCTApi` service)
+- *#23* The mod is now also a requirement for clients (for now)
+- *#22* `BattleManager#end(UUID, boolean)` overload to forcefully end battles
 
 **Fixed:**
 
+- *#21* Possibility of starting battles against trainers not attached to an entity (potential softlock)
 - *#20* Slight adjustments to mod initialization (hopefully fixes some *random* startup crashes on neoforge)
 - *#19* Trainer pokemon being catchable and/or not recalled in some scenarios
 

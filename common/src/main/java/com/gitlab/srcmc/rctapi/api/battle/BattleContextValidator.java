@@ -27,6 +27,7 @@ import com.cobblemon.mod.common.battles.BattleStartError;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
+import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 
 import net.minecraft.network.chat.Component;
 
@@ -79,7 +80,7 @@ public class BattleContextValidator {
                     }
                 }
 
-                if(actor instanceof EntityBackedBattleActor entityBacked && entityBacked.getEntity() != null) {
+                if(actor instanceof EntityBackedBattleActor entityBacked && entityBacked.getEntity() != null && !entityBacked.getEntity().getTags().contains(TrainerNPC.DUMMY_TAG)) {
                     if(actor.getPokemonList().size() < slotsPerActor) {
                         errors.getParticipantErrors().get(actor).add(BattleStartError.Companion.insufficientPokemon(entityBacked.getEntity(), slotsPerActor, actor.getPokemonList().size()));
                     }

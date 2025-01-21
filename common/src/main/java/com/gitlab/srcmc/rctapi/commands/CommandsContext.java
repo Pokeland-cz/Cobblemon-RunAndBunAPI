@@ -34,6 +34,7 @@ import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
 import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
+import com.gitlab.srcmc.rctapi.commands.arguments.TrainerIdArgument;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -47,9 +48,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.Commands.CommandSelection;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 public abstract class CommandsContext {
@@ -77,7 +76,7 @@ public abstract class CommandsContext {
             .requires(css -> css.hasPermission(2))
             .then(Commands.literal(CMD_ATTACH)
                 .then(Commands
-                    .argument(ARG_TRAINER_ID, ResourceLocationArgument.id())
+                    .argument(ARG_TRAINER_ID, TrainerIdArgument.id())
                     .suggests(this::get_trainer_id_suggestions)
                     .then(Commands.argument(ARG_TRAINER_ENTITY, EntityArgument.entity())
                         .executes(this::attach))))
@@ -101,7 +100,7 @@ public abstract class CommandsContext {
         if(actor < actorsPerSide) {
             var arg = ((1L<<(side*actorsPerSide + actor)) & entityArg) != 0
                 ? Commands.argument(getParticipantEntityId(side, actor), EntityArgument.entity())
-                : RequiredArgumentBuilder.<CommandSourceStack, ResourceLocation>argument(getParticipantId(side, actor), ResourceLocationArgument.id()).suggests(this::get_trainer_id_suggestions);
+                : RequiredArgumentBuilder.<CommandSourceStack, String>argument(getParticipantId(side, actor), TrainerIdArgument.id()).suggests(this::get_trainer_id_suggestions);
 
             return actor + 1 < actorsPerSide
                 ? arg.then(builderParticipants(format, side, actor + 1, actorsPerSide, entityArg, optionalArgs))
@@ -139,10 +138,16 @@ public abstract class CommandsContext {
 
     private int attach(CommandContext<CommandSourceStack> context) {
         try {
-            var trainerId = ResourceLocationArgument.getId(context, ARG_TRAINER_ID).toString();
-            var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
-            RCTApi.getInstance(this.getPrefix()).getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
-            context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
+            var trainerId = context.getArgument(ARG_TRAINER_ID, String.class);
+            var trainer = RCTApi.getInstance(this.getPrefix()).getTrainerRegistry().getById(trainerId, TrainerNPC.class);
+
+            if(trainer == null) {
+                context.getSource().sendFailure(Component.nullToEmpty(String.format("No such trainer registered '%s'", trainerId)));
+            } else {
+                var trainerEntity = (LivingEntity)EntityArgument.getEntity(context, ARG_TRAINER_ENTITY);
+                trainer.setEntity(trainerEntity);
+                context.getSource().sendSystemMessage(Component.nullToEmpty(String.format("Trainer '%s' attached to '%s'", trainerId, trainerEntity.getDisplayName().getString())));
+            }
         } catch(Exception e) {
             return handleError(context, e);
         }
@@ -173,7 +178,7 @@ public abstract class CommandsContext {
                         }
                     } catch(IllegalArgumentException e) {
                         // either no argument or wrong type -> try again
-                        trainerId = ResourceLocationArgument.getId(context, getParticipantId(side, actor)).toString();
+                        trainerId = context.getArgument(getParticipantId(side, actor), String.class);
 
                         try {                            
                             // command syntax for trainer id and entity selector is the same hence minecraft

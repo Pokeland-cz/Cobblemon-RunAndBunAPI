@@ -24,6 +24,7 @@ import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
+import com.gitlab.srcmc.rctapi.ModCommon;
 
 import net.minecraft.world.entity.LivingEntity;
 
@@ -31,6 +32,12 @@ import net.minecraft.world.entity.LivingEntity;
  * An ai trainer that is represented by an arbitrary {@link LivingEntity}.
  */
 public class TrainerNPC implements Trainer {
+    /**
+     * A tag which is added to dummy entities of all {@link TrainerNPC}s registererd to
+     * a {@link TrainerRegistry}.
+     */
+    public static final String DUMMY_TAG = ModCommon.MOD_ID + ":dummy";
+
     private String name;
     private Pokemon[] team;
     private TrainerBag bag;
