@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.8-beta] - 2025-01-22
+
+**Added:**
+
+- *#30* `BattleManager#of(PokemonBattle)`
+
+**Fixed:**
+
+- *#29* Command api mixing up winners and losers
+
 ## [0.10.7-beta] - 2025-01-21
 
 **Added:**

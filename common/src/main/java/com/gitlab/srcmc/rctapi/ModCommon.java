@@ -31,6 +31,7 @@ import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.SelfdotGen5AIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.StrongBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
+import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 
 import kotlin.Unit;
@@ -70,8 +71,16 @@ public class ModCommon {
 
     static Unit handleBattleVictory(BattleVictoryEvent event) {
         // TODO: why does Cobblemon not do this?
-        event.getBattle().setWinners(event.getWinners());
-        event.getBattle().setLosers(event.getLosers());
+        var battle = event.getBattle();
+        battle.setWinners(event.getWinners());
+        battle.setLosers(event.getLosers());
+        var bm = BattleManager.of(battle);
+
+        if(bm != null) {
+            bm.end(battle.getBattleId(), true);
+            BattleStates.notifyBattleEnded(battle);
+        }
+
         return Unit.INSTANCE;
     }
 

@@ -41,7 +41,6 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
 import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
 import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
@@ -250,12 +249,7 @@ public class BattleManager {
                 sendErrors(error, participants1, participants2);
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
-                battle.getOnEndHandlers().add(b -> {
-                    BattleManager.this.end(b.getBattleId(), true);
-                    BattleStates.notifyBattleEnded(b);
-                    return Unit.INSTANCE;
-                });
-
+                battleToManager.put(battle.getBattleId(), BattleManager.this);
                 this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2))));
                 return Unit.INSTANCE;
             });
@@ -331,6 +325,7 @@ public class BattleManager {
                 }
 
                 this.battleStates.remove(battleId);
+                battleToManager.remove(battleId);
                 return true;
             }
         }
@@ -369,7 +364,7 @@ public class BattleManager {
     }
 
     /**
-     * Retrieves a unmodiable collection of all {@link BattleState}s for an ongoing
+     * Retrieves a unmodiable collection of all {@link BattleState}s of all ongoing
      * {@link PokemonBattle}s that were previously started with {@link
      * BattleManager#start(List, List, BattleFormat, BattleRules)}.
      * 
@@ -377,6 +372,23 @@ public class BattleManager {
      */
     public Collection<BattleState> getStates() {
         return this.battleStates.values();
+    }
+
+    //////////////////////////////////////////
+    //                STATIC                //
+    //////////////////////////////////////////
+
+    private static Map<UUID, BattleManager> battleToManager = new HashMap<>();
+
+    /**
+     * Retrieves the {@link BattleManager} that started the provided ongoing {@link
+     * PokemonBattle}.
+     * 
+     * @param battle {@link PokemonBattle} to retrieve the {@link BattleManager} for.
+     * @return {@link BattleManager} that started the {@link PokemonBattle} or null if the battle is unknown.
+     */
+    public static BattleManager of(@NotNull PokemonBattle battle) {
+        return battleToManager.get(battle.getBattleId());
     }
 
     private static void sendErrors(ErroredBattleStart errors, List<Trainer> participants1, List<Trainer> participants2) {
