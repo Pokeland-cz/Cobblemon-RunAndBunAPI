@@ -4,7 +4,7 @@
 
 **Added:**
 
-- *#30* `BattleManager#of(PokemonBattle)`
+- *#30* `BattleManager#of(PokemonBattle)`, `BattleManager#queryToEnd(PokemonBattle)` and `BattleManager#tick()`
 
 **Fixed:**
 
