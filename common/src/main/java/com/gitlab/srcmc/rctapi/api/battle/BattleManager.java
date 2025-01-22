@@ -41,6 +41,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
 import com.gitlab.srcmc.rctapi.api.events.Events;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
@@ -250,6 +251,12 @@ public class BattleManager {
                 return Unit.INSTANCE;
             }).ifSuccessful(battle -> {
                 battleToManager.put(battle.getBattleId(), BattleManager.this);
+
+                battle.getOnEndHandlers().add(b -> {
+                    BattleManager.queryToEnd(b, MAX_BATTLE_QUERY_WAIT_TICKS);
+                    return Unit.INSTANCE;
+                });
+
                 this.eventContext.fire(Events.BATTLE_STARTED.create(this.battleStates.put(battle.getBattleId(), new BattleState(battle, battleFormat, battleRules, participants1, participants2))));
                 return Unit.INSTANCE;
             });
@@ -378,7 +385,50 @@ public class BattleManager {
     //                STATIC                //
     //////////////////////////////////////////
 
+    // Maps active battle ids to the battle manager that started them.
     private static Map<UUID, BattleManager> battleToManager = new HashMap<>();
+
+    // Max ticks to wait before a battle is ended an unregistered.
+    private final static int MAX_BATTLE_QUERY_WAIT_TICKS = 60;
+
+    // Stores all battles that are queried to be forcefully canceled.
+    private final static Map<PokemonBattle, int[]> BATTLE_QUERY_TO_CANCEL = new HashMap<>();
+
+    /**
+     * Updates the {@link BattleManager} service.
+     */
+    public static void tick() {
+        var it = BATTLE_QUERY_TO_CANCEL.entrySet().iterator();
+
+        while(it.hasNext()) {
+            var e = it.next();
+
+            if(--e.getValue()[0] < 0) {
+                BattleManager.forceEnd(e.getKey());
+                it.remove();
+            }
+        }
+    }
+
+    /**
+     * Adds a {@link PokemonBattle} to the query of being ended and unregistered
+     * immediately.
+     * 
+     * @param battle The {@link PokemonBattle} to end.
+     */
+    public static void queryToEnd(PokemonBattle battle) {
+        BATTLE_QUERY_TO_CANCEL.put(battle, new int[]{0});
+    }
+
+    /**
+     * Adds a {@link PokemonBattle} to the query of being ended and unregistered.
+     * 
+     * @param battle The {@link PokemonBattle} to end.
+     * @param ticks The amount of ticks to wait before any action is taken.
+     */
+    public static void queryToEnd(PokemonBattle battle, int ticks) {
+        BATTLE_QUERY_TO_CANCEL.put(battle, new int[]{ticks});
+    }
 
     /**
      * Retrieves the {@link BattleManager} that started the provided ongoing {@link
@@ -389,6 +439,16 @@ public class BattleManager {
      */
     public static BattleManager of(@NotNull PokemonBattle battle) {
         return battleToManager.get(battle.getBattleId());
+    }
+
+    // forcefully ends a battle if it is known
+    private static void forceEnd(PokemonBattle battle) {
+        var bm = BattleManager.of(battle);
+
+        if(bm != null) {
+            bm.end(battle.getBattleId(), true);
+            BattleStates.notifyBattleEnded(battle);
+        }
     }
 
     private static void sendErrors(ErroredBattleStart errors, List<Trainer> participants1, List<Trainer> participants2) {

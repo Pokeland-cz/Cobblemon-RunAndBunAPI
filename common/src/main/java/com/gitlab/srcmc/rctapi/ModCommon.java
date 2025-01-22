@@ -34,7 +34,9 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 
+import dev.architectury.event.events.common.TickEvent;
 import kotlin.Unit;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Mod initialization logic.
@@ -48,10 +50,15 @@ public class ModCommon {
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();
 
+        TickEvent.SERVER_POST.register(ModCommon::handleServerTick);
         CobblemonEvents.POKEMON_ENTITY_SAVE_TO_WORLD.subscribe(Priority.HIGH, ModCommon::handlePokemonEntitySaveToWorld);
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
+    }
+
+    static void handleServerTick(MinecraftServer server) {
+        BattleManager.tick();
     }
 
     static Unit handlePokemonEntitySaveToWorld(PokemonEntitySaveToWorldEvent event) {
@@ -74,13 +81,7 @@ public class ModCommon {
         var battle = event.getBattle();
         battle.setWinners(event.getWinners());
         battle.setLosers(event.getLosers());
-        var bm = BattleManager.of(battle);
-
-        if(bm != null) {
-            bm.end(battle.getBattleId(), true);
-            BattleStates.notifyBattleEnded(battle);
-        }
-
+        BattleManager.queryToEnd(event.getBattle());
         return Unit.INSTANCE;
     }
 
