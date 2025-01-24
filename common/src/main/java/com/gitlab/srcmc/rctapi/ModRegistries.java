@@ -43,13 +43,20 @@ public class ModRegistries {
     }
 
     public static void init() {
+        ModRegistries.init(false);
+    }
+
+    public static void init(boolean skipArgumentType) {
         if(!ModRegistries.initialized) {
-            ArgumentTypes.REGISTRY.register();
+            if(!skipArgumentType) {
+                ArgumentTypes.REGISTRY.register();
+            }
+
             ModRegistries.initialized = true;
         }
     }
 
-    private static ResourceLocation location(String key) {
+    public static ResourceLocation location(String key) {
         return ResourceLocation.fromNamespaceAndPath(ModCommon.MOD_ID, key);
     }
 

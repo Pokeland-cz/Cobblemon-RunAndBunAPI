@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.9-beta] - 2025-01-24
+
+**Fixed:**
+
+- *#31* Clients crashing when logging out from a server on fabric
+
 ## [0.10.8-beta] - 2025-01-22
 
 **Added:**

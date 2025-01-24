@@ -25,28 +25,29 @@ import com.gitlab.srcmc.rctapi.commands.arguments.TrainerIdArgument;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
+import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 
 public final class FabricCommon implements ModInitializer {
     public FabricCommon() {
-        ModRegistries.init();
+        ModRegistries.init(true);
     }
 
     @Override
     public void onInitialize() {
         ArgumentTypeRegistry.registerArgumentType(
-            ModRegistries.ArgumentTypes.BATTLE_RULES.getId(),
+            ModRegistries.location("battle_rules"),
             BattleRulesArgument.class,
-            ModRegistries.ArgumentTypes.BATTLE_RULES.get());
+            SingletonArgumentInfo.contextFree(BattleRulesArgument::battleRules));
 
         ArgumentTypeRegistry.registerArgumentType(
-            ModRegistries.ArgumentTypes.BATTLE_END_COMMAND_MAP.getId(),
+            ModRegistries.location("battle_end_command_map"),
             BattleEndCommandMapArgument.class,
-            ModRegistries.ArgumentTypes.BATTLE_END_COMMAND_MAP.get());
+            SingletonArgumentInfo.contextFree(BattleEndCommandMapArgument::map));
 
         ArgumentTypeRegistry.registerArgumentType(
-                ModRegistries.ArgumentTypes.TRAINER_ID.getId(),
-                TrainerIdArgument.class,
-                ModRegistries.ArgumentTypes.TRAINER_ID.get());
+            ModRegistries.location("trainer_id"),
+            TrainerIdArgument.class,
+            SingletonArgumentInfo.contextFree(TrainerIdArgument::id));
 
         ModCommon.init();
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
