@@ -222,13 +222,16 @@ public abstract class CommandsContext {
 
                     if(server != null) {
                         var state = (BattleState)e.getValue();
-                        var winnersFirst = Stream
-                            .concat(state.getWinners().stream(), state.getLosers().stream())
-                            .map(Trainer::getEntity).toArray(l -> new LivingEntity[l]);
 
-                        Stream
-                            .of(commands.getOrDefault(state.getWinnerSide(), new BattleEndCommand[0]))
-                            .forEach(c -> c.execute(server, winnersFirst));
+                        if(!state.isEndForced()) {
+                            var winnersFirst = Stream
+                                .concat(state.getWinners().stream(), state.getLosers().stream())
+                                .map(Trainer::getEntity).toArray(l -> new LivingEntity[l]);
+
+                            Stream
+                                .of(commands.getOrDefault(state.getWinnerSide(), new BattleEndCommand[0]))
+                                .forEach(c -> c.execute(server, winnersFirst));
+                        }
                     }
 
                     rct.getEventContext().unregister(Events.BATTLE_ENDED, (EventListener<BattleState>)onEnd[0]);
