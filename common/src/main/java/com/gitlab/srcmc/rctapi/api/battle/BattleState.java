@@ -38,6 +38,7 @@ public class BattleState {
     private final BattleRules rules;
     private final List<Trainer> participants1;
     private final List<Trainer> participants2;
+    protected boolean endForced;
 
     /**
      * Creates a new battle state for the given {@link PokemonBattle}.
@@ -190,6 +191,16 @@ public class BattleState {
                 ? 1
                 : 2
             : 0;
+    }
+
+    /**
+     * Checks if the {@link PokemonBattle} referred to by this state was forcefully ended.
+     * 
+     * @see {@link BattleManager#end(UUID, boolean)}.
+     * @return True if {@link PokemonBattle} was forcefully ended.
+     */
+    public boolean isEndForced() {
+        return this.endForced;
     }
 
     /**

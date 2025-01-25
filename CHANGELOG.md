@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.10-beta] - 2025-01-24
+
+**Added:**
+
+- *#33* `BattleState#isEndForced()`: checks if battle was forcefully ended (i.e. draw)
+
+**Changed:**
+
+- *#32* `Events#BATTLE_ENDED` now fired after a battle was unregistered from the `BattleManager` and also if a battle was forcfully ended
+
 ## [0.10.9-beta] - 2025-01-24
 
 **Fixed:**

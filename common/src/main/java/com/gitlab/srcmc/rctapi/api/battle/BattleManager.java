@@ -288,9 +288,8 @@ public class BattleManager {
      * registered by this {@link BattleManager}.
      * 
      * @param battleId Id of the {@link PokemonBattle} to finish and unregister.
-     * @param forced If true the {@link PokemonBattle} will be forcefully stopped if it
-     * has not ended. A {@link Events#BATTLE_ENDED} event will not be fired in that
-     * case.
+     * @param forced If true the {@link PokemonBattle} will be forcefully stopped if it has not ended.
+     * @see {@link BattleState#isEndForced()}
      * @return True if the {@link PokemonBattle} was finished and unregistered.
      */
     public boolean end(UUID battleId, boolean forced) {
@@ -300,12 +299,10 @@ public class BattleManager {
             var battle = state.getBattle();
 
             if(forced || battle == null || battle.getEnded()) {
-                if(battle != null) {
-                    if(battle.getEnded()) {
-                        this.eventContext.fire(Events.BATTLE_ENDED.create(state));
-                    } else { // forced
-                        battle.stop(); // should force tie
-                    }
+                state.endForced = battle != null && !battle.getEnded();
+
+                if(state.endForced) {
+                    battle.stop();
                 }
 
                 // attach trainers to the DUMMY_ENTITY if they npcs have died
@@ -333,6 +330,7 @@ public class BattleManager {
 
                 this.battleStates.remove(battleId);
                 battleToManager.remove(battleId);
+                this.eventContext.fire(Events.BATTLE_ENDED.create(state));
                 return true;
             }
         }
