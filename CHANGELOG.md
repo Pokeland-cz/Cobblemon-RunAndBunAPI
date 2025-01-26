@@ -12,7 +12,7 @@
 
 **Fixed:**
 
-- *#32* Incompatibility with Cobblemon 1.6.1
+- *#32* Incompatibility with Cobblemon 1.6.1 (min required version)
 
 ## [0.10.9-beta] - 2025-01-24
 
