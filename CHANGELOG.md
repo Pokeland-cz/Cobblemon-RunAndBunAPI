@@ -1,14 +1,18 @@
 # Changelog
 
-## [0.10.10-beta] - 2025-01-24
+## [0.10.10-beta] - 2025-01-26
 
 **Added:**
 
-- *#33* `BattleState#isEndForced()`: checks if battle was forcefully ended (i.e. draw)
+- *#34* `BattleState#isEndForced()`: checks if battle was forcefully ended (i.e. draw)
 
 **Changed:**
 
-- *#32* `Events#BATTLE_ENDED` now fired after a battle was unregistered from the `BattleManager` and also if a battle was forcfully ended
+- *#33* `Events#BATTLE_ENDED` now fired after a battle was unregistered from the `BattleManager` and also if a battle was forcfully ended
+
+**Fixed:**
+
+- *#32* Incompatibility with Cobblemon 1.6.1
 
 ## [0.10.9-beta] - 2025-01-24
 

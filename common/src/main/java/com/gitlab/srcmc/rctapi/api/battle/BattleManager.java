@@ -37,9 +37,12 @@ import com.cobblemon.mod.common.battles.BattleSide;
 import com.cobblemon.mod.common.battles.ErroredBattleStart;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 
 import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
@@ -489,9 +492,19 @@ public class BattleManager {
 
         for(var pokemon : pokemons) {
             if(!pokemon.isFainted()) {
-                battlePokemons.add(clone
-                    ? new BattlePokemon(pokemon, pokemon.clone(true), entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; })
-                    : new BattlePokemon(pokemon, pokemon, entity -> Unit.INSTANCE));
+                Pokemon effected;
+                Function1<? super PokemonEntity, Unit> post;
+
+                if(clone) {
+                    effected = new Pokemon();
+                    effected.copyFrom(pokemon);
+                    post = entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; };
+                } else {
+                    effected = pokemon;
+                    post = entity -> Unit.INSTANCE;
+                }
+
+                battlePokemons.add(new BattlePokemon(pokemon, effected, post));
             }
         }
 
