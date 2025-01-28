@@ -496,8 +496,7 @@ public class BattleManager {
                 Function1<? super PokemonEntity, Unit> post;
 
                 if(clone) {
-                    effected = new Pokemon();
-                    effected.copyFrom(pokemon);
+                    effected = pokemon.clone(true, null); // TODO: Cobblemon 1.7 something something... (see clone() description)
                     post = entity -> { entity.recallWithAnimation(); return Unit.INSTANCE; };
                 } else {
                     effected = pokemon;

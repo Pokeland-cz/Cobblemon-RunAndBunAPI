@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.11-beta] - 2025-01-28
+
+**Fixed:**
+
+- *#35* EVs/IVs of trainer pokemon being reset/randomized at start of battles
+
 ## [0.10.10-beta] - 2025-01-26
 
 **Added:**
