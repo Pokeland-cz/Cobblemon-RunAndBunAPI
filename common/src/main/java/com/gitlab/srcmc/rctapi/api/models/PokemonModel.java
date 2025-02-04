@@ -171,12 +171,14 @@ public class PokemonModel {
         this.nature = pokemon.getNature().getName().toString();
         this.ability = pokemon.getAbility().getName();
         this.moveset = pokemon.getMoveSet().getMoves().stream().map(m -> m.getName()).collect(Collectors.toSet());
+        this.ivs = new StatsModel();
         this.ivs.hp = pokemon.getIvs().getOrDefault(Stats.HP);
         this.ivs.atk = pokemon.getIvs().getOrDefault(Stats.ATTACK);
         this.ivs.def = pokemon.getIvs().getOrDefault(Stats.DEFENCE);
         this.ivs.spa = pokemon.getIvs().getOrDefault(Stats.SPECIAL_ATTACK);
         this.ivs.spd = pokemon.getIvs().getOrDefault(Stats.SPECIAL_DEFENCE);
         this.ivs.spe = pokemon.getIvs().getOrDefault(Stats.SPEED);
+        this.evs = new StatsModel();
         this.evs.hp = pokemon.getEvs().getOrDefault(Stats.HP);
         this.evs.atk = pokemon.getEvs().getOrDefault(Stats.ATTACK);
         this.evs.def = pokemon.getEvs().getOrDefault(Stats.DEFENCE);
