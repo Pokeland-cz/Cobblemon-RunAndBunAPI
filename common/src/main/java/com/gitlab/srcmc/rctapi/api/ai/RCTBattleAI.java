@@ -40,7 +40,7 @@ public class RCTBattleAI implements BattleAI {
     private Random rng = new Random();
 
     public RCTBattleAI() {
-        this(new RCTBattleAIConfig());
+        this(new RCTBattleAIConfig.Builder().build());
     }
 
     public RCTBattleAI(@NotNull RCTBattleAIConfig config) {

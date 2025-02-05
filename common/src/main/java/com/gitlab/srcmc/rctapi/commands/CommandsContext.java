@@ -206,7 +206,7 @@ public abstract class CommandsContext {
             }
 
             if(rules == null) {
-                rules = new BattleRules();
+                rules = new BattleRules.Builder().build();
             }
 
             EventListener<?>[] onEnd = new EventListener[1];

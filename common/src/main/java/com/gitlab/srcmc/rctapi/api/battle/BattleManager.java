@@ -64,7 +64,7 @@ import static com.cobblemon.mod.common.util.LocalizationUtilsKt.battleLang;
 public class BattleManager {
     private BattleContextValidator validator = new BattleContextValidator();
     private Map<UUID, BattleState> battleStates = new HashMap<>();
-    private BattleRules defaultRules = new BattleRules();
+    private BattleRules defaultRules = new BattleRules.Builder().build();
     private EventContext eventContext;
 
     /**
