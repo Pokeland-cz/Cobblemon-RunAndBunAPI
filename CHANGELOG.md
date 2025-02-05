@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.12-beta] - 2025-02-05
+
+**Fixed:**
+
+- *#36* Fix non-initialized IV and EV props in `PokemonModel` when using Cobblemon Pokemon class constructor (thanks Gitoido)
+
 ## [0.10.11-beta] - 2025-01-28
 
 **Fixed:**
