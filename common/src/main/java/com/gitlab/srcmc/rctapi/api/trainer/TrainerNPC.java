@@ -138,8 +138,7 @@ public class TrainerNPC implements Trainer {
         var copy = new Pokemon[team.length];
 
         for(int i = 0; i < team.length; i++) {
-            copy[i] = new Pokemon();
-            copy[i].copyFrom(team[i]);
+            copy[i] = team[i].clone(true, null);
         }
 
         return copy;

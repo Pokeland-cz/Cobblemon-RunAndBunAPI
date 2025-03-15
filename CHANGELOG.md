@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.13-beta] - 2025-03-15
+
+**Fixed:**
+
+- *#37* Fixed potential issues with randomized pokemon stats when there are multiple mods that depend on this api
+
 ## [0.10.12-beta] - 2025-02-05
 
 **Fixed:**
