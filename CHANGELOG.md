@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.14] - 2025-03-20
+
+**Fixed:**
+
+- *#38* Potential mod initialization issues when multiple mods register to this api (hopefully)
+
 ## [0.10.13-beta] - 2025-03-15
 
 **Fixed:**

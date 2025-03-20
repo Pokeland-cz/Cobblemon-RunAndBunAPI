@@ -17,8 +17,8 @@
  */
 package com.gitlab.srcmc.rctapi.api;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
@@ -84,7 +84,7 @@ public class RCTApi {
     private static final RCTApi DEFEAULT_INSTANCE = new RCTApi(new TrainerRegistry("", DEFAULT_EVENT_CONTEXT), new BattleManager(DEFAULT_EVENT_CONTEXT), DEFAULT_EVENT_CONTEXT);
 
     // All registered instances (does not include DEFAULT_INSTANCE).
-    private static Map<String, RCTApi> instances = new HashMap<String, RCTApi>();
+    private static Map<String, RCTApi> instances = new ConcurrentHashMap<String, RCTApi>();
 
     /**
      * Does nothing.
