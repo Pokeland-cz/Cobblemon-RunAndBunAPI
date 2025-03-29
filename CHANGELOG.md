@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.15] - 2025-03-29
+
+**Changed:**
+
+- *#39* Serializable model and `JTO` classes
+
 ## [0.10.14-beta] - 2025-03-20
 
 **Fixed:**

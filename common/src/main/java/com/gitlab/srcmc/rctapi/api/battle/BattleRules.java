@@ -17,12 +17,16 @@
  */
 package com.gitlab.srcmc.rctapi.api.battle;
 
+import java.io.Serializable;
+
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 
 /**
  * Additional rules that are enforced during trainer battles.
  */
-public class BattleRules {
+public class BattleRules implements Serializable {
+    private static final long serialVersionUID = 0L;
+    
     protected int maxItemUses = -1;
 
     /**

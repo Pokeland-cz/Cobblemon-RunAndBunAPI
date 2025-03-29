@@ -17,6 +17,7 @@
  */
 package com.gitlab.srcmc.rctapi.api.models;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
@@ -31,8 +32,12 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 /**
  * A pojo class for parsing {@link Pokemon}.
  */
-public class PokemonModel {
-    public static class StatsModel {
+public class PokemonModel implements Serializable {
+    private static final long serialVersionUID = 0L;
+
+    public static class StatsModel implements Serializable {
+        private static final long serialVersionUID = 0L;
+        
         private int hp;
         private int atk;
         private int def;
