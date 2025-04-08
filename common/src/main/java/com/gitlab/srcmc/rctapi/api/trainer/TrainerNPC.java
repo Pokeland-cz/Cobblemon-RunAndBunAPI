@@ -47,6 +47,18 @@ public class TrainerNPC implements Trainer {
     /**
      * Constructs a new {@link TrainerNPC}.
      * 
+     * @param team The {@link Pokemon} party of the trainer.
+     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
+     * @param battleAI {@link BattleAI} used by this trainer.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
+     */
+    public TrainerNPC(@NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
+        this("", team, bag, battleAI, entity);
+    }
+
+    /**
+     * Constructs a new {@link TrainerNPC}.
+     * 
      * @param name The name of the trainer.
      * @param team The {@link Pokemon} party of the trainer.
      * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
@@ -106,7 +118,9 @@ public class TrainerNPC implements Trainer {
 
     @Override @NotNull
     public String getName() {
-        return this.name;
+        return this.name.isEmpty() && this.getEntity().getDisplayName() != null
+            ? this.getEntity().getDisplayName().getString()
+            : this.name;
     }
 
     @Override @NotNull

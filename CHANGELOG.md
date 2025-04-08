@@ -2,6 +2,10 @@
 
 ## [0.11.0-beta] - 2025-04-08
 
+**Changed:**
+
+- *#46* If the `name` of a `TrainerNPC` is unset or empty it will now fall back to the display name of the entity the trainer is attached to
+
 **Removed:**
 
 - *#45* Demo commands (now implemented in [tbcs](https://gitlab.com/srcmc/tbcs))
