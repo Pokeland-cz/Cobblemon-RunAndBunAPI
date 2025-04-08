@@ -41,17 +41,10 @@ public class ExampleMod {
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
-    // Our own commands context.
-    static class ExampleCommandsContext extends CommandsContext {
-        @Override public String getPrefix() { return MOD_ID; }
-        @Override public int getWinCommandsPermission() { return 2; }
-    }
-
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        RCTApiCommands.register(new ExampleCommandsContext()); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 

@@ -32,8 +32,6 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.errors.RCTException;
 import com.gitlab.srcmc.rctapi.api.models.TrainerModel;
-import com.gitlab.srcmc.rctapi.commands.CommandsContext;
-import com.gitlab.srcmc.rctapi.commands.RCTApiCommands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -56,17 +54,10 @@ public class ExampleMod {
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
-    // Our own commands context.
-    static class ExampleCommandsContext extends CommandsContext {
-        @Override public String getPrefix() { return MOD_ID; }
-        @Override public int getWinCommandsPermission() { return 2; }
-    }
-
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        RCTApiCommands.register(new ExampleCommandsContext()); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.0-beta] - 2025-04-08
+
+**Removed:**
+
+- *#40* Demo commands (now implemented in [tbcs](https://gitlab.com/srcmc/tbcs))
+  - `BattleEndCommand`
+  - `CommandsContext`
+  - `RCTApiCommands`
+  - other related classes
+
 ## [0.10.15-beta] - 2025-03-29
 
 **Changed:**
