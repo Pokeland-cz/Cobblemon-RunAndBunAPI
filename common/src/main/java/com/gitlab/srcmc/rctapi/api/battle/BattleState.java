@@ -44,21 +44,6 @@ public class BattleState {
      * Creates a new battle state for the given {@link PokemonBattle}.
      * 
      * @param battle {@link PokemonBattle} referenced by this battle state.
-     * @param rules {@link BattleRules} enforced on the battle.
-     * @deprecated Use {@link BattleState#BattleState(PokemonBattle, BattleFormat, BattleRules, List, List)} instead.
-     */
-    @Deprecated(since = "0.10.7-beta")
-    public BattleState(
-        @NotNull PokemonBattle battle,
-        @NotNull BattleRules rules)
-    {
-        this(battle, BattleFormat.GEN_9_SINGLES, rules, List.of(), List.of());
-    }
-
-    /**
-     * Creates a new battle state for the given {@link PokemonBattle}.
-     * 
-     * @param battle {@link PokemonBattle} referenced by this battle state.
      * @param format {@link BattleFormat} of the battle.
      * @param rules {@link BattleRules} enforced on the battle.
      * @param participants1 Trainer participants from the first side.

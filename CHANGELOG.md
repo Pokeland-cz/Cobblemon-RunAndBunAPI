@@ -4,11 +4,16 @@
 
 **Removed:**
 
-- *#40* Demo commands (now implemented in [tbcs](https://gitlab.com/srcmc/tbcs))
+- *#45* Demo commands (now implemented in [tbcs](https://gitlab.com/srcmc/tbcs))
   - `BattleEndCommand`
   - `CommandsContext`
   - `RCTApiCommands`
   - other related classes
+- *#44* `BattleState#BattleState(PokemonBattle, BattleRules)`
+- *#43* `RCTApi#getInstance()`
+- *#42* `RCTApi#init(TrainerRegistry, BattleManager)`
+- *#41* `RCTApi#initInstance(String, TrainerRegistry)`
+- *#40* `RCTApi#initInstance(String, TrainerRegistry, BattleManager)`
 
 ## [0.10.15-beta] - 2025-03-29
 
