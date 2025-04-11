@@ -199,7 +199,6 @@ public class BattleManager {
         return this.startMulti(participant1_l, participant1_r, participant2_l, participant2_r, this.getDefaultRules());
     }
 
-
     /**
      * Starts a new {@link PokemonBattle} in the 'GEN 9 Multi' format with the given
      * {@link BattleRules}.

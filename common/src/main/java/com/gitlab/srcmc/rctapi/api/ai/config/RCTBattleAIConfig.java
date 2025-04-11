@@ -29,9 +29,9 @@ public record RCTBattleAIConfig(
     Double maxSelectMargin)
 {
     private static final double DEFAULT_MOVE_BIAS = 1.0;
-    private static final double DEFAULT_STATUS_MOVE_BIAS = 0.1;
-    private static final double DEFAULT_SWITCH_BIAS = 0.65;
-    private static final double DEFAULT_ITEM_BIAS = 1.0;
+    private static final double DEFAULT_STATUS_MOVE_BIAS = 0.15;
+    private static final double DEFAULT_SWITCH_BIAS = 0.85;
+    private static final double DEFAULT_ITEM_BIAS = 0.85;
     private static final double DEFAULT_MAX_SELECT_MARGIN = 0.15;
 
     public RCTBattleAIConfig() {

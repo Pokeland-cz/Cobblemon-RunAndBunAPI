@@ -17,21 +17,24 @@
  */
 package com.gitlab.srcmc.rctapi.api.ai;
 
-import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
+import com.gitlab.srcmc.rctapi.api.ai.utils.TypeChart;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
 import java.util.Random;
 
 import org.jetbrains.annotations.NotNull;
 
 public class RCTBattleAI implements BattleAI {
+    public static final boolean DEBUG = true;
+
     private double moveBias;
     private double statusMoveBias;
     private double switchBias;
@@ -53,6 +56,18 @@ public class RCTBattleAI implements BattleAI {
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
+        // TODO: REMOVE DEBUG
+        if(RCTBattleAI.DEBUG) {
+            if(pkmn.isAlive()) {
+                PokeContext.dump(pkmn.getBattlePokemon());
+                pkmn.getActor().getSide().getOppositeSide().getActivePokemon()
+                    .stream().filter(p -> p.isAlive())
+                    .map(p -> p.getBattlePokemon())
+                    .forEach(PokeContext::dump);
+            }
+        }
+        // // // // // // //
+
         var builder = ResponseBuilder
             .create(pkmn, moveset, forceSwitch)
             .margin(this.rng.nextDouble(this.maxSelectMargin))
@@ -61,20 +76,22 @@ public class RCTBattleAI implements BattleAI {
         builder.suggestMoves(candidates -> candidates
             .map(pair -> {
                 if(pair.second instanceof ActiveBattlePokemon targetPkmn) {
-                    return new Choice<>(pair, pair.second.isAllied(pkmn)
+                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, pair.second.isAllied(pkmn)
                         ? 1.0 + evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first)
                         : 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
                 }
 
                 // non or multi-target move
-                return new Choice<>(pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
+                return new Choice<>(String.format("MOVE %s -> <multi/none>", pair.first.move), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
             }));
-        
-        builder.suggestItems(candidates -> candidates
-            .map(pair -> new Choice<>(pair, 1.0 - evalItem(pair.first, pair.second))));
 
-        builder.suggestSwitches(candidates -> candidates
-            .map(bp -> new Choice<>(bp, 1.0 - evalSwitch(pkmn, bp))));
+        builder.suggestItems(candidates -> candidates
+            .map(pair -> new Choice<>(String.format("ITEM %s -> %s", pair.first.getItemName(), pair.second.getName().getString()), pair, 1.0 - evalItem(pair.first, pair.second))));
+
+        if(forceSwitch || !pkmn.hasPokemon() || !PokeContext.State.trapped(pkmn.getBattlePokemon())) {
+            builder.suggestSwitches(candidates -> candidates
+                .map(bp -> new Choice<>(String.format("SWITCH %s -> %s", pkmn.isAlive() ? pkmn.getBattlePokemon().getName().getString() : "<dead>", bp.getName().getString()), bp, 1.0 - evalSwitch(pkmn, bp))));
+        }
 
         return builder.response();
     }
@@ -88,13 +105,13 @@ public class RCTBattleAI implements BattleAI {
                 .max(Double::compare).orElse(0.0);
         }
 
-        var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
         var estDamage = PokeMath.isStatus(move)
-            ? !hasStatus ? to.getHealth() * this.statusMoveBias * (PokeMath.typeEffectiveness(move, to.getOriginalPokemon()) > 0 ? 1 : 0) : 0
+            ? this.statusMoveBias * ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to))
+                ? Math.min(1, to.getHealth() * Math.min(0.25, Math.max(1.0, TypeChart.getEffectiveness(move, to)))) : this.rng.nextDouble() * 0.35)
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
-        var d = 1.0 - (to.getHealth() - estDamage) / to.getHealth();
-        
-        return (d < 1 ? d * to.getHealth() / (double)to.getMaxHealth() : d) * this.moveBias;
+
+        var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();
+        return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias;
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {
@@ -105,31 +122,64 @@ public class RCTBattleAI implements BattleAI {
                 : potion == PotionType.MAX_POTION ? to.getMaxHealth()
                 : potion == PotionType.FULL_RESTORE ? to.getMaxHealth() : 0;
 
-            var hasStatus = to.getContextManager().get(BattleContext.Type.STATUS) != null;
-            var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth()) / (double)amount;
-
-            return (amount / (double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (hasStatus && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias;
+            var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth())/(double)amount;
+            return (amount/(double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (PokeContext.Statuses.any(to) && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias;
         }
 
         return 0;
     }
 
     private double evalSwitch(ActiveBattlePokemon from, BattlePokemon to) {
-        // TODO: consider stat boosts/mali, status effects, etc.
-        var fromHealthBias = 0.5 + 0.5*(1.0 - (from.hasPokemon() ? from.getBattlePokemon().getHealth()/from.getBattlePokemon().getMaxHealth() : 0));
-        double[] d = {fromHealthBias * to.getHealth() / (double)to.getMaxHealth()};
+        // stat boosts
+        var fboost = 1.0 - 0.5 * (from.hasPokemon() ? PokeContext.Boosts.avg(from.getBattlePokemon()) : 0);
+
+        // status effects
+        var fStat = from.hasPokemon() && (PokeContext.Statuses.any(from.getBattlePokemon()) || PokeContext.Volatiles.any(from.getBattlePokemon())) ? 1.25 : 1.0;
+        var tStat = PokeContext.Statuses.any(to) ? 0.75 : 1.0;
+
+        // health
+        var fhCur = (double)(from.hasPokemon() ? from.getBattlePokemon().getHealth() : 0);
+        var fhMax = (double)(from.hasPokemon() ? from.getBattlePokemon().getMaxHealth() : 1);
+        var fhRel = fhCur/fhMax;
+        var thRel = to.getHealth()/(double)to.getMaxHealth();
+
+        double[] d = { (thRel > 0 ? thRel < fhRel ? (1.0 + thRel - fhRel)/4.0 : thRel - fhRel : 0.0) * fStat * tStat * fboost};
+
+        // (s)atk/(s)def and type effectiveness
+        var atkFrom = from.hasPokemon() ? from.getBattlePokemon().getEffectedPokemon().getAttack() : 0;
+        var spaFrom = from.hasPokemon() ? from.getBattlePokemon().getEffectedPokemon().getSpecialAttack() : 0;
+        var defFrom = from.hasPokemon() ? from.getBattlePokemon().getEffectedPokemon().getAttack() : 0;
+        var spdFrom = from.hasPokemon() ? from.getBattlePokemon().getEffectedPokemon().getSpecialAttack() : 0;
+        var atkTo = to.getEffectedPokemon().getAttack();
+        var spaTo = to.getEffectedPokemon().getSpecialAttack();
+        var defTo = to.getEffectedPokemon().getAttack();
+        var spdTo = to.getEffectedPokemon().getSpecialAttack();
 
         from.getSide().getOppositeSide().getActivePokemon().stream().filter(ActiveBattlePokemon::hasPokemon).forEach(pkmn -> {
-            var atkTo = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
-            var spaTo = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
-            d[0] *= 1.0 - PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0; // max type effectiveness is actually 8 but its pretty uncommon
-            d[0] *= (atkTo > spaTo ? to.getOriginalPokemon().getDefence() / (double)atkTo : to.getOriginalPokemon().getSpecialDefence() / (double) spaTo) / 2;
+            var atkOpp = pkmn.getBattlePokemon().getEffectedPokemon().getAttack();
+            var spaOpp = pkmn.getBattlePokemon().getEffectedPokemon().getSpecialAttack();
+            var defOpp = pkmn.getBattlePokemon().getEffectedPokemon().getAttack();
+            var spdOpp = pkmn.getBattlePokemon().getEffectedPokemon().getSpecialAttack();
+            
+            var fe1 = from.hasPokemon() ? TypeChart.getEffectiveness(from.getBattlePokemon(), pkmn.getBattlePokemon()) : 0;
+            var fe2 = from.hasPokemon() ? TypeChart.getEffectiveness(pkmn.getBattlePokemon(), from.getBattlePokemon()) : 4;
+            var f1 = atkFrom > 0 ? defOpp/(double)atkFrom : 2;
+            var f2 = spaFrom > 0 ? spdOpp/(double)spaFrom : 2;
+            var f3 = defFrom > 0 ? atkOpp/(double)defFrom : 2;
+            var f4 = spdFrom > 0 ? spaOpp/(double)spdFrom : 2;
+            var f5 = fe1 > 0 ? 1/fe1 : 2;
+            var f6 = fe2 > 0 ? fe2/4 : 1/2.0;
 
-            // TODO: opposite for current pokemon
-            // var atkFrom = pkmn.getBattlePokemon().getOriginalPokemon().getAttack();
-            // var spaFrom = pkmn.getBattlePokemon().getOriginalPokemon().getSpecialAttack();
-            // d[0] *= PokeMath.typeEffectiveness(pkmn.getBattlePokemon().getOriginalPokemon(), to.getOriginalPokemon()) / 4.0;
-            // d[0] *= Math.max(0, 1.0 - (atkFrom > spaFrom ? to.getOriginalPokemon().getDefence() / (double)atkFrom : to.getOriginalPokemon().getSpecialDefence() / (double) spaFrom) / 2);
+            var te1 = TypeChart.getEffectiveness(to, pkmn.getBattlePokemon());
+            var te2 = TypeChart.getEffectiveness(pkmn.getBattlePokemon(), to);
+            var t1 = defOpp > 0 ? atkTo/(double)defOpp : 2;
+            var t2 = spdOpp > 0 ? spaTo/(double)spdOpp : 2;
+            var t3 = atkOpp > 0 ? defTo/(double)atkOpp : 2;
+            var t4 = spaOpp > 0 ? spdTo/(double)spaOpp : 2;
+            var t5 = te1 > 0 ? te2/4 : 1/2.0;
+            var t6 = te2 > 0 ? 1/te2 : 2;
+
+            d[0] *= f1 * f2 * f3 * f4 * f5 * f6 * t1 * t2 * t3 * t4 * t5 * t6;
         });
 
         return Math.min(1, d[0]) * this.switchBias;
