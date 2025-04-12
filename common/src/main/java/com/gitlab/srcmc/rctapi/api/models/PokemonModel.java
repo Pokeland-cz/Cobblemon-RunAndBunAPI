@@ -98,6 +98,7 @@ public class PokemonModel implements Serializable {
     }
 
     private String species;
+    private String nickname;
     private String gender;
     private int level;
     private String nature;
@@ -110,6 +111,7 @@ public class PokemonModel implements Serializable {
     private Set<String> aspects;
     
     public String getSpecies() { return this.species; }
+    public String getNickname() { return this.nickname; }
     public String getGender() { return this.gender; }
     public int getLevel() { return this.level; }
     public String getNature() { return this.nature; }
@@ -151,7 +153,35 @@ public class PokemonModel implements Serializable {
         boolean shiny, @NotNull String heldItem,
         @NotNull Set<String> aspects)
     {
+        this(species, "", gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
+    }
+
+    /**
+     * Creates a new pokemon model with the given properties.
+     * 
+     * @param species Pokemon species.
+     * @param nickname Pokemon nickname.
+     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
+     * @param level Pokemon level.
+     * @param nature Pokemon nature.
+     * @param ability Pokemon ability.
+     * @param moveset Set of moves.
+     * @param ivs Pokemon ivs.
+     * @param evs Pokemon evs.
+     * @param shiny If the pokemon is shiny or not.
+     * @param heldItem Item held by the pokemon.
+     * @param aspects Set of pokemon aspects.
+     */
+    public PokemonModel(
+        @NotNull String species, @NotNull String nickname,
+        @NotNull String gender, int level, @NotNull String nature,
+        @NotNull String ability, @NotNull Set<String> moveset,
+        @NotNull StatsModel ivs, @NotNull StatsModel evs,
+        boolean shiny, @NotNull String heldItem,
+        @NotNull Set<String> aspects)
+    {
         this.species = species;
+        this.nickname = nickname;
         this.gender = gender;
         this.level = level;
         this.nature = nature;
@@ -171,6 +201,7 @@ public class PokemonModel implements Serializable {
      */
     public PokemonModel(Pokemon pokemon) {
         this.species = pokemon.getSpecies().getName();
+        this.nickname = pokemon.getNickname() != null ? pokemon.getNickname().getString() : "";
         this.gender = pokemon.getGender().getSerializedName();
         this.level = pokemon.getLevel();
         this.nature = pokemon.getNature().getName().toString();
@@ -199,6 +230,7 @@ public class PokemonModel implements Serializable {
     public boolean equals(Object obj) {
         return (obj instanceof PokemonModel other)
             && this.species.equals(other.species)
+            && this.nickname.equals(other.nickname)
             && this.gender.equals(other.gender)
             && this.level == other.level
             && this.nature.equals(other.nature)
@@ -214,10 +246,10 @@ public class PokemonModel implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(
-            this.species, this.gender,
-            this.level, this.nature,
-            this.ability, this.moveset,
-            this.ivs, this.evs,
+            this.species, this.nickname,
+            this.gender, this.level,
+            this.nature, this.ability,
+            this.moveset, this.ivs, this.evs,
             this.shiny, this.heldItem,
             this.aspects);
     }
