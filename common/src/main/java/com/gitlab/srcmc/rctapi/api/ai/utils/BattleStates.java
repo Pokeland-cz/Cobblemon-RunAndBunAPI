@@ -139,8 +139,14 @@ public final class BattleStates {
 
         if(out.hasPokemon()) {
             // store the choice to revert the switch state in case the active pokemon dies
-            bs.getPokemonState(out.getBattlePokemon()).switchFor = in;
+            var ps = bs.getPokemonState(out.getBattlePokemon());
+
+            if(ps.switchFor != null) {
+                ps.switchFor.setWillBeSwitchedIn(false);
+            }
+
             out.getBattlePokemon().setWillBeSwitchedIn(false);
+            ps.switchFor = in;
         }
 
         bs.getPokemonState(in).reset();

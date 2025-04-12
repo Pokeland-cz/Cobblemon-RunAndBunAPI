@@ -110,8 +110,8 @@ public class ResponseBuilder {
 
     public ResponseBuilder suggestSwitches(Function<Stream<BattlePokemon>, Stream<Choice<BattlePokemon>>> consumer) {
         consumer.apply(this.switchCandidates.get()).forEach(choice -> {
-            this.choices.add(new Choice<>(choice.name,
-                new SwitchActionResponse(choice.value.getUuid()), choice.weight,
+            this.choices.add(new Choice<>(
+                choice.name, new SwitchActionResponse(choice.value.getUuid()), choice.weight,
                 () -> BattleStates.setWillBeSwitchedFor(choice.value, this.pkmn)));
         });
         
@@ -208,7 +208,7 @@ public class ResponseBuilder {
         }
 
         public Choice(String name, T value, double weight, Action onpick) {
-            this(name, value, weight, () -> {}, false);
+            this(name, value, weight, onpick, false);
         }
 
         public Choice(String name, T value, double weight, Action onpick, boolean forced) {

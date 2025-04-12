@@ -75,7 +75,7 @@ public class RCTBattleAI implements BattleAI {
 
         builder.suggestMoves(candidates -> candidates
             .map(pair -> {
-                if(pair.second instanceof ActiveBattlePokemon targetPkmn) {
+                if(pair.second instanceof ActiveBattlePokemon targetPkmn && targetPkmn.isAlive()) {
                     return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, pair.second.isAllied(pkmn)
                         ? 1.0 + evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first)
                         : 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
@@ -108,8 +108,8 @@ public class RCTBattleAI implements BattleAI {
         var isStatusMove = PokeMath.isStatus(move);
         var estDamage = isStatusMove
             ? (!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to))
-                ? Math.max(1, to.getHealth() * this.rng.nextDouble(0.25, 0.75))
-                : Math.max(1, to.getHealth() * this.rng.nextDouble(0.5))
+                ? Math.max(1, to.getHealth() * this.rng.nextDouble(0.1, 0.75))
+                : Math.max(1, to.getHealth() * this.rng.nextDouble(0.4))
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
 
         var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();

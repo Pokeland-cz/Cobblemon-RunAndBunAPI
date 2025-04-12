@@ -10,7 +10,7 @@
 
 **Fixed:**
 
-- *#46* `RCTBattleAI` attempting to choose illegal actions and causing battles to softlock in certain situations (e.g. switching out against pokemon with "arena trap" or while "mean look" is active)
+- *#46* `RCTBattleAI` attempting to choose illegal actions, causing battles to softlock in certain situations and other issues (e.g. switching out against pokemon with "arena trap" or while "mean look" is active)
 
 **Removed:**
 
