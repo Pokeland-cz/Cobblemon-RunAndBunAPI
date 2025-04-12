@@ -33,7 +33,7 @@ import java.util.Random;
 import org.jetbrains.annotations.NotNull;
 
 public class RCTBattleAI implements BattleAI {
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private double moveBias;
     private double statusMoveBias;
@@ -105,13 +105,15 @@ public class RCTBattleAI implements BattleAI {
                 .max(Double::compare).orElse(0.0);
         }
 
-        var estDamage = PokeMath.isStatus(move)
-            ? this.statusMoveBias * ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to))
-                ? Math.min(1, to.getHealth() * Math.min(0.25, Math.max(1.0, TypeChart.getEffectiveness(move, to)))) : this.rng.nextDouble() * 0.35)
+        var isStatusMove = PokeMath.isStatus(move);
+        var estDamage = isStatusMove
+            ? (!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to))
+                ? Math.max(1, to.getHealth() * this.rng.nextDouble(0.25, 0.75))
+                : Math.max(1, to.getHealth() * this.rng.nextDouble(0.5))
             : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
 
         var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();
-        return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias;
+        return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias * (isStatusMove ? this.statusMoveBias : 1.0);
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {
