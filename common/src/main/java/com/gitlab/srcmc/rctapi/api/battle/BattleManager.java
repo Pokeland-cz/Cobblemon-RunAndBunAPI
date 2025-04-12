@@ -89,10 +89,12 @@ public class BattleManager {
      * 
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startSingle(
+    @Deprecated(since = "0.11.0")
+    public boolean startSingle(
         @NotNull Trainer participant1,
         @NotNull Trainer participant2)
     {
@@ -106,10 +108,12 @@ public class BattleManager {
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
      * @param battleRules {@link BattleRules} applied to the battle.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startSingle(
+    @Deprecated(since = "0.11.0")
+    public boolean startSingle(
         @NotNull Trainer participant1,
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
@@ -123,10 +127,12 @@ public class BattleManager {
      * 
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startDouble(@NotNull Trainer participant1, @NotNull Trainer participant2) {
+    @Deprecated(since = "0.11.0")
+    public boolean startDouble(@NotNull Trainer participant1, @NotNull Trainer participant2) {
         return this.startDouble(participant1, participant2, this.getDefaultRules());
     }
 
@@ -137,10 +143,12 @@ public class BattleManager {
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
      * @param battleRules {@link BattleRules} applied to the battle.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startDouble(
+    @Deprecated(since = "0.11.0")
+    public boolean startDouble(
         @NotNull Trainer participant1,
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
@@ -154,10 +162,12 @@ public class BattleManager {
      * 
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startTriple(@NotNull Trainer participant1, @NotNull Trainer participant2) {
+    @Deprecated(since = "0.11.0")
+    public boolean startTriple(@NotNull Trainer participant1, @NotNull Trainer participant2) {
         return this.startTriple(participant1, participant2, this.getDefaultRules());
     }
 
@@ -168,10 +178,12 @@ public class BattleManager {
      * @param participant1 First participating {@link Trainer}.
      * @param participant2 Second participating {@link Trainer}.
      * @param battleRules {@link BattleRules} applied to the battle.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startTriple(
+    @Deprecated(since = "0.11.0")
+    public boolean startTriple(
         @NotNull Trainer participant1,
         @NotNull Trainer participant2,
         @NotNull BattleRules battleRules)
@@ -187,10 +199,12 @@ public class BattleManager {
      * @param participant2_r Participating {@link Trainer} for the first team on the right side.
      * @param participant1_l Participating {@link Trainer} for the second team on the left side.
      * @param participant2_r Participating {@link Trainer} for the second team on the right side.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startMulti(
+    @Deprecated(since = "0.11.0")
+    public boolean startMulti(
         @NotNull Trainer participant1_l,
         @NotNull Trainer participant1_r,
         @NotNull Trainer participant2_l,
@@ -208,10 +222,12 @@ public class BattleManager {
      * @param participant1_l Participating {@link Trainer} for the second team on the left side.
      * @param participant2_r Participating {@link Trainer} for the second team on the right side.
      * @param battleRules {@link BattleRules} applied to the battle.
-     * @return {@link UUID} of the started battle or null on failure.
-     * @see also {@link BattleManager#start(List, List, BattleFormat, BattleRules)}
+     * @return True if a battle was started.
+     * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
+     * @deprecated The return type will be changed to {@link UUID} in 0.12.
      */
-    public UUID startMulti(
+    @Deprecated(since = "0.11.0")
+    public boolean startMulti(
         @NotNull Trainer participant1_l,
         @NotNull Trainer participant1_r,
         @NotNull Trainer participant2_l,
@@ -232,8 +248,31 @@ public class BattleManager {
      * @param battleFormat {@link BattleFormat} to use.
      * @param battleRules {@link BattleRules} enforced on the battle.
      * @return {@link UUID} of the started battle or null on failure.
+     * @deprecated Use {@link BattleManager#startBattleBattle(List, List, BattleFormat, BattleRules)} instead.
      */
-    public UUID start(
+    @Deprecated(since = "0.11.0")
+    public boolean start(
+        @NotNull List<Trainer> participants1,
+        @NotNull List<Trainer> participants2,
+        @NotNull BattleFormat battleFormat,
+        @NotNull BattleRules battleRules)
+    {
+        return this.startBattle(participants1, participants2, battleFormat, battleRules) != null;
+    }
+
+    /**
+     * Starts a new {@link PokemonBattle}. Potential errors that may occur at the start
+     * or during a battle are sent to all participating players.
+     * 
+     * Note: The first participant in participants1 must be a player!
+     * 
+     * @param participants1 List of {@link Trainer} participants for one side.
+     * @param participants2 List of {@link Trainer} participants for the other side.
+     * @param battleFormat {@link BattleFormat} to use.
+     * @param battleRules {@link BattleRules} enforced on the battle.
+     * @return {@link UUID} of the started battle or null on failure.
+     */
+    public UUID startBattle(
         @NotNull List<Trainer> participants1,
         @NotNull List<Trainer> participants2,
         @NotNull BattleFormat battleFormat,
@@ -362,7 +401,7 @@ public class BattleManager {
 
     /**
      * Retrieves the {@link BattleState} for an ongoing {@link PokemonBattle} that was
-     * previously started with {@link BattleManager#start(List, List, BattleFormat, BattleRules)}.
+     * previously started with {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}.
      * 
      * @param battleId UUID of the {@link PokemonBattle}.
      * @return The {@link BattleState} or null of no such battle is active.
@@ -374,7 +413,7 @@ public class BattleManager {
     /**
      * Retrieves a unmodiable collection of all {@link BattleState}s of all ongoing
      * {@link PokemonBattle}s that were previously started with {@link
-     * BattleManager#start(List, List, BattleFormat, BattleRules)}.
+     * BattleManager#startBattle(List, List, BattleFormat, BattleRules)}.
      * 
      * @return Collection of active {@link BattleState}s.
      */

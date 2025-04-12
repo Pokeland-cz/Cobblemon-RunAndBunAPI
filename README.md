@@ -102,7 +102,7 @@ public class ExampleMod {
 
 ---
 
-Starting a battle is now simply a matter of invoking `BattleManager#start` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [`RCTApiCommands`](common/src/main/java/com/gitlab/srcmc/rctapi/commands/RCTApiCommands.java) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
+Starting a battle is now simply a matter of invoking `BattleManager#startBattle` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [`RCTApiCommands`](common/src/main/java/com/gitlab/srcmc/rctapi/commands/RCTApiCommands.java) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
 
 ```java
 RCTApi.getInstance("example_mod").getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
