@@ -137,13 +137,8 @@ public class RCTBattleAI implements BattleAI {
         var fStat = from.hasPokemon() && (PokeContext.Statuses.any(from.getBattlePokemon()) || PokeContext.Volatiles.any(from.getBattlePokemon())) ? 1.25 : 1.0;
         var tStat = PokeContext.Statuses.any(to) ? 0.75 : 1.0;
 
-        // health
-        var fhCur = (double)(from.hasPokemon() ? from.getBattlePokemon().getHealth() : 0);
-        var fhMax = (double)(from.hasPokemon() ? from.getBattlePokemon().getMaxHealth() : 1);
-        var fhRel = fhCur/fhMax;
-        var thRel = to.getHealth()/(double)to.getMaxHealth();
-
-        double[] d = { (thRel > 0 ? thRel < fhRel ? (1.0 + thRel - fhRel)/4.0 : thRel - fhRel : 0.0) * fStat * tStat * fboost};
+        // double[] d = { (thRel > 0 ? thRel < fhRel ? (1.0 + thRel - fhRel)/4.0 : thRel - fhRel : 0.0) * fStat * tStat * fboost};
+        double[] d = { fStat * tStat * fboost};
 
         // (s)atk/(s)def and type effectiveness
         var atkFrom = from.hasPokemon() ? from.getBattlePokemon().getEffectedPokemon().getAttack() : 0;
@@ -155,7 +150,7 @@ public class RCTBattleAI implements BattleAI {
         var defTo = to.getEffectedPokemon().getAttack();
         var spdTo = to.getEffectedPokemon().getSpecialAttack();
 
-        from.getSide().getOppositeSide().getActivePokemon().stream().filter(ActiveBattlePokemon::hasPokemon).forEach(pkmn -> {
+        to.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(ActiveBattlePokemon::hasPokemon).forEach(pkmn -> {
             var atkOpp = pkmn.getBattlePokemon().getEffectedPokemon().getAttack();
             var spaOpp = pkmn.getBattlePokemon().getEffectedPokemon().getSpecialAttack();
             var defOpp = pkmn.getBattlePokemon().getEffectedPokemon().getAttack();
@@ -163,11 +158,11 @@ public class RCTBattleAI implements BattleAI {
             
             var fe1 = from.hasPokemon() ? TypeChart.getEffectiveness(from.getBattlePokemon(), pkmn.getBattlePokemon()) : 0;
             var fe2 = from.hasPokemon() ? TypeChart.getEffectiveness(pkmn.getBattlePokemon(), from.getBattlePokemon()) : 4;
-            var f1 = atkFrom > 0 ? defOpp/(double)atkFrom : 2;
-            var f2 = spaFrom > 0 ? spdOpp/(double)spaFrom : 2;
-            var f3 = defFrom > 0 ? atkOpp/(double)defFrom : 2;
-            var f4 = spdFrom > 0 ? spaOpp/(double)spdFrom : 2;
-            var f5 = fe1 > 0 ? 1/fe1 : 2;
+            var f1 = atkFrom > 0 ? defOpp/(double)atkFrom : 1;
+            var f2 = spaFrom > 0 ? spdOpp/(double)spaFrom : 1;
+            var f3 = defFrom > 0 ? atkOpp/(double)defFrom : 1;
+            var f4 = spdFrom > 0 ? spaOpp/(double)spdFrom : 1;
+            var f5 = fe1 > 0 ? 1/fe1 : 1;
             var f6 = fe2 > 0 ? fe2/4 : 1/2.0;
 
             var te1 = TypeChart.getEffectiveness(to, pkmn.getBattlePokemon());
@@ -181,6 +176,14 @@ public class RCTBattleAI implements BattleAI {
 
             d[0] *= f1 * f2 * f3 * f4 * f5 * f6 * t1 * t2 * t3 * t4 * t5 * t6;
         });
+
+
+        // health (TODO: factor current health, speed, etc.)
+        // var fhCur = (double)(from.hasPokemon() ? from.getBattlePokemon().getHealth() : 0);
+        // var fhMax = (double)(from.hasPokemon() ? from.getBattlePokemon().getMaxHealth() : 1);
+        // var fhRel = fhCur/fhMax;
+        var thRel = to.getHealth()/(double)to.getMaxHealth();
+        d[0] *= thRel < 1.0 ? this.rng.nextDouble(thRel, 1.0) : 1.0;
 
         return Math.min(1, d[0]) * this.switchBias;
     }

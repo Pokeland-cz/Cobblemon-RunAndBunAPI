@@ -126,7 +126,7 @@ public class ResponseBuilder {
                         var item = choice.value.first;
                         var pkmn = choice.value.second;
                         this.pkmn.getActor().forceChoose(new BagItemActionResponse(actor.getBag().use(item), pkmn, pkmn.getUuid().toString()));
-                    }));
+                    }, true));
             });
         }
 
@@ -152,7 +152,7 @@ public class ResponseBuilder {
         // // // // // // //
 
         var choices = this.choices.stream()
-            .filter(c -> c.value.isValid(this.pkmn, this.moveset, this.forceMove))
+            .filter(c -> c.forced || c.value.isValid(this.pkmn, this.moveset, this.forceMove))
             .toList();
             
         var response = choices.isEmpty()
@@ -193,24 +193,30 @@ public class ResponseBuilder {
     }
 
     public static class Choice<T> implements Comparable<Choice<?>> {
-        public static interface Action {
-            void perform();            
-        }
-
         public final T value;
         public final double weight;
         public final String name;
+        public final boolean forced;
         private final Action onpick;
 
         public Choice(String name, T value, double weight) {
-            this(name, value, weight, () -> {});
+            this(name, value, weight, () -> {}, false);
+        }
+
+        public Choice(String name, T value, double weight, boolean forced) {
+            this(name, value, weight, () -> {}, forced);
         }
 
         public Choice(String name, T value, double weight, Action onpick) {
+            this(name, value, weight, () -> {}, false);
+        }
+
+        public Choice(String name, T value, double weight, Action onpick, boolean forced) {
             this.value = value;
             this.weight = weight;
             this.name = name;
             this.onpick = onpick;
+            this.forced = forced;
         }
 
         public Choice<T> pick() {
@@ -221,6 +227,10 @@ public class ResponseBuilder {
         @Override
         public int compareTo(Choice<?> other) {
             return Double.compare(this.weight, other.weight);
+        }
+
+        public static interface Action {
+            void perform();            
         }
     }
 
