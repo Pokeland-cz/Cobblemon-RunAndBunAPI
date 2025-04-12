@@ -1,16 +1,17 @@
 # Changelog
 
-## [0.11.0-beta] - 2025-04-11
+## [0.11.0-beta] - 2025-04-12
 
 **Changed:**
 
-- *#49* Added `nickname` property to `PokemonModel`s (TODO)
-- *#48* Adjustments to `RCTBattleAI` *move* and *switch* evaluations (e.g. better awareness of shedinjas wonderguard) and other tweaks
-- *#47* If the `name` of a `TrainerNPC` is unset or empty it will now fall back to the display name of the entity the trainer is attached to
+- *#50* Added `nickname` property to `PokemonModel`s (TODO)
+- *#49* Adjustments to `RCTBattleAI` *move* and *switch* evaluations (e.g. better awareness of shedinjas wonderguard) and other tweaks
+- *#48* If the `name` of a `TrainerNPC` is unset or empty it will now fall back to the display name of the entity the trainer is attached to
+- *#47* `BattleManager#start()` (and helper methods) now return a `UUID` of the started battle on success (instead of a `boolean`)
 
 **Fixed:**
 
-- *#46* `RCTBattleAI` attempting to choose illegal actions, causing battles to softlock in certain situations and other issues (e.g. switching out against pokemon with "arena trap" or while "mean look" is active)
+- *#46* `RCTBattleAI` attempting to choose various illegal actions, causing battles to softlock in certain situations and other issues (e.g. switching out against pokemon with "arena trap" or while "mean look" is active)
 
 **Removed:**
 
