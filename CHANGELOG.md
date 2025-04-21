@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.11.0-beta] - 2025-04-12
+
+**Added:**
+
+- *#51* `BattleManager#startBattle()` with `UUID` return type as replacement for `BattleManager#start()`
+- *#50* `nickname` property for `PokemonModel`s
+
+**Changed:**
+
+- *#49* Adjustments to `RCTBattleAI` *move* and *switch* evaluations (e.g. better awareness of shedinjas wonderguard) and other tweaks
+- *#48* If the `name` of a `TrainerNPC` is unset or empty it will now fall back to the display name of the entity the trainer is attached to
+
+**Fixed:**
+
+- *#47* `RCTBattleAI` attempting to choose various illegal actions, causing battles to softlock in certain situations and other issues (e.g. switching out against pokemon with "arena trap" or while "mean look" is active)
+
+**Deprecated:**
+
+- *#46* `BattleManager#start()` and helper methods
+
+**Removed:**
+
+- *#45* Demo commands (now implemented in [tbcs](https://gitlab.com/srcmc/tbcs))
+  - `BattleEndCommand`
+  - `CommandsContext`
+  - `RCTApiCommands`
+  - other related classes
+- *#44* `BattleState#BattleState(PokemonBattle, BattleRules)`
+- *#43* `RCTApi#getInstance()`
+- *#42* `RCTApi#init(TrainerRegistry, BattleManager)`
+- *#41* `RCTApi#initInstance(String, TrainerRegistry)`
+- *#40* `RCTApi#initInstance(String, TrainerRegistry, BattleManager)`
+
+## [0.10.15-beta] - 2025-03-29
+
+**Changed:**
+
+- *#39* Serializable model and `JTO` classes
+
+## [0.10.14-beta] - 2025-03-20
+
+**Fixed:**
+
+- *#38* Potential mod initialization issues when multiple mods register to this api (hopefully)
+
+## [0.10.13-beta] - 2025-03-15
+
+**Fixed:**
+
+- *#37* Fixed potential issues with randomized pokemon stats when there are multiple mods that depend on this api
+
 ## [0.10.12-beta] - 2025-02-05
 
 **Fixed:**

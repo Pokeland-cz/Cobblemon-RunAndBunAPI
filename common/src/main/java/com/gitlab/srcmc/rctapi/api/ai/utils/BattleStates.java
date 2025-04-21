@@ -24,57 +24,144 @@ import java.util.UUID;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 
 /**
  * Utility class to keep track of information throughout a battle.
  */
 public final class BattleStates {
-    public static class State {
-        private Map<BattlePokemon, BattlePokemon> switchReplacements = new HashMap<>();
+    public static class PokemonState {
+        private static final int[] ZERO = new int[]{0};
+        private Map<BattleEffect, int[]> turnEffectCounters = new HashMap<>();
+        private BattlePokemon switchFor;
+        private PokemonState preReset;
+        private long effects;
+
+        private PokemonState() {
+            this(true);
+        }
+
+        private PokemonState(boolean resettable) {
+            if(resettable) {
+                this.preReset = new PokemonState(false);
+            }
+        }
+
+        private void copy(PokemonState other) {
+            this.turnEffectCounters = new HashMap<>(other.turnEffectCounters);
+            this.switchFor = other.switchFor;
+            this.effects = other.effects;
+        }
+
+        private PokemonState reset() {
+            this.preReset.copy(this);
+            this.switchFor = null;
+            this.effects  = 0;
+            this.turnEffectCounters.clear();
+            this.add(BattleEffect.TURN);
+            return this;
+        }
+
+        private void undo() {
+            this.copy(this.preReset);
+        }
+
+        private void nextTurn() {
+            if(!this.has(BattleEffect.TURN)) {
+                this.add(BattleEffect.TURN);
+            }
+            
+            var it = this.turnEffectCounters.entrySet().iterator();
+
+            while(it.hasNext()) {
+                var e = it.next();
+
+                if(e.getValue()[0]-- <= 0) {
+                    this.effects ^= e.getKey().mask();
+                    it.remove();
+                }
+            }
+
+            this.switchFor = null;
+        }
+
+        public boolean has(BattleEffect e) {
+            return (e.mask() & this.effects) != 0;
+        }
+
+        public int age(BattleEffect e) {
+            return this.has(e) ? e.expires() - this.turnEffectCounters.getOrDefault(e, ZERO)[0] : 0;
+        }
+
+        public void add(BattleEffect e) {
+            if(e.expires() >= 0) {
+                this.turnEffectCounters.put(e, new int[]{e.expires()});
+            }
+
+            this.effects |= e.mask();
+        }
+    }
+
+    public static class BattleState {
+        private Map<BattlePokemon, PokemonState> pokemonStates = new HashMap<>();
         private Map<ActiveBattlePokemon, Boolean> turnStates = new HashMap<>();
-        private State() {}
+        private BattleState() {}
 
         public boolean isTurn(ActiveBattlePokemon pkmn) {
             return this.turnStates.getOrDefault(pkmn, false);
         }
+
+        public PokemonState getPokemonState(BattlePokemon pkmn) {
+            return this.pokemonStates.computeIfAbsent(pkmn, k -> new PokemonState());
+        }
     }
 
-    public static State get(PokemonBattle battle) {
+    public static BattleState get(PokemonBattle battle) {
         if(!battle.getEnded()) {
-            return BattleStates.STATES.computeIfAbsent(battle.getBattleId(), k -> new State());
+            return BattleStates.STATES.computeIfAbsent(battle.getBattleId(), k -> new BattleState());
         }
 
-        return new State();
+        return new BattleState();
     }
 
     public static void setTurn(ActiveBattlePokemon pkmn, boolean turn) {
         var bs = BattleStates.get(pkmn.getBattle());
 
         if(turn && pkmn.hasPokemon()) {
-            bs.switchReplacements.remove(pkmn.getBattlePokemon());
+            bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn();
         }
         
         bs.turnStates.put(pkmn, turn);
     }
 
-    public static void setWillBeSwitchedInFor(BattlePokemon in, ActiveBattlePokemon out) {
+    public static void setWillBeSwitchedFor(BattlePokemon in, ActiveBattlePokemon out) {
+        var bs = BattleStates.get(out.getBattle());
+
         if(out.hasPokemon()) {
             // store the choice to revert the switch state in case the active pokemon dies
-            BattleStates.get(out.getBattle()).switchReplacements.put(out.getBattlePokemon(), in);
+            var ps = bs.getPokemonState(out.getBattlePokemon());
+
+            if(ps.switchFor != null) {
+                ps.switchFor.setWillBeSwitchedIn(false);
+            }
+
             out.getBattlePokemon().setWillBeSwitchedIn(false);
+            ps.switchFor = in;
         }
 
+        bs.getPokemonState(in).reset();
         in.setWillBeSwitchedIn(true);
     }
 
     public static void notifyPokemonFainted(PokemonBattle battle, BattlePokemon pkmn) {
         if(BattleStates.STATES.containsKey(battle.getBattleId())) {
-            var replacement = BattleStates.STATES
-                .get(battle.getBattleId())
-                .switchReplacements.remove(pkmn);
+            var bs = BattleStates.get(battle);
+            var ps = bs.getPokemonState(pkmn);
 
-            if(replacement != null) {
-                replacement.setWillBeSwitchedIn(false);
+            if(ps.switchFor != null) {
+                bs.getPokemonState(ps.switchFor).undo();
+                ps.switchFor.setWillBeSwitchedIn(false);
+                ps.switchFor = null;
             }
         }
     }
@@ -83,6 +170,6 @@ public final class BattleStates {
         BattleStates.STATES.remove(battle.getBattleId());
     }
 
-    private static Map<UUID, State> STATES = new HashMap<>();
+    private static Map<UUID, BattleState> STATES = new HashMap<>();
     private BattleStates() {}
 }

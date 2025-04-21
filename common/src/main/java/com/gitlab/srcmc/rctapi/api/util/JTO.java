@@ -17,14 +17,20 @@
  */
 package com.gitlab.srcmc.rctapi.api.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Utility class to parse generic json objects on demand. An instance of JTO can be
@@ -40,28 +46,51 @@ import com.google.gson.JsonObject;
  * and {@code "data"} define a json object that will be supplied (as {@link JsonObject}) to the json parser
  * ({@code "data"} may be omitted in which case {@code null} will be supplied to the parser).
  */
-public class JTO<T> {
+public class JTO<T> implements Serializable {
+    private static final long serialVersionUID = 0L;
     private static final Map<TypeToken<?>, Map<String, Parser<?>>> PARSERS = new HashMap<>();
     private static final Gson GSON = new Gson();
 
     private String type;
     private JsonObject data;
     private transient T target;
+    private transient Supplier<T> func;
 
-    private transient Supplier<T> func = () -> {
-        var tt = TypeToken.of(Wrapper.<T>clazz());
-        var parsers = JTO.PARSERS.getOrDefault(tt, Map.of());
+    protected JTO() {
+        this.data = new JsonObject();
+        this.type = "";
+        this.init();
+    }
 
-        @SuppressWarnings("unchecked")
-        var parser = (Parser<T>)parsers.get(this.type);
+    private void init() {
+        this.func = () -> {
+            var tt = TypeToken.of(Wrapper.<T>clazz());
+            var parsers = JTO.PARSERS.getOrDefault(tt, Map.of());
+    
+            @SuppressWarnings("unchecked")
+            var parser = (Parser<T>)parsers.get(this.type);
+    
+            if(parser != null) {
+                this.target = parser.func.apply(this.data);
+                this.func = () -> this.target;
+            } else {
+                ModCommon.LOG.error(String.format("No JTO parser registered for type '%s'", this.type));
+            }
+            
+            return this.target;
+        };
+    }
 
-        if(parser != null) {
-            this.target = parser.func.apply(this.data);
-            this.func = () -> this.target;
-        }
-        
-        return this.target;
-    };
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        oos.writeObject(this.type);
+        oos.writeObject(this.data.toString());
+    }
+
+    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+        this.type = (String)ois.readObject();
+        this.data = JsonParser.parseString((String)ois.readObject()).getAsJsonObject();
+        this.init();
+    }
 
     /**
      * Parsers this JTO into an object of the target type and returns it. If the object

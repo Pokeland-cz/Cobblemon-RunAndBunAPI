@@ -38,6 +38,8 @@ import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
+import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.ai.RCTBattleAI;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager.TrainerEntityBattleActor;
 
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
@@ -46,14 +48,13 @@ public class ResponseBuilder {
     private Supplier<Stream<BattlePokemon>> switchCandidates = Stream::empty;
     private Supplier<Stream<Pair<BagItem, BattlePokemon>>> itemCandidates = Stream::empty;
     private Supplier<Stream<Pair<InBattleMove, Targetable>>> moveCandidates = Stream::empty;
-    private List<Choice<Supplier<ShowdownActionResponse>>> choices = new ArrayList<>();
+    private List<Choice<ShowdownActionResponse>> choices = new ArrayList<>();
     private Random rng = new Random(0);
 
     private ActiveBattlePokemon pkmn;
     private ShowdownMoveset moveset;
     private boolean forceSwitch, forceMove, mustChoose;
     private double margin;
-    private double rdf = 3; // randomDistributionFactor >= 1
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
         var builder = new ResponseBuilder();
@@ -109,10 +110,9 @@ public class ResponseBuilder {
 
     public ResponseBuilder suggestSwitches(Function<Stream<BattlePokemon>, Stream<Choice<BattlePokemon>>> consumer) {
         consumer.apply(this.switchCandidates.get()).forEach(choice -> {
-            this.choices.add(new Choice<>(() -> {
-                BattleStates.setWillBeSwitchedInFor(choice.value, this.pkmn);
-                return new SwitchActionResponse(choice.value.getUuid());
-            }, choice.weight));
+            this.choices.add(new Choice<>(
+                choice.name, new SwitchActionResponse(choice.value.getUuid()), choice.weight,
+                () -> BattleStates.setWillBeSwitchedFor(choice.value, this.pkmn)));
         });
         
         return this;
@@ -121,12 +121,12 @@ public class ResponseBuilder {
     public ResponseBuilder suggestItems(Function<Stream<Pair<BagItem, BattlePokemon>>, Stream<Choice<Pair<BagItem, BattlePokemon>>>> consumer) {
         if(this.pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
             consumer.apply(this.itemCandidates.get()).forEach(choice -> {
-                this.choices.add(new Choice<>(() -> {
-                    var item = choice.value.first;
-                    var pkmn = choice.value.second;
-                    this.pkmn.getActor().forceChoose(new BagItemActionResponse(actor.getBag().use(item), pkmn, pkmn.getUuid().toString()));
-                    return new ForcePassActionResponse();
-                }, choice.weight));
+                this.choices.add(new Choice<>(choice.name,
+                    new ForcePassActionResponse(), choice.weight, () -> {
+                        var item = choice.value.first;
+                        var pkmn = choice.value.second;
+                        this.pkmn.getActor().forceChoose(new BagItemActionResponse(actor.getBag().use(item), pkmn, pkmn.getUuid().toString()));
+                    }, true));
             });
         }
 
@@ -137,20 +137,31 @@ public class ResponseBuilder {
         consumer.apply(this.moveCandidates.get()).forEach(choice -> {
             var move = choice.value.first;
             var target = choice.value.second;
-            this.choices.add(new Choice<>(() -> new MoveActionResponse(move.id, target != null ? target.getPNX() : null, null), choice.weight));
+            this.choices.add(new Choice<>(choice.name,
+                new MoveActionResponse(move.id, target != null ? target.getPNX() : null, null), choice.weight));
         });
 
         return this;
     }
 
     public ShowdownActionResponse response(Consumer<ShowdownActionResponse> consumer) {
-        var response = this.choices.isEmpty()
+        // TODO: REMOVE DEBUG
+        if(RCTBattleAI.DEBUG) {
+            ModCommon.LOG.info(String.format("[CHOICES OF %s]:", this.pkmn.isAlive() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>"));
+        }
+        // // // // // // //
+
+        var choices = this.choices.stream()
+            .filter(c -> c.forced || c.value.isValid(this.pkmn, this.moveset, this.forceMove))
+            .toList();
+            
+        var response = choices.isEmpty()
             ? this.mustChoose && this.pkmn.hasPokemon()
                 ? new DefaultActionResponse()
                 : PassActionResponse.INSTANCE
-            : getRandom(takeWithMargin(this.choices.stream().sorted(), this.margin), this.rng, this.margin, this.rdf)
-                .orElse(new Choice<>(DefaultActionResponse::new, 0)).value.get();
-            
+            : getRandom(takeWithMargin(choices.stream().sorted(), this.margin), this.rng, this.margin)
+                .orElse(new Choice<>("DEFAULT", new DefaultActionResponse(), 0)).pick().value;
+
         consumer.accept(response);
         return response;
     }
@@ -184,23 +195,60 @@ public class ResponseBuilder {
     public static class Choice<T> implements Comparable<Choice<?>> {
         public final T value;
         public final double weight;
+        public final String name;
+        public final boolean forced;
+        private final Action onpick;
 
-        public Choice(T value, double weight) {
+        public Choice(String name, T value, double weight) {
+            this(name, value, weight, () -> {}, false);
+        }
+
+        public Choice(String name, T value, double weight, boolean forced) {
+            this(name, value, weight, () -> {}, forced);
+        }
+
+        public Choice(String name, T value, double weight, Action onpick) {
+            this(name, value, weight, onpick, false);
+        }
+
+        public Choice(String name, T value, double weight, Action onpick, boolean forced) {
             this.value = value;
             this.weight = weight;
+            this.name = name;
+            this.onpick = onpick;
+            this.forced = forced;
+        }
+
+        public Choice<T> pick() {
+            this.onpick.perform();
+            return this;
         }
 
         @Override
         public int compareTo(Choice<?> other) {
             return Double.compare(this.weight, other.weight);
         }
+
+        public static interface Action {
+            void perform();            
+        }
     }
 
     // Stream utils
 
+    private static final int MAX_CHOICE_RNG = 30;
+
     private static <T> Stream<Choice<T>> takeWithMargin(Stream<Choice<T>> in, double margin) {
         double[] w = {Double.NEGATIVE_INFINITY};
-        
+
+        // TODO: REMOVE DEBUG
+        if(RCTBattleAI.DEBUG) {
+            var list = in.toList();
+            list.forEach(ch -> ModCommon.LOG.info(String.format(" - %s: %.4f", ch.name, ch.weight)));
+            in = list.stream();
+        }
+        // // // // // // //
+
         return in.takeWhile(choice -> {
             if(w[0] == Double.NEGATIVE_INFINITY) {
                 w[0] = choice.weight;
@@ -212,7 +260,7 @@ public class ResponseBuilder {
         });
     }
 
-    private static <T> Optional<Choice<T>> getRandom(Stream<Choice<T>> stream, Random rng, double margin, double f) {
+    private static <T> Optional<Choice<T>> getRandom(Stream<Choice<T>> stream, Random rng, double margin) {
         var it = stream.iterator();
         Choice<T> c;
 
@@ -220,14 +268,14 @@ public class ResponseBuilder {
             var next= it.next();
             var start = next.weight;
             var w = 0.0;
-            var i = 0;
+            var i = 1;
             c = next;
 
             while(it.hasNext()) {
                 next = it.next();
                 w = margin > 0 ? (next.weight - start)/margin : 1;
 
-                if(rng.nextInt((int)((++i) * (1 + w * f))) == 0) {
+                if(rng.nextInt((++i) + (int)(w * MAX_CHOICE_RNG)) == 0) {
                     c = next;
                 }
             }

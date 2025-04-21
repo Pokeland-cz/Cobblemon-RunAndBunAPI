@@ -41,17 +41,10 @@ public class ExampleMod {
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
 
-    // Our own commands context.
-    static class ExampleCommandsContext extends CommandsContext {
-        @Override public String getPrefix() { return MOD_ID; }
-        @Override public int getWinCommandsPermission() { return 2; }
-    }
-
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
     // Neoforge.
     public static void init() {
-        RCTApiCommands.register(new ExampleCommandsContext()); // commands are not registered unless explicitly doing so.
         ExampleMod.registerEvents();
     }
 
@@ -109,7 +102,7 @@ public class ExampleMod {
 
 ---
 
-Starting a battle is now simply a matter of invoking `BattleManager#start` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [`RCTApiCommands`](common/src/main/java/com/gitlab/srcmc/rctapi/commands/RCTApiCommands.java) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
+Starting a battle is now simply a matter of invoking `BattleManager#startBattle` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [`RCTApiCommands`](common/src/main/java/com/gitlab/srcmc/rctapi/commands/RCTApiCommands.java) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
 
 ```java
 RCTApi.getInstance("example_mod").getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);

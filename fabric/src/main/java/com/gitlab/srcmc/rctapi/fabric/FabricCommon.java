@@ -18,37 +18,11 @@
 package com.gitlab.srcmc.rctapi.fabric;
 
 import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.ModRegistries;
-import com.gitlab.srcmc.rctapi.commands.arguments.BattleEndCommandMapArgument;
-import com.gitlab.srcmc.rctapi.commands.arguments.BattleRulesArgument;
-import com.gitlab.srcmc.rctapi.commands.arguments.TrainerIdArgument;
-
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 
 public final class FabricCommon implements ModInitializer {
-    public FabricCommon() {
-        ModRegistries.init(true);
-    }
-
     @Override
     public void onInitialize() {
-        ArgumentTypeRegistry.registerArgumentType(
-            ModRegistries.location("battle_rules"),
-            BattleRulesArgument.class,
-            SingletonArgumentInfo.contextFree(BattleRulesArgument::battleRules));
-
-        ArgumentTypeRegistry.registerArgumentType(
-            ModRegistries.location("battle_end_command_map"),
-            BattleEndCommandMapArgument.class,
-            SingletonArgumentInfo.contextFree(BattleEndCommandMapArgument::map));
-
-        ArgumentTypeRegistry.registerArgumentType(
-            ModRegistries.location("trainer_id"),
-            TrainerIdArgument.class,
-            SingletonArgumentInfo.contextFree(TrainerIdArgument::id));
-
         ModCommon.init();
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
     }

@@ -17,6 +17,7 @@
  */
 package com.gitlab.srcmc.rctapi.api.models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A pojo class for parsing trainer {@link BagItem}s.
  */
-public class BagItemModel {
+public class BagItemModel implements Serializable {
+    private static final long serialVersionUID = 0L;
+    
     private String item;
     private int quantity;
 
