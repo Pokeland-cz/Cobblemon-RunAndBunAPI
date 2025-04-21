@@ -29,6 +29,10 @@ public class BattleRules implements Serializable {
     
     protected int maxItemUses = -1;
 
+    public BattleRules(Builder builder) {
+        this.maxItemUses = builder.maxItemUses;
+    }
+
     /**
      * Retrieves the max amount of items a {@link BattleActor} may use per battle. A
      * negative values implies that there is no limit.
@@ -37,5 +41,23 @@ public class BattleRules implements Serializable {
      */
     public int getMaxItemUses() {
         return this.maxItemUses;
+    }
+
+    /**
+     * Builder companion class which allows for optional parameters for parent BattleRules class
+     * {@link "<a href="https://java-design-patterns.com/patterns/builder/">Explanation of builder pattern</a>"}
+     */
+    public static class Builder {
+        private int maxItemUses = -1;
+
+        public Builder withMaxItemUses(int maxItemUses) {
+            this.maxItemUses = maxItemUses;
+
+            return this;
+        }
+
+        public BattleRules build() {
+            return new BattleRules(this);
+        }
     }
 }

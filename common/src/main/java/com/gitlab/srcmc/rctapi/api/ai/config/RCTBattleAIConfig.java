@@ -53,4 +53,49 @@ public record RCTBattleAIConfig(
     public static void register() {
         JTO.registerParser("rct", RCTBattleAI::new, RCTBattleAIConfig::new, RCTBattleAIConfig.class);
     }
+
+    public static class Builder {
+        private double moveBias = DEFAULT_MOVE_BIAS;
+        private double statusMoveBias = DEFAULT_STATUS_MOVE_BIAS;
+        private double switchBias = DEFAULT_SWITCH_BIAS;
+        private double itemBias = DEFAULT_ITEM_BIAS;
+        private double maxSelectMargin = DEFAULT_MAX_SELECT_MARGIN;
+
+        public RCTBattleAIConfig.Builder withMoveBias(double moveBias) {
+            this.moveBias = moveBias;
+
+            return this;
+        }
+        public RCTBattleAIConfig.Builder withStatusMoveBias(double statusMoveBias) {
+            this.statusMoveBias = statusMoveBias;
+
+            return this;
+        }
+        public RCTBattleAIConfig.Builder withSwitchBias(double switchBias) {
+            this.switchBias = switchBias;
+
+            return this;
+        }
+        public RCTBattleAIConfig.Builder withItemBias(double itemBias) {
+            this.itemBias = itemBias;
+
+            return this;
+        }
+        public RCTBattleAIConfig.Builder withMaxSelectMargin(double maxSelectMargin) {
+            this.maxSelectMargin = maxSelectMargin;
+
+            return this;
+        }
+
+        public RCTBattleAIConfig build() {
+            return new RCTBattleAIConfig(
+                    this.moveBias,
+                    this.statusMoveBias,
+                    this.switchBias,
+                    this.itemBias,
+                    this.maxSelectMargin
+            );
+        }
+    }
 }
+
