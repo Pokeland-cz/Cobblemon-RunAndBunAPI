@@ -47,53 +47,64 @@ public final class TypeChart {
         return getEffectiveness(aep.getPrimaryType(), defender) * (sec != null ? getEffectiveness(sec, defender) : 1.0);
     }
 
-    public static double getEffectiveness(ElementalType attacker, BattlePokemon defender) {
+    public static double getEffectiveness(ElementalType attackerType, BattlePokemon defender) {
         var ep = defender.getEffectedPokemon();
-        return getEffectiveness(attacker, ep.getPrimaryType(), ep.getSecondaryType(), ep.getAbility());
-    }
+        var eff = (getEffectiveness(attackerType, ep.getPrimaryType(), defender)) * (ep.getSecondaryType() != null ?  getEffectiveness(attackerType, ep.getSecondaryType(), defender) : 1.0);
 
-    public static double getEffectiveness(ElementalType attacker, ElementalType defenderPrimaryType, ElementalType defenderSecondaryType, Ability defenderAbility) {
-        var eff = (getEffectiveness(attacker, defenderPrimaryType, defenderAbility)) * (defenderSecondaryType != null ?  getEffectiveness(attacker, defenderSecondaryType, defenderAbility) : 1.0);
-
-        if(eff < 2.0 && defenderAbility.getName().equals("wonderguard")) {
+        if(eff < 2.0 && ep.getAbility().getName().equals("wonderguard")) {
             return 0;
         }
 
         return eff;
     }
 
-    private static double getEffectiveness(ElementalType attacker, ElementalType defender, Ability defenderAbility) {
-        String defenderAbilityId = defenderAbility.getName();
+    /**
+     * @return 1.0
+     * @deprecated This overload will be removed in 0.12.
+     */
+    @Deprecated(since = "0.11.1")
+    public static double getEffectiveness(ElementalType attackerType, ElementalType defenderPrimaryType, ElementalType defenderSecondaryType, Ability defenderAbility) {
+        return 1.0;
+    }
 
-        if(attacker.equals(ElementalTypes.INSTANCE.getWATER())) {
+    private static double getEffectiveness(ElementalType attackerType, ElementalType defenderType, BattlePokemon defender) {
+        var defenderAbilityId = defender.getEffectedPokemon().getAbility().getName();
+
+        if(attackerType.equals(ElementalTypes.INSTANCE.getWATER())) {
             if(defenderAbilityId.equals("stormdrain")
                 || defenderAbilityId.equals("waterabsorb")
                 || defenderAbilityId.equals("dryskin"))
             {
                 return 0;
             }
-        } else if(attacker.equals(ElementalTypes.INSTANCE.getELECTRIC())) {
+        } else if(attackerType.equals(ElementalTypes.INSTANCE.getELECTRIC())) {
             if(defenderAbilityId.equals("voltabsorb")
                 || defenderAbilityId.equals("lightningrod")
                 || defenderAbilityId.equals("motordrive"))
             {
                 return 0;
             }
-        } else if(attacker.equals(ElementalTypes.INSTANCE.getGROUND())) {
-            if(defenderAbilityId.equals("levitate") || defenderAbilityId.equals("eartheater")) {
+        } else if(attackerType.equals(ElementalTypes.INSTANCE.getGROUND())) {
+            if(defenderAbilityId.equals("eartheater")) {
                 return 0;
             }
-        } else if(attacker.equals(ElementalTypes.INSTANCE.getFIRE())) {
+
+            if(PokeContext.State.raised(defender)) {
+                return 0;
+            } else if(defenderType.equals(ElementalTypes.INSTANCE.getFLYING())) {
+                return 1.0;
+            }
+        } else if(attackerType.equals(ElementalTypes.INSTANCE.getFIRE())) {
             if(defenderAbilityId.equals("wellbakedbody") || defenderAbilityId.equals("flashfire")) {
                 return 0;
             }
-        } else if(attacker.equals(ElementalTypes.INSTANCE.getGRASS())) {
+        } else if(attackerType.equals(ElementalTypes.INSTANCE.getGRASS())) {
             if(defenderAbilityId.equals("sapsipper")) {
                 return 0;
             }
         }
         
-        return CHART.getOrDefault(defender, EMPTY_MAP).getOrDefault(attacker, 1.0);
+        return CHART.getOrDefault(defenderType, EMPTY_MAP).getOrDefault(attackerType, 1.0);
     }
 
     public static Move getMove(InBattleMove move) {

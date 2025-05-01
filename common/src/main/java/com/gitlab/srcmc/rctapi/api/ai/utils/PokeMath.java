@@ -18,7 +18,6 @@
 package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.Random;
-import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext.Type;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
@@ -56,13 +55,14 @@ public class PokeMath {
         boolean lightscreen,
         boolean attackerHasStatus,
         ElementalType moveType,
-        ElementalType attackerPrimaryType,
-        ElementalType attackerSecondaryType,
-        ElementalType defenderPrimaryType,
-        ElementalType defenderSecondaryType,
-        Ability defenderAbility,
-        Ability attackerAbility)
+        BattlePokemon attacker,
+        BattlePokemon defender)
     {
+        var attackerEp = attacker.getEffectedPokemon();
+        var attackerPrimaryType = attackerEp.getPrimaryType();
+        var attackerSecondaryType = attackerEp.getSecondaryType();
+        var attackerAbility = attackerEp.getAbility();
+
         // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
         var baseDamage = (int)(((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / (double) defenderEffectiveDefence)/50.0) + 2;
         if(multiTarget) baseDamage *= 0.75;
@@ -73,7 +73,7 @@ public class PokeMath {
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getFIRE()) || rain && moveType.equals(ElementalTypes.INSTANCE.getWATER())) baseDamage *= 1.5;
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getWATER()) || rain && moveType.equals(ElementalTypes.INSTANCE.getFIRE())) baseDamage *= 0.5;
         if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) baseDamage *= 1.5;
-        baseDamage = (int)(baseDamage * TypeChart.getEffectiveness(moveType, defenderPrimaryType, defenderSecondaryType, defenderAbility));
+        baseDamage = (int)(baseDamage * TypeChart.getEffectiveness(moveType, defender));
 
         return baseDamage > 0
             ? Math.max(1, baseDamage * ((RANDOM.nextDouble() * 0.15) + 0.85))
@@ -126,11 +126,7 @@ public class PokeMath {
             false, // lightscreen
             status != null && !status.isEmpty(),
             move.getType(),
-            attacker.getEffectedPokemon().getPrimaryType(),
-            attacker.getEffectedPokemon().getSecondaryType(),
-            defender.getEffectedPokemon().getPrimaryType(),
-            defender.getEffectedPokemon().getSecondaryType(),
-            defender.getEffectedPokemon().getAbility(),
-            attacker.getEffectedPokemon().getAbility()));
+            attacker,
+            defender));
     }
 }

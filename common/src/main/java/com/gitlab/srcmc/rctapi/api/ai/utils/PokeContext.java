@@ -38,7 +38,7 @@ public final class PokeContext {
     public static enum BattleEffect {
         // TODO: 'trapping moves' are currently never added to a PokemonState (ShowdownActionResponse notices if switch is invalid)
         // TODO: other stuff
-        TURN(1, Integer.MAX_VALUE), BLOCK(2), MEANLOOK(4), SPIDERWEB(8);
+        TURN(1, Integer.MAX_VALUE), BLOCK(2), MEANLOOK(4), SPIDERWEB(8), ITEM_ENDED(16);
         private long mask;
         private int expires;
 
@@ -67,11 +67,11 @@ public final class PokeContext {
             // TODO: ingrain => false
             // TODO: smackdown => false
 
-            if(pkmn.getEffectedPokemon().getHeldItem$common().is(CobblemonItems.IRON_BALL)) {
+            if(pkmn.getEffectedPokemon().heldItem().is(CobblemonItems.IRON_BALL) && !BattleStates.get(pkmn.actor.battle).getPokemonState(pkmn).has(BattleEffect.ITEM_ENDED)) {
                 return false;
             }
 
-            if(pkmn.getEffectedPokemon().getHeldItem$common().is(CobblemonItems.AIR_BALLOON)) {
+            if(pkmn.getEffectedPokemon().heldItem().is(CobblemonItems.AIR_BALLOON) && !BattleStates.get(pkmn.actor.battle).getPokemonState(pkmn).has(BattleEffect.ITEM_ENDED)) {
                 return true;
             }
 

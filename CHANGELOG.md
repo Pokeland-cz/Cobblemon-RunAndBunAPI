@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.1-beta] - 2025-05-01
+
+**Changed:**
+
+- *#54* Builder pattern for `RCTBattleAIConfig` and `BattleRules` (thanks Gitoido) -d
+- *#53* Some improvements and fixes to `RCTBattleAI`
+  - Fixed *raised* state not getting recognized for pokemon holding an Air Balloon or Iron Ball
+
+**Deprecated:**
+
+- *#52* `TypeChart#getEffectiveness(ElementalType, ElementalType, ElementalType, Ability)`
+
 ## [0.11.0-beta] - 2025-04-12
 
 **Added:**
