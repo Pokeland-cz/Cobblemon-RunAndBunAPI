@@ -29,6 +29,9 @@ public class BattleRules implements Serializable {
     
     protected int maxItemUses = -1;
 
+    public BattleRules() {
+    }
+    
     public BattleRules(Builder builder) {
         this.maxItemUses = builder.maxItemUses;
     }
