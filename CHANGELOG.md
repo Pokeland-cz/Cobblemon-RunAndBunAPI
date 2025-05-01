@@ -6,7 +6,7 @@
 
 - *#54* Builder pattern for `RCTBattleAIConfig` and `BattleRules` (thanks Gitoido) -d
 - *#53* Some improvements and fixes to `RCTBattleAI`
-  - Fixed *raised* state not getting recognized for pokemon holding an Air Balloon or Iron Ball
+  - Fixed *raised* state not getting recognized in some situations (i.e. pokemon holding an Air Balloon or Iron Ball, getting hit by Smack Down or beeing under the effect of Ingrain, Telekinesis or Magnet Rise)
 
 **Deprecated:**
 

@@ -64,8 +64,14 @@ public final class PokeContext {
         // https://pokemondb.net/glossary#def-raised
         public static boolean raised(BattlePokemon pkmn) {
             // TODO: gravity => false
-            // TODO: ingrain => false
-            // TODO: smackdown => false
+
+            if(Volatiles.ingrain(pkmn)) {
+                return false;
+            }
+
+            if(Volatiles.smackdown(pkmn)) {
+                return false;
+            }
 
             if(pkmn.getEffectedPokemon().heldItem().is(CobblemonItems.IRON_BALL) && !BattleStates.get(pkmn.actor.battle).getPokemonState(pkmn).has(BattleEffect.ITEM_ENDED)) {
                 return false;
@@ -84,9 +90,14 @@ public final class PokeContext {
                     return true;
                 }
             }
-            
-            // TODO: steel + magnetrise => true
-            // TODO: telekinesis => true
+
+            if(Volatiles.magnetrise(pkmn)) {
+                return true;
+            }
+
+            if(Volatiles.telekinesis(pkmn)) {
+                return true;
+            }
 
             return false;
         }
@@ -177,6 +188,10 @@ public final class PokeContext {
         public static boolean confusion(BattlePokemon pkmn) { return has(pkmn, "confusion"); }
         public static boolean cursed(BattlePokemon pkmn) { return has(pkmn, "cursed"); }
         public static boolean leech(BattlePokemon pkmn) { return has(pkmn, "leech"); }
+        public static boolean ingrain(BattlePokemon pkmn) { return has(pkmn, "ingrain"); }
+        public static boolean smackdown(BattlePokemon pkmn) { return has(pkmn, "smackdown"); }
+        public static boolean telekinesis(BattlePokemon pkmn) { return has(pkmn, "telekinesis"); }
+        public static boolean magnetrise(BattlePokemon pkmn) { return has(pkmn, "magnetrise"); }
 
         public static boolean any(BattlePokemon pkmn) {
             var ctx = pkmn.getContextManager().get(BattleContext.Type.VOLATILE);
@@ -184,7 +199,7 @@ public final class PokeContext {
         }
 
         private static boolean has(BattlePokemon pkmn, String volId) {
-            var ctx = pkmn.getContextManager().get(BattleContext.Type.STATUS);
+            var ctx = pkmn.getContextManager().get(BattleContext.Type.VOLATILE);
             return ctx != null && ctx.stream().filter(bc -> bc.getId().equals(volId)).findFirst().isPresent();
         }
     }
