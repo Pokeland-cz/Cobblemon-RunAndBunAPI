@@ -36,8 +36,8 @@ public enum MoveType {
 
     // in practice only moves that could either target allies OR opponents matter
     private static final Map<String, MoveType> MOVE_TYPES = Map.<String, MoveType>ofEntries(
-        Map.<String, MoveType>entry("heal_pulse", MoveType.HEAL),
-        Map.<String, MoveType>entry("floral_healing", MoveType.HEAL),
+        Map.<String, MoveType>entry("healpulse", MoveType.HEAL),
+        Map.<String, MoveType>entry("floralhealing", MoveType.HEAL),
         Map.<String, MoveType>entry("decorate", MoveType.BUFF)
     );
 }
