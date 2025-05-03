@@ -124,9 +124,7 @@ public class RCTBattleAI implements BattleAI {
             case STATUS:
                 return ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias;
             case DAMAGE:
-                var estDamage = Math.min(to.getHealth(), PokeMath.damage(from, to, move));
-                var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();
-                return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias;
+                return (Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth())*this.moveBias;
             default:
                 return this.rng.nextDouble();
         }
