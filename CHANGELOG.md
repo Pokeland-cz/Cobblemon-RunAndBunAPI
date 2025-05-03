@@ -6,6 +6,7 @@
 
 - *#54* Builder pattern for `RCTBattleAIConfig` and `BattleRules` (thanks Gitoido) -d
 - *#53* Some improvements and fixes to `RCTBattleAI`
+  - Slight improvements to evaluation of status moves with positive effects (e.g. trainers should not target opponents with healing moves anymore)
   - Fixed *raised* state not getting recognized in some situations (i.e. pokemon holding an Air Balloon or Iron Ball, getting hit by Smack Down or beeing under the effect of Ingrain, Telekinesis or Magnet Rise)
 
 **Deprecated:**

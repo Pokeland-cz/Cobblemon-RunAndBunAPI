@@ -79,12 +79,7 @@ public class PokeMath {
             ? Math.max(1, baseDamage * ((RANDOM.nextDouble() * 0.15) + 0.85))
             : baseDamage;
     }
-
-    public static boolean isStatus(InBattleMove inBattleMove) {
-        var move = TypeChart.getMove(inBattleMove);
-        return move.getDamageCategory().getName().equals(DamageCategories.INSTANCE.getSTATUS().getName());
-    }
-
+    
     public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove) {
         var move = TypeChart.getMove(inBattleMove);
         var damageCategory = move.getDamageCategory().getName();

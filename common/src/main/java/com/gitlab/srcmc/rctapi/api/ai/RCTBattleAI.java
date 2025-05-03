@@ -23,6 +23,7 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
@@ -105,15 +106,30 @@ public class RCTBattleAI implements BattleAI {
                 .max(Double::compare).orElse(0.0);
         }
 
-        var isStatusMove = PokeMath.isStatus(move);
-        var estDamage = isStatusMove
-            ? (!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to))
-                ? Math.max(1, to.getHealth() * this.rng.nextDouble(0.1, 0.75))
-                : Math.max(1, to.getHealth() * this.rng.nextDouble(0.4))
-            : Math.min(to.getHealth(), PokeMath.damage(from, to, move));
+        var mt = MoveType.of(move);
 
-        var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();
-        return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias * (isStatusMove ? this.statusMoveBias : 1.0);
+        if((mt == MoveType.HEAL || mt == MoveType.CURE || mt == MoveType.BUFF) && from.getActor().getSide().equals(to.getActor().getSide())) {
+            return 0;
+        }
+
+        switch(mt) {
+            case HEAL:
+                return Math.max(this.rng.nextDouble(this.maxSelectMargin), 1.0 - to.getHealth()/to.getMaxHealth())*this.statusMoveBias;
+            case CURE:
+                return (PokeContext.Statuses.any(to) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias;
+            case BUFF:
+                return Math.max(0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias;
+            case MALUS:
+                return this.rng.nextDouble(0.5)*this.statusMoveBias;
+            case STATUS:
+                return ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias;
+            case DAMAGE:
+                var estDamage = Math.min(to.getHealth(), PokeMath.damage(from, to, move));
+                var d = 1.0 - (to.getHealth() - estDamage)/to.getHealth();
+                return (d < 1 ? d * to.getHealth()/(double)to.getMaxHealth() : d) * this.moveBias;
+            default:
+                return this.rng.nextDouble();
+        }
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {
