@@ -77,9 +77,7 @@ public class RCTBattleAI implements BattleAI {
         builder.suggestMoves(candidates -> candidates
             .map(pair -> {
                 if(pair.second instanceof ActiveBattlePokemon targetPkmn && targetPkmn.isAlive()) {
-                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, pair.second.isAllied(pkmn)
-                        ? 1.0 + evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first)
-                        : 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
+                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
                 }
 
                 // non or multi-target move
@@ -106,25 +104,21 @@ public class RCTBattleAI implements BattleAI {
                 .max(Double::compare).orElse(0.0);
         }
 
-        var mt = MoveType.of(move);
+        var ally = from.actor.getSide().equals(to.actor.getSide());
 
-        if((mt == MoveType.HEAL || mt == MoveType.CURE || mt == MoveType.BUFF) && from.getActor().getSide().equals(to.getActor().getSide())) {
-            return 0;
-        }
-
-        switch(mt) {
+        switch(MoveType.of(move)) {
             case HEAL:
-                return Math.max(this.rng.nextDouble(this.maxSelectMargin), 1.0 - to.getHealth()/to.getMaxHealth())*this.statusMoveBias;
+                return ally ? Math.max(this.rng.nextDouble(this.maxSelectMargin), 1.0 - to.getHealth()/(double)to.getMaxHealth())*this.statusMoveBias : 0;
             case CURE:
-                return (PokeContext.Statuses.any(to) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias;
+                return ally ? (PokeContext.Statuses.any(to) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias : 0;
             case BUFF:
-                return Math.max(0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias;
+                return ally ? Math.abs(this.rng.nextGaussian())*Math.min(1.0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
             case MALUS:
-                return this.rng.nextDouble(0.5)*this.statusMoveBias;
+                return !ally ? Math.abs(this.rng.nextGaussian())*Math.min(1.0, 1.0 + PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
             case STATUS:
-                return ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias;
+                return !ally ? ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias : 0;
             case DAMAGE:
-                return (Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth())*this.moveBias;
+                return !ally ? (Math.max(this.rng.nextDouble(this.maxSelectMargin), Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth()))*this.moveBias : 0;
             default:
                 return this.rng.nextDouble();
         }
