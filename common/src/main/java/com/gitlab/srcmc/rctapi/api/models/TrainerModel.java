@@ -53,6 +53,18 @@ public class TrainerModel implements Serializable {
      * @param bag Bag of items the trainer may use in a battle.
      * @param team Pokemon party of the trainer.
      */
+    public TrainerModel(@NotNull String name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
+        this(new Text().setLiteral(name), ai, bag, team);
+    }
+
+    /**
+     * Creates a new TrainerModel with the given properties.
+     * 
+     * @param name Name of the trainer.
+     * @param ai Battle AI type used by the trainer.
+     * @param bag Bag of items the trainer may use in a battle.
+     * @param team Pokemon party of the trainer.
+     */
     public TrainerModel(@NotNull Text name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
         this.name = name;
         this.ai = ai;
