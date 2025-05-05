@@ -38,6 +38,7 @@ public final class TypeChart {
     private static final double IMMUNE = 0;
 
     public static double getEffectiveness(InBattleMove move, BattlePokemon defender) {
+        // TODO: hiddenpower type
         return getEffectiveness(getMove(move).getType(), defender);
     }
 

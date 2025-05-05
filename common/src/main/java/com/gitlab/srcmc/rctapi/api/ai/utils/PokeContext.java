@@ -29,26 +29,28 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 // BattleContext.Type.ITEM
 // BattleContext.Type.MISC
 // BattleContext.Type.ROOM
-// BattleContext.Type.SCREEN
 // BattleContext.Type.SPORT
 // BattleContext.Type.TAILWIND
-// BattleContext.Type.TERRAIN
-// BattleContext.Type.WEATHER
 public final class PokeContext {
     public static enum BattleEffect {
-        // TODO: 'trapping moves' are currently never added to a PokemonState (ShowdownActionResponse notices if switch is invalid)
-        // TODO: other stuff
-        TURN(1, Integer.MAX_VALUE), BLOCK(2), MEANLOOK(4), SPIDERWEB(8), ITEM_ENDED(16);
+        // keep track of custom effects or effects that I could not find anywhere else
+        TURN(1, Integer.MAX_VALUE), BLOCK(2), MEANLOOK(4), SPIDERWEB(8), ITEM_ENDED(16), WISH(32, 1, true);
         private long mask;
         private int expires;
+        private boolean persists; // TODO: has currently no effect
 
         private BattleEffect(int mask) {
             this(mask, -1);
         }
 
         private BattleEffect(int mask, int expires) {
+            this(mask, expires, false);
+        }
+
+        private BattleEffect(int mask, int expires, boolean persists) {
             this.mask = mask;
             this.expires = expires;
+            this.persists = persists;
         }
 
         public long mask() {
@@ -57,6 +59,55 @@ public final class PokeContext {
 
         public int expires() {
             return this.expires;
+        }
+
+        public boolean persists() {
+            return this.persists;
+        }
+    }
+
+    // BattleContext.Type.SCREEN
+    public static final class Screen {
+        public static boolean auroraveil(BattlePokemon pkmn) { return has(pkmn, "auroraveil"); }
+        public static boolean lightscreen(BattlePokemon pkmn) { return has(pkmn, "lightscreen"); }
+        public static boolean reflect(BattlePokemon pkmn) { return has(pkmn, "reflect"); }
+
+        private static boolean has(BattlePokemon pkmn, String screenId) {
+            var ctx = pkmn.actor.getSide().getContextManager().get(BattleContext.Type.SCREEN);
+            return ctx != null && ctx.stream().anyMatch(bc -> bc.getId().equals(screenId));
+        }
+    }
+
+    // BattleContext.Type.WEATHER
+    // https://bulbapedia.bulbagarden.net/wiki/Weather#List_of_weather
+    public static final class Weather {
+        public static boolean harshsunlight(BattlePokemon pkmn) { return has(pkmn, "harshsunlight"); }
+        public static boolean rain(BattlePokemon pkmn) { return has(pkmn, "rain"); }
+        public static boolean sandstorm(BattlePokemon pkmn) { return has(pkmn, "sandstorm"); }
+        public static boolean hail(BattlePokemon pkmn) { return has(pkmn, "hail"); }
+        public static boolean snow(BattlePokemon pkmn) { return has(pkmn, "snow"); }
+        public static boolean fog(BattlePokemon pkmn) { return has(pkmn, "fog"); }
+        public static boolean extremelyharshsunlight(BattlePokemon pkmn) { return has(pkmn, "extremelyharshsunlight"); }
+        public static boolean heavyrain(BattlePokemon pkmn) { return has(pkmn, "heavyrain"); }
+        public static boolean strongwinds(BattlePokemon pkmn) { return has(pkmn, "strongwinds"); }
+        public static boolean shadowaura(BattlePokemon pkmn) { return has(pkmn, "shadowaura"); }
+
+        private static boolean has(BattlePokemon pkmn, String weatherId) {
+            var ctx = pkmn.actor.battle.getContextManager().get(BattleContext.Type.WEATHER);
+            return ctx != null && ctx.stream().anyMatch(bc -> bc.getId().equals(weatherId));
+        }
+    }
+
+    // BattleContext.Type.TERRAIN
+    public static final class Terrain {
+        public static boolean electricterrain(BattlePokemon pkmn) { return has(pkmn, "electricterrain"); }
+        public static boolean grassyterrain(BattlePokemon pkmn) { return has(pkmn, "grassyterrain"); }
+        public static boolean mistyterrain(BattlePokemon pkmn) { return has(pkmn, "mistyterrain"); }
+        public static boolean psychicterrain(BattlePokemon pkmn) { return has(pkmn, "psychicterrain"); }
+
+        private static boolean has(BattlePokemon pkmn, String terrainId) {
+            var ctx = pkmn.actor.battle.getContextManager().get(BattleContext.Type.TERRAIN);
+            return ctx != null && ctx.stream().anyMatch(bc -> bc.getId().equals(terrainId));
         }
     }
 
@@ -189,9 +240,11 @@ public final class PokeContext {
         public static boolean cursed(BattlePokemon pkmn) { return has(pkmn, "cursed"); }
         public static boolean leech(BattlePokemon pkmn) { return has(pkmn, "leech"); }
         public static boolean ingrain(BattlePokemon pkmn) { return has(pkmn, "ingrain"); }
+        public static boolean aquaring(BattlePokemon pkmn) { return has(pkmn, "aquaring"); }
         public static boolean smackdown(BattlePokemon pkmn) { return has(pkmn, "smackdown"); }
         public static boolean telekinesis(BattlePokemon pkmn) { return has(pkmn, "telekinesis"); }
         public static boolean magnetrise(BattlePokemon pkmn) { return has(pkmn, "magnetrise"); }
+        public static boolean yawn(BattlePokemon pkmn) { return has(pkmn, "yawn"); }
 
         public static boolean any(BattlePokemon pkmn) {
             var ctx = pkmn.getContextManager().get(BattleContext.Type.VOLATILE);
@@ -213,5 +266,25 @@ public final class PokeContext {
                 " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
                 bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
         });
+
+        // ModCommon.LOG.info("SIDE CONTEXT:");
+        // pkmn.actor.getSide().getContextManager().getBuckets().forEach((t, c) -> {
+        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
+        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+        // });
+
+        // ModCommon.LOG.info("BATTLE CONTEXT:");
+        // pkmn.actor.battle.getContextManager().getBuckets().forEach((t, c) -> {
+        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
+        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+        // });
+
+        // ModCommon.LOG.info("MAJOR ACTIONS:");
+        // pkmn.actor.battle.getMajorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
+
+        // ModCommon.LOG.info("MINOR ACTIONS:");
+        // pkmn.actor.battle.getMinorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
     }
 }

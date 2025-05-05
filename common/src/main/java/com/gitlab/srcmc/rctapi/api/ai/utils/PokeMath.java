@@ -26,7 +26,6 @@ import com.cobblemon.mod.common.api.types.ElementalType;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 
 /**
  * Pokemon math utilities derived from davo899s implementation of a 'Pokemon Gen5
@@ -85,10 +84,6 @@ public class PokeMath {
         var damageCategory = move.getDamageCategory().getName();
 
         if(damageCategory.equals(DamageCategories.INSTANCE.getSTATUS().getName())) {
-            return 0;
-        }
-
-        if(move.getName().equals("fakeout") && BattleStates.get(attacker.getActor().getBattle()).getPokemonState(attacker).age(BattleEffect.TURN) > 1) {
             return 0;
         }
 

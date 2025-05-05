@@ -1,13 +1,15 @@
 # Changelog
 
-## [0.11.1-beta] - 2025-05-01
+## [0.11.1-beta] - 2025-05-05
 
 **Changed:**
 
-- *#54* Builder pattern for `RCTBattleAIConfig` and `BattleRules` (thanks Gitoido) -d
-- *#53* Some improvements and fixes to `RCTBattleAI`
-  - Slight improvements to evaluation of status moves with positive effects (e.g. trainers should not target opponents with healing moves anymore)
-  - Fixed *raised* state not getting recognized in some situations (i.e. pokemon holding an Air Balloon or Iron Ball, getting hit by Smack Down or beeing under the effect of Ingrain, Telekinesis or Magnet Rise)
+- *#54* Adjustments and fixes to `RCTBattleAI`
+  - All moves have been further categorized (e.g. *HEAL* or *BUFF*) for a better generic evaluation and to circumvent issues with trainers targeting opponents with moves that have positive effects
+  - Improved awareness of *screens*, *weather effects* and *terrains*
+  - Improved awareness of certain moves with specific conditions (like *fake out* or *wish*)
+  - Improved awareness of status conditions and other effects (like *levitate*, *seeded* or *drowsy*)
+- *#53* Builder pattern for `RCTBattleAIConfig` and `BattleRules` (thanks Gitoido)
 
 **Deprecated:**
 

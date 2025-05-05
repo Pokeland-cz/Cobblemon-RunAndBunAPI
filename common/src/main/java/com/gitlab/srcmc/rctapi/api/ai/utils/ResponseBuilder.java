@@ -236,7 +236,7 @@ public class ResponseBuilder {
 
     // Stream utils
 
-    private static final int MAX_CHOICE_RNG = 30;
+    private static final int MAX_CHOICE_RNG = 16;
 
     private static <T> Stream<Choice<T>> takeWithMargin(Stream<Choice<T>> in, double margin) {
         double[] w = {Double.NEGATIVE_INFINITY};

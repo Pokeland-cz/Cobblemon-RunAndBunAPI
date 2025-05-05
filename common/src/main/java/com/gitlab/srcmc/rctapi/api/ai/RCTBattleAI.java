@@ -75,8 +75,9 @@ public class RCTBattleAI implements BattleAI {
             .random(this.rng);
 
         builder.suggestMoves(candidates -> candidates
+            .filter(pair -> !(pair.second instanceof ActiveBattlePokemon targetPkmn) || targetPkmn.isAlive())
             .map(pair -> {
-                if(pair.second instanceof ActiveBattlePokemon targetPkmn && targetPkmn.isAlive()) {
+                if(pair.second instanceof ActiveBattlePokemon targetPkmn) {
                     return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
                 }
 
@@ -96,32 +97,48 @@ public class RCTBattleAI implements BattleAI {
     }
 
     private double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
+        var mt = MoveType.of(move);
+
         if(to == null) {
-            return from.getActor().getSide().getOppositeSide()
-                .getActivePokemon().stream()
+            var all = (mt == MoveType.HEAL || mt == MoveType.CURE || mt == MoveType.BUFF)
+                ? from.getActor().getSide().getActivePokemon()
+                : from.getActor().getSide().getOppositeSide().getActivePokemon();
+
+            return all.stream()
                 .filter(ActiveBattlePokemon::hasPokemon)
                 .map(pkmn -> evalMove(from, pkmn.getBattlePokemon(), move))
                 .max(Double::compare).orElse(0.0);
         }
 
         var ally = from.actor.getSide().equals(to.actor.getSide());
+        double e;
 
-        switch(MoveType.of(move)) {
+        switch(mt) {
             case HEAL:
-                return ally ? Math.max(this.rng.nextDouble(this.maxSelectMargin), 1.0 - to.getHealth()/(double)to.getMaxHealth())*this.statusMoveBias : 0;
+                // TODO: check healblock
+                e = ally ? Math.max(this.rngSin()*this.maxSelectMargin, 1.0 - to.getHealth()/(double)to.getMaxHealth())*this.statusMoveBias : 0;
+                break;
             case CURE:
-                return ally ? (PokeContext.Statuses.any(to) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias : 0;
+                e = ally ? (PokeContext.Statuses.any(to) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
+                break;
             case BUFF:
-                return ally ? Math.abs(this.rng.nextGaussian())*Math.min(1.0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                e = ally ? this.rngSin()*Math.min(1.0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                break;
             case MALUS:
-                return !ally ? Math.abs(this.rng.nextGaussian())*Math.min(1.0, 1.0 + PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                e = !ally ? this.rngSin()*Math.min(1.0, 1.0 + PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                break;
             case STATUS:
-                return !ally ? ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rng.nextDouble(0.25, 0.75) : this.rng.nextDouble(0.25))*this.statusMoveBias : 0;
+                e = !ally ? ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
+                break;
             case DAMAGE:
-                return !ally ? (Math.max(this.rng.nextDouble(this.maxSelectMargin), Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth()))*this.moveBias : 0;
+                e = !ally ? Math.max(this.rngSin()*this.maxSelectMargin, Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth())*this.moveBias : 0;
+                break;
             default:
-                return this.rng.nextDouble();
+                e = this.rng.nextDouble();
+                break;
         }
+
+        return e == 0 ? -1.0 : MoveType.eval(from, to, move) * e;
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {
@@ -133,7 +150,7 @@ public class RCTBattleAI implements BattleAI {
                 : potion == PotionType.FULL_RESTORE ? to.getMaxHealth() : 0;
 
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth())/(double)amount;
-            return (amount/(double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (PokeContext.Statuses.any(to) && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias;
+            return Math.min(1.0, (amount/(double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (PokeContext.Statuses.any(to) && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias);
         }
 
         return 0;
@@ -196,5 +213,9 @@ public class RCTBattleAI implements BattleAI {
         d[0] *= thRel < 1.0 ? this.rng.nextDouble(thRel, 1.0) : 1.0;
 
         return Math.min(1, d[0]) * this.switchBias;
+    }
+
+    private double rngSin() {
+        return org.joml.Math.sin(this.rng.nextDouble() * (org.joml.Math.PI/2));
     }
 }
