@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.gitlab.srcmc.rctapi.api.ai.RCTBattleAI;
 import com.gitlab.srcmc.rctapi.api.util.JTO;
+import com.gitlab.srcmc.rctapi.api.util.Text;
 
 /**
  * A pojo class for parsing {@link Trainer}.
@@ -32,7 +33,7 @@ import com.gitlab.srcmc.rctapi.api.util.JTO;
 public class TrainerModel implements Serializable {
     private static final long serialVersionUID = 0L;
     
-    private String name;
+    private Text name;
     private JTO<BattleAI> ai;
     private List<BagItemModel> bag;
     private List<PokemonModel> team;
@@ -41,7 +42,7 @@ public class TrainerModel implements Serializable {
      * Creates a new TrainerModel.
      */
     public TrainerModel() {
-        this("", JTO.of(RCTBattleAI::new), List.of(), List.of());
+        this(new Text(), JTO.of(RCTBattleAI::new), List.of(), List.of());
     }
 
     /**
@@ -52,7 +53,7 @@ public class TrainerModel implements Serializable {
      * @param bag Bag of items the trainer may use in a battle.
      * @param team Pokemon party of the trainer.
      */
-    public TrainerModel(@NotNull String name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
+    public TrainerModel(@NotNull Text name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
         this.name = name;
         this.ai = ai;
         this.bag = bag;
@@ -61,7 +62,7 @@ public class TrainerModel implements Serializable {
 
     @NotNull
     public String getName() {
-        return this.name;
+        return this.name.getComponent().getString();
     }
 
     @NotNull

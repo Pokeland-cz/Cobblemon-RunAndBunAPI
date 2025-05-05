@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.2-beta] - 2025-05-06
+
+**Added:**
+
+- *#56* `Text` utility type for translatable text
+
+**Changed:**
+
+- *#55* `TrainerModel#name` property from `String` to `Text` (translation support)
+
 ## [0.11.1-beta] - 2025-05-05
 
 **Changed:**

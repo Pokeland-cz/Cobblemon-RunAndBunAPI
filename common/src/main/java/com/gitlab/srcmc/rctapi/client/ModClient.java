@@ -15,15 +15,15 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.fabric.client;
+package com.gitlab.srcmc.rctapi.client;
 
-import com.gitlab.srcmc.rctapi.client.ModClient;
+import com.gitlab.srcmc.rctapi.api.util.Text;
 
-import net.fabricmc.api.ClientModInitializer;
+import dev.architectury.registry.ReloadListenerRegistry;
+import net.minecraft.server.packs.PackType;
 
-public final class FabricClient implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        ModClient.init();
+public class ModClient {
+    public static void init() {
+        ReloadListenerRegistry.register(PackType.CLIENT_RESOURCES, Text.ReloadListener.INSTANCE);
     }
 }
