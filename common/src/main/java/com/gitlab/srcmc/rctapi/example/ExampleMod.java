@@ -23,8 +23,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 
@@ -40,11 +38,6 @@ import net.minecraft.world.level.storage.LevelResource;
 public class ExampleMod {
     private static final String MOD_ID = "example_mod";
 
-    private static final Gson GSON = new GsonBuilder()
-        .setPrettyPrinting()
-        .disableHtmlEscaping()
-        .create();
-
     private static String fileToId(File file) {
         var name = file.getName().toLowerCase().trim();
         var i = name.lastIndexOf('.');
@@ -53,6 +46,12 @@ public class ExampleMod {
 
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
+
+    // Using a gson builder provided by the api is necessary.
+    private static final Gson GSON = RCT.gsonBuilder()
+        .setPrettyPrinting()
+        .disableHtmlEscaping()
+        .create();
 
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on

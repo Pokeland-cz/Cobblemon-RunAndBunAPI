@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
+import com.gitlab.srcmc.rctapi.api.util.Text;
+import com.google.gson.GsonBuilder;
 
 /**
  * API entrypoint (see {@link RCTApi#initInstance(String)} and {@link
@@ -38,6 +40,29 @@ public class RCTApi {
         this.trainerRegistry = trainerRegistry;
         this.battleManager = battleManager;
         this.eventContext = eventContext;
+    }
+
+    /**
+     * Constructs a new {@link GsonBuilder} that is preconfigred with type adapters for
+     * classes provided by this api.
+     * 
+     * @return Configured {@link GsonBuilder}
+     * @see Text.Deserializer
+     */
+    public GsonBuilder gsonBuilder() {
+        return this.configureGsonBuilder(new GsonBuilder());
+    }
+
+    /**
+     * Configures type adapters for a {@link GsonBuilder} for classes provided by this
+     * api.
+     * 
+     * @param builder {@link GsonBuilder} to configure.
+     * @return Configured {@link GsonBuilder}
+     * @see Text.Deserializer
+     */
+    public GsonBuilder configureGsonBuilder(GsonBuilder builder) {
+        return builder.registerTypeAdapter(Text.class, new Text.Deserializer());
     }
 
     /**

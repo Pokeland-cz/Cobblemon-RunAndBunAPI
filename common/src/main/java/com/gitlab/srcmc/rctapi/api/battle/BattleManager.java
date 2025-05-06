@@ -91,7 +91,7 @@ public class BattleManager {
      * @param participant2 Second participating {@link Trainer}.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startSingle(
@@ -110,7 +110,7 @@ public class BattleManager {
      * @param battleRules {@link BattleRules} applied to the battle.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startSingle(
@@ -129,7 +129,7 @@ public class BattleManager {
      * @param participant2 Second participating {@link Trainer}.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startDouble(@NotNull Trainer participant1, @NotNull Trainer participant2) {
@@ -145,7 +145,7 @@ public class BattleManager {
      * @param battleRules {@link BattleRules} applied to the battle.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startDouble(
@@ -164,7 +164,7 @@ public class BattleManager {
      * @param participant2 Second participating {@link Trainer}.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startTriple(@NotNull Trainer participant1, @NotNull Trainer participant2) {
@@ -180,7 +180,7 @@ public class BattleManager {
      * @param battleRules {@link BattleRules} applied to the battle.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startTriple(
@@ -201,7 +201,7 @@ public class BattleManager {
      * @param participant2_r Participating {@link Trainer} for the second team on the right side.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startMulti(
@@ -224,7 +224,7 @@ public class BattleManager {
      * @param battleRules {@link BattleRules} applied to the battle.
      * @return True if a battle was started.
      * @see also {@link BattleManager#startBattle(List, List, BattleFormat, BattleRules)}
-     * @deprecated The return type will be changed to {@link UUID} in 0.12.
+     * @deprecated The return type is possibly going to be changed to {@link UUID}.
      */
     @Deprecated(since = "0.11.0")
     public boolean startMulti(

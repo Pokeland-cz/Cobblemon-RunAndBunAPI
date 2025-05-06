@@ -61,7 +61,7 @@ public final class TypeChart {
 
     /**
      * @return 1.0
-     * @deprecated This overload will be removed in 0.12.
+     * @deprecated This overload will be removed in 0.13.
      */
     @Deprecated(since = "0.11.1")
     public static double getEffectiveness(ElementalType attackerType, ElementalType defenderPrimaryType, ElementalType defenderSecondaryType, Ability defenderAbility) {

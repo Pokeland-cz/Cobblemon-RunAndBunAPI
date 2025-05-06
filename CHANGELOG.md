@@ -1,9 +1,15 @@
 # Changelog
 
-## [0.11.2-beta] - 2025-05-06
+**Important:** This version may break compatibility with mods that rely on an older version of this api (`< 0.12.0-beta`), but only if these mods happen to parse trainers from json (i.e. with `GSON`). There shouldn't be any issues otherwise.
+
+To update be sure to configure your `GsonBuilder` instances with `RCTApi#configureGsonBuilder(GsonBuilder)` or simply use a builder provided by `RCTApi#gsonBuilder()`.
+
+## [0.12.0-beta] - 2025-05-06
 
 **Added:**
 
+- *#58* `RCTApi#configureGsonBuilder(GsonBuilder)`
+- *#57* `RCTApi#gsonBuilder()`
 - *#56* `Text` utility type for translatable text
 
 **Changed:**

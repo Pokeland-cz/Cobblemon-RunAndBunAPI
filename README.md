@@ -27,11 +27,6 @@ Following [ExampleMod](common/src/main/java/com/gitlab/srcmc/rctapi/example/Exam
 public class ExampleMod {
     private static final String MOD_ID = "example_mod";
 
-    private static final Gson GSON = new GsonBuilder()
-        .setPrettyPrinting()
-        .disableHtmlEscaping()
-        .create();
-
     private static String fileToId(File file) {
         var name = file.getName().toLowerCase().trim();
         var i = name.lastIndexOf('.');
@@ -40,6 +35,12 @@ public class ExampleMod {
 
     // Our own instance of the service.
     private static final RCTApi RCT = RCTApi.initInstance(MOD_ID);
+
+    // Using a gson builder provided by the api is necessary.
+    private static final Gson GSON = RCT.gsonBuilder()
+        .setPrettyPrinting()
+        .disableHtmlEscaping()
+        .create();
 
     // Call this in the common setup phase of the mod. E.g. in onInitialize() of your
     // ModInitializer on Fabric or in the constructor of your @Mod annotated class on
@@ -102,7 +103,7 @@ public class ExampleMod {
 
 ---
 
-Starting a battle is now simply a matter of invoking `BattleManager#startBattle` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [`RCTApiCommands`](common/src/main/java/com/gitlab/srcmc/rctapi/commands/RCTApiCommands.java) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
+Starting a battle is now simply a matter of invoking `BattleManager#startBattle` and providing `Trainer` instances for both sides along a `BattleFormat` and some `BattleRules`. One may study the implementation of the `battle` command in [*`TBCS`*](https://gitlab.com/srcmc/tbcs/-/blob/master/common/src/main/java/com/gitlab/srcmc/tbcs/commands/CommandsContext.java?ref_type=heads) for an example of how this can be achieved (the `attach` command may also serve as an example of how to associate trainers with entities) but to give a brief overview:
 
 ```java
 RCTApi.getInstance("example_mod").getTrainerRegistry().getById(trainerId, TrainerNPC.class).setEntity(trainerEntity);
@@ -113,10 +114,12 @@ Attaches the trainer with `trainerId` to the `trainerEntity` (can be any `Living
 ---
 
 ```java
-RCTApi.getInstance("example_mod").getBattleManager().start(trainerPlayer, trainerNPC, new BattleRules());
+RCTApi.getInstance("example_mod").getBattleManager().startBattle(trainerPlayer, trainerNPC, new BattleRules());
 ```
 
 Starts a battle between the `trainerPlayer` and `trainerNPC` in the `GEN_9_SINGLES` battle format and with default `BattleRules`.
+
+> **Tip**: It it usually a good idea to always (re)attach a trainer to a known entity immediately before a battle is started. If the entity happens to be in an unloaded chunk a battle may softlock!
 
 ## Gradle dependency
 
