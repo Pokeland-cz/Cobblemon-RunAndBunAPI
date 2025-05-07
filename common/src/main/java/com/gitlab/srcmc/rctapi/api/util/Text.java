@@ -56,6 +56,24 @@ public class Text implements Serializable, Comparable<Text> {
     public Text() {
         this.reloadState = ReloadListener.INSTANCE.reloadState - 1;
     }
+    
+    /**
+     * Retrieves the configured literal of this Text.
+     * 
+     * @return Literal of this text or null.
+     */
+    public String getLiteral() {
+        return this.literal;
+    }
+
+    /**
+     * Retrieves the configured language key of this Text.
+     * 
+     * @return Language key of this text or null.
+     */
+    public String getTranslatable() {
+        return this.translatable;
+    }
 
     /**
      * Sets the literal of this Text.
@@ -73,7 +91,7 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
-     * Sets the translatable of this Text.
+     * Sets the translatable (language key) of this Text.
      * 
      * @param translatable Language key.
      * @return This Text object.
