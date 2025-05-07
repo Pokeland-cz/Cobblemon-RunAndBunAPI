@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.gitlab.srcmc.rctapi.api.util.Text;
 
 /**
  * A pojo class for parsing {@link Pokemon}.
@@ -98,7 +99,7 @@ public class PokemonModel implements Serializable {
     }
 
     private String species;
-    private String nickname;
+    private Text nickname;
     private String gender;
     private int level;
     private String nature;
@@ -111,7 +112,7 @@ public class PokemonModel implements Serializable {
     private Set<String> aspects;
     
     public String getSpecies() { return this.species; }
-    public String getNickname() { return this.nickname; }
+    public Text getNickname() { return this.nickname; }
     public String getGender() { return this.gender; }
     public int getLevel() { return this.level; }
     public String getNature() { return this.nature; }
@@ -153,7 +154,7 @@ public class PokemonModel implements Serializable {
         boolean shiny, @NotNull String heldItem,
         @NotNull Set<String> aspects)
     {
-        this(species, "", gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
+        this(species, new Text(), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
     }
 
     /**
@@ -174,6 +175,33 @@ public class PokemonModel implements Serializable {
      */
     public PokemonModel(
         @NotNull String species, @NotNull String nickname,
+        @NotNull String gender, int level, @NotNull String nature,
+        @NotNull String ability, @NotNull Set<String> moveset,
+        @NotNull StatsModel ivs, @NotNull StatsModel evs,
+        boolean shiny, @NotNull String heldItem,
+        @NotNull Set<String> aspects)
+    {
+        this(species, new Text().setLiteral(nickname), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
+    }
+
+    /**
+     * Creates a new pokemon model with the given properties.
+     * 
+     * @param species Pokemon species.
+     * @param nickname Pokemon nickname.
+     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
+     * @param level Pokemon level.
+     * @param nature Pokemon nature.
+     * @param ability Pokemon ability.
+     * @param moveset Set of moves.
+     * @param ivs Pokemon ivs.
+     * @param evs Pokemon evs.
+     * @param shiny If the pokemon is shiny or not.
+     * @param heldItem Item held by the pokemon.
+     * @param aspects Set of pokemon aspects.
+     */
+    public PokemonModel(
+        @NotNull String species, @NotNull Text nickname,
         @NotNull String gender, int level, @NotNull String nature,
         @NotNull String ability, @NotNull Set<String> moveset,
         @NotNull StatsModel ivs, @NotNull StatsModel evs,
@@ -201,7 +229,7 @@ public class PokemonModel implements Serializable {
      */
     public PokemonModel(Pokemon pokemon) {
         this.species = pokemon.getSpecies().getName();
-        this.nickname = pokemon.getNickname() != null ? pokemon.getNickname().getString() : "";
+        this.nickname = pokemon.getNickname() != null ? new Text().setLiteral(pokemon.getNickname().getString()) : new Text();
         this.gender = pokemon.getGender().getSerializedName();
         this.level = pokemon.getLevel();
         this.nature = pokemon.getNature().getName().toString();

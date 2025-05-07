@@ -23,6 +23,7 @@ import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.util.Text;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.EntityType;
@@ -38,7 +39,7 @@ public class TrainerNPC implements Trainer {
      */
     public static final String DUMMY_TAG = ModCommon.MOD_ID + ":dummy";
 
-    private String name;
+    private Text name, entityName;
     private Pokemon[] team;
     private TrainerBag bag;
     private BattleAI battleAI;
@@ -53,7 +54,7 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
-        this("", team, bag, battleAI, entity);
+        this(new Text(), team, bag, battleAI, entity);
     }
 
     /**
@@ -66,11 +67,24 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
+        this(new Text().setLiteral(name), team, bag, battleAI, entity);
+    }
+
+    /**
+     * Constructs a new {@link TrainerNPC}.
+     * 
+     * @param name The name of the trainer.
+     * @param team The {@link Pokemon} party of the trainer.
+     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
+     * @param battleAI {@link BattleAI} used by this trainer.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
+     */
+    public TrainerNPC(@NotNull Text name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
         this.name = name;
         this.team = team;
         this.bag = bag;
         this.battleAI = battleAI;
-        this.entity = entity;
+        this.setEntity(entity);
     }
 
     /**
@@ -84,7 +98,7 @@ public class TrainerNPC implements Trainer {
         this.team = copyTeam(other.team);
         this.bag = other.bag;
         this.battleAI = other.battleAI;
-        this.entity = other.entity;
+        this.setEntity(other.entity);
     }
 
     /**
@@ -94,6 +108,7 @@ public class TrainerNPC implements Trainer {
      */
     public void setEntity(@NotNull LivingEntity entity) {
         this.entity = entity;
+        this.entityName = new Text().setLiteral(entity.getDisplayName().getString());
     }
 
     /**
@@ -117,9 +132,9 @@ public class TrainerNPC implements Trainer {
     }
 
     @Override @NotNull
-    public String getName() {
-        return this.name.isEmpty() && this.getEntity().getDisplayName() != null
-            ? this.getEntity().getDisplayName().getString()
+    public Text getName() {
+        return this.name.getComponent().getString().isEmpty() && this.getEntity().getDisplayName() != null
+            ? this.entityName
             : this.name;
     }
 
@@ -136,7 +151,7 @@ public class TrainerNPC implements Trainer {
     void initTeam(String otId) {
         for(var pkmn : this.team) {
             pkmn.setOriginalTrainer(otId);
-            pkmn.setOriginalTrainerName(this.getName());
+            pkmn.setOriginalTrainerName(this.getName().getComponent().getString());
             pkmn.setOriginalTrainerType$common(OriginalTrainerType.NPC);
             pkmn.getCustomProperties().add(UncatchableProperty.INSTANCE.uncatchable());
         }

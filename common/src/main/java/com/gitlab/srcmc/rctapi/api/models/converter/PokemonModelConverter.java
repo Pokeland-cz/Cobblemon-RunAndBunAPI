@@ -31,7 +31,6 @@ import com.gitlab.srcmc.rctapi.api.errors.RCTException;
 import com.gitlab.srcmc.rctapi.api.models.PokemonModel;
 import com.gitlab.srcmc.rctapi.api.util.Locations;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -50,9 +49,9 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
                 v -> v != null, v -> pokemon.setSpecies(v),
                 "invalid species '" + species + "'");
         }
-
-        if(!model.getNickname().isBlank()) {
-            pokemon.setNickname(Component.literal(model.getNickname()));
+        
+        if(!model.getNickname().getComponent().getString().isEmpty()) {
+            pokemon.setNickname(model.getNickname().getComponent());
         }
 
         var g = Gender.FEMALE.name().equals(model.getGender()) ? Gender.FEMALE

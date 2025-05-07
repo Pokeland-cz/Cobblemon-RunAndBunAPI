@@ -23,12 +23,14 @@ import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.gitlab.srcmc.rctapi.api.util.Text;
 
 /**
  * A trainer that is represented by a {@link ServerPlayer}.
  */
 public class TrainerPlayer implements Trainer {
     private ServerPlayer player;
+    private Text playerName;
 
     /**
      * Creates a trainer for the given {@link ServerPlayer} instance.
@@ -37,6 +39,7 @@ public class TrainerPlayer implements Trainer {
      */
     public TrainerPlayer(@NotNull ServerPlayer player) {
         this.player = player;
+        this.playerName = new Text().setLiteral(player.getDisplayName().getString());
     }
 
     /**
@@ -50,8 +53,8 @@ public class TrainerPlayer implements Trainer {
     }
 
     @Override @NotNull
-    public String getName() {
-        return this.player.getDisplayName().getString();
+    public Text getName() {
+        return this.playerName;
     }
 
     @Override @NotNull

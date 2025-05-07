@@ -73,8 +73,8 @@ public class TrainerModel implements Serializable {
     }
 
     @NotNull
-    public String getName() {
-        return this.name.getComponent().getString();
+    public Text getName() {
+        return this.name;
     }
 
     @NotNull

@@ -28,6 +28,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -47,7 +48,7 @@ public class Text implements Serializable, Comparable<Text> {
     private static Gson GSON = new Gson();
     
     private String literal, translatable;
-    private transient Component cache;
+    private transient MutableComponent cache;
     private transient int reloadState;
 
     /**
@@ -116,13 +117,13 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
-     * Retrieves the {@link Component} for this Text. Note that the {@link Component}
+     * Retrieves the {@link MutableComponent} for this Text. Note that the {@link MutableComponent}
      * will be cached until the client reloads.
      * 
      * @param args Format string args.
-     * @return {@link Component} for this Text.
+     * @return {@link MutableComponent} for this Text.
      */
-    public Component getComponent(Object... args) {
+    public MutableComponent getComponent(Object... args) {
         if(this.cache == null || this.reloadState != ReloadListener.INSTANCE.reloadState) {
             if(this.translatable != null) {
                 this.cache = this.literal != null
@@ -152,6 +153,7 @@ public class Text implements Serializable, Comparable<Text> {
 
     @Override
     public int compareTo(Text o) {
+        // TODO: this may fail if component requires format args! (default placeholder args?)
         return this.getComponent().getString().compareTo(o.getComponent().getString());
     }
 

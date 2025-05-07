@@ -1,20 +1,26 @@
 # Changelog
 
-**Important:** This version may break compatibility with mods that rely on an older version of this api (`< 0.12.0-beta`), but only if these mods happen to parse trainers from json (i.e. with `GSON`). There shouldn't be any issues otherwise.
+**Important:** This version may break compatibility with mods that rely on an older version of this api (`< 0.12.0-beta`). This could be the case if mods happen to parse trainers from JSON (i.e. with `GSON`) or use `#getName()` (see *#55* - *59*). There shouldn't be any issues otherwise.
 
 To update be sure to configure your `GsonBuilder` instances with `RCTApi#configureGsonBuilder(GsonBuilder)` or simply use a builder provided by `RCTApi#gsonBuilder()`.
 
-## [0.12.0-beta] - 2025-05-06
+## [0.12.0-beta] - 2025-05-07
 
 **Added:**
 
-- *#58* `RCTApi#configureGsonBuilder(GsonBuilder)`
-- *#57* `RCTApi#gsonBuilder()`
-- *#56* `Text` utility type for translatable text
+- *#62* `RCTApi#configureGsonBuilder(GsonBuilder)`
+- *#61* `RCTApi#gsonBuilder()`
+- *#60* `Text` utility type for translatable text
+  - Translation support for `PokemonModel#name` property
+  - Translation support for `TrainerModel#name` property
 
 **Changed:**
 
-- *#55* `TrainerModel#name` property from `String` to `Text` (translation support)
+- *#59* Return type of `PokemonModel#getName()` from `String` to `Text` (**potential breaking change**)
+- *#58* Return type of `Trainer#getName()` from `String` to `Text` (**potential breaking change**)
+- *#57* Return type of `TrainerModel#getName()` from `String` to `Text` (**potential breaking change**)
+- *#56* Return type of `TrainerNPC#getName()` from `String` to `Text` (**potential breaking change**)
+- *#55* Return type of `TrainerPlayer#getName()` from `String` to `Text` (**potential breaking change**)
 
 ## [0.11.1-beta] - 2025-05-05
 

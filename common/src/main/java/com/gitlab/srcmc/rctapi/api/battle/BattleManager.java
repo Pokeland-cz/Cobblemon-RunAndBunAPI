@@ -51,7 +51,8 @@ import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerBag;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerPlayer;
-import net.minecraft.network.chat.Component;
+import com.gitlab.srcmc.rctapi.api.util.Text;
+
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -584,12 +585,23 @@ public class BattleManager {
 
     // TODO: move to different package
     public static class TrainerEntityBattleActor extends AIBattleActor implements EntityBackedBattleActor<LivingEntity> {
-        private final String name;
+        private final Text name;
         private final LivingEntity entity;
         private final TrainerBag bag;
 
         public TrainerEntityBattleActor(
             String name,
+            LivingEntity entity,
+            UUID uuid,
+            List<BattlePokemon> pokemonList,
+            TrainerBag bag,
+            BattleAI artificialDecider)
+        {
+            this(new Text().setLiteral(name), entity, uuid, pokemonList, bag, artificialDecider);
+        }
+
+        public TrainerEntityBattleActor(
+            Text name,
             LivingEntity entity,
             UUID uuid,
             List<BattlePokemon> pokemonList,
@@ -619,7 +631,7 @@ public class BattleManager {
 
         @Override @NotNull
         public MutableComponent getName() {
-            return Component.literal(this.name);
+            return this.name.getComponent();
         }
 
         @Override @NotNull

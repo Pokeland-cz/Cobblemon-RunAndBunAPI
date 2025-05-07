@@ -19,6 +19,8 @@ package com.gitlab.srcmc.rctapi.api.trainer;
 
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.gitlab.srcmc.rctapi.api.util.Text;
+
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -30,7 +32,7 @@ public interface Trainer {
      * 
      * @return Trainer name.
      */
-    @NotNull String getName();
+    @NotNull Text getName();
 
     /**
      * Retrieves the {@link Pokemon} team of this trainer.
