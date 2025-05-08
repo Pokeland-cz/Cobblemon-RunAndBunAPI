@@ -49,8 +49,8 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
                 v -> v != null, v -> pokemon.setSpecies(v),
                 "invalid species '" + species + "'");
         }
-        
-        if(!model.getNickname().getComponent().getString().isEmpty()) {
+
+        if(model.getNickname().getLiteral() != null) {
             pokemon.setNickname(model.getNickname().getComponent());
         }
 

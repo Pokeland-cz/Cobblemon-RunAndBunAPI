@@ -125,15 +125,9 @@ public class Text implements Serializable, Comparable<Text> {
      */
     public MutableComponent getComponent(Object... args) {
         if(this.cache == null || this.reloadState != ReloadListener.INSTANCE.reloadState) {
-            if(this.translatable != null) {
-                this.cache = this.literal != null
-                    ? Component.translatableWithFallback(this.translatable, this.literal, args)
-                    : Component.translatable(this.translatable, args);
-            } else {
-                this.cache = this.literal != null
-                    ? Component.literal(String.format(this.literal, args))
-                    : Component.empty();
-            }
+            this.cache = this.translatable != null
+                ? Component.translatableWithFallback(this.translatable, this.literal, args)
+                : (this.literal != null ? Component.literal(String.format(this.literal, args)) : Component.empty());
             
             this.reloadState = ReloadListener.INSTANCE.reloadState;
         }
@@ -153,7 +147,7 @@ public class Text implements Serializable, Comparable<Text> {
 
     @Override
     public int compareTo(Text o) {
-        // TODO: this may fail if component requires format args! (default placeholder args?)
+        // TODO: can this fail if component requires args? (default placeholder args?)
         return this.getComponent().getString().compareTo(o.getComponent().getString());
     }
 

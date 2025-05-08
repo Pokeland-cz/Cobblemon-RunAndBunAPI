@@ -10,8 +10,8 @@ To update be sure to configure your `GsonBuilder` instances with `RCTApi#configu
 
 - *#62* `RCTApi#configureGsonBuilder(GsonBuilder)`
 - *#61* `RCTApi#gsonBuilder()`
-- *#60* `Text` utility type for translatable text
-  - Translation support for `PokemonModel#name` property
+- *#60* `Text` utility type for translatable text, which can be parsed from a JSON object with `literal` and/or `translatable` fields, or directly from a string, which serves as the `literal` value
+  - Translation support for `PokemonModel#nickname` property (**will be ignored if `literal` is not set**)
   - Translation support for `TrainerModel#name` property
 
 **Changed:**
