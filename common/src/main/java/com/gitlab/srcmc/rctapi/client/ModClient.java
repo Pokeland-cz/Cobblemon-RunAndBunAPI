@@ -17,13 +17,7 @@
  */
 package com.gitlab.srcmc.rctapi.client;
 
-import com.gitlab.srcmc.rctapi.api.util.Text;
-
-import dev.architectury.registry.ReloadListenerRegistry;
-import net.minecraft.server.packs.PackType;
-
 public class ModClient {
     public static void init() {
-        ReloadListenerRegistry.register(PackType.CLIENT_RESOURCES, Text.ReloadListener.INSTANCE);
     }
 }

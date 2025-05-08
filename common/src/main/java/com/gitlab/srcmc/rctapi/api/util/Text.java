@@ -19,7 +19,6 @@ package com.gitlab.srcmc.rctapi.api.util;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
-import java.util.Map;
 import java.util.Objects;
 
 import com.google.gson.Gson;
@@ -29,10 +28,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 
 /**
  * Arbitrary text that may be defined as literal or by providing a language key
@@ -49,14 +44,6 @@ public class Text implements Serializable, Comparable<Text> {
     
     private String literal, translatable;
     private transient MutableComponent cache;
-    private transient int reloadState;
-
-    /**
-     * Construct an empty Text object.
-     */
-    public Text() {
-        this.reloadState = ReloadListener.INSTANCE.reloadState - 1;
-    }
     
     /**
      * Retrieves the configured literal of this Text.
@@ -77,7 +64,7 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
-     * Sets the literal of this Text.
+     * Sets the literal of this Text. Clears the cached {@link Component} on change.
      * 
      * @param literal Literal text.
      * @return This Text object.
@@ -92,7 +79,8 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
-     * Sets the translatable (language key) of this Text.
+     * Sets the translatable (language key) of this Text. Clears the cached {@link
+     * Component} on change.
      * 
      * @param translatable Language key.
      * @return This Text object.
@@ -117,19 +105,17 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
-     * Retrieves the {@link MutableComponent} for this Text. Note that the {@link MutableComponent}
-     * will be cached until the client reloads.
+     * Retrieves the {@link MutableComponent} for this Text. Note that the {@link
+     * MutableComponent} will be cached.
      * 
      * @param args Format string args.
      * @return {@link MutableComponent} for this Text.
      */
     public MutableComponent getComponent(Object... args) {
-        if(this.cache == null || this.reloadState != ReloadListener.INSTANCE.reloadState) {
+        if(this.cache == null) {
             this.cache = this.translatable != null
                 ? Component.translatableWithFallback(this.translatable, this.literal, args)
                 : (this.literal != null ? Component.literal(String.format(this.literal, args)) : Component.empty());
-            
-            this.reloadState = ReloadListener.INSTANCE.reloadState;
         }
 
         return this.cache;
@@ -149,20 +135,6 @@ public class Text implements Serializable, Comparable<Text> {
     public int compareTo(Text o) {
         // TODO: can this fail if component requires args? (default placeholder args?)
         return this.getComponent().getString().compareTo(o.getComponent().getString());
-    }
-
-    public static class ReloadListener extends SimpleJsonResourceReloadListener {
-        public static final ReloadListener INSTANCE = new ReloadListener();
-        private int reloadState;
-
-        private ReloadListener() {
-            super(GSON, "");
-        }
-
-        @Override
-        protected void apply(Map<ResourceLocation, JsonElement> map, ResourceManager rm, ProfilerFiller profilerFiller) {
-            this.reloadState++;
-        }
     }
 
     public static class Deserializer implements JsonDeserializer<Text> {

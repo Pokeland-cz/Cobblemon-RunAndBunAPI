@@ -33,13 +33,9 @@ import com.gitlab.srcmc.rctapi.api.ai.config.StrongBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
-import com.gitlab.srcmc.rctapi.api.util.Text;
-
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.registry.ReloadListenerRegistry;
 import kotlin.Unit;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.packs.PackType;
 
 /**
  * Mod initialization logic.
@@ -58,7 +54,6 @@ public class ModCommon {
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
-        ReloadListenerRegistry.register(PackType.SERVER_DATA, Text.ReloadListener.INSTANCE);
     }
 
     static void handleServerTick(MinecraftServer server) {
