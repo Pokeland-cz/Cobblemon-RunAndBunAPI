@@ -137,6 +137,12 @@ public class Text implements Serializable, Comparable<Text> {
         return this.getComponent().getString().compareTo(o.getComponent().getString());
     }
 
+    @Override
+    public String toString() {
+        // TODO: can this fail if component requires args? (default placeholder args?)
+        return this.getComponent().getString();
+    }
+
     public static class Deserializer implements JsonDeserializer<Text> {
         @Override
         public Text deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
