@@ -47,7 +47,6 @@ public class Text implements Serializable, Comparable<Text> {
     private transient Cache cache;
 
     protected Text() {
-        this.cache = new Cache();
     }
 
     /**
@@ -158,6 +157,10 @@ public class Text implements Serializable, Comparable<Text> {
      * @see Text#clearCache()
      */
     public MutableComponent getComponent(Object... args) {
+        if(this.cache == null) {
+            this.cache = new Cache();
+        }
+        
         if(this.cache.component == null || !Arrays.equals(this.cache.args, args)) {
             this.cache.component = this.translatable != null
                 ? Component.translatableWithFallback(this.translatable, this.literal, args)
