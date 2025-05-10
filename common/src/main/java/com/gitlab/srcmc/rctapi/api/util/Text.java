@@ -99,7 +99,7 @@ public class Text implements Serializable, Comparable<Text> {
      * Reports if this Text is empty, which is the case if both, the literal and the
      * translatable, are either null or empty.
      * 
-     * @return True if the Text is emtpy.
+     * @return True if the Text is empty.
      */
     public boolean isEmpty() {
         return (this.literal == null || this.literal.isEmpty())
