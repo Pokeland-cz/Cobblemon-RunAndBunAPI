@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.api.util;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.gson.Gson;
@@ -43,9 +44,10 @@ public class Text implements Serializable, Comparable<Text> {
     private static Gson GSON = new Gson();
     
     private String literal, translatable;
-    private transient MutableComponent cache;
+    private transient Cache cache;
 
     protected Text() {
+        this.cache = new Cache();
     }
 
     /**
@@ -143,7 +145,7 @@ public class Text implements Serializable, Comparable<Text> {
      * @return This Text object.
      */
     public Text clearCache() {
-        this.cache = null;
+        this.cache = new Cache();
         return this;
     }
 
@@ -156,14 +158,19 @@ public class Text implements Serializable, Comparable<Text> {
      * @see Text#clearCache()
      */
     public MutableComponent getComponent(Object... args) {
-        // TODO: clearCache if args are different
-        if(this.cache == null) {
-            this.cache = this.translatable != null
+        var newArgs = !Arrays.equals(this.cache.args, args);
+
+        if(newArgs) {
+            this.cache.args = args;
+        }
+
+        if(newArgs || this.cache.component == null) {
+            this.cache.component = this.translatable != null
                 ? Component.translatableWithFallback(this.translatable, this.literal, args)
                 : (this.literal != null ? Component.literal(String.format(this.literal, args)) : Component.empty());
         }
 
-        return this.cache;
+        return this.cache.component;
     }
 
     @Override
@@ -178,13 +185,13 @@ public class Text implements Serializable, Comparable<Text> {
 
     @Override
     public int compareTo(Text o) {
-        // TODO: can this fail if component requires args? (default placeholder args?)
+        // TODO: can this fail if component requires args?
         return this.getComponent().getString().compareTo(o.getComponent().getString());
     }
 
     @Override
     public String toString() {
-        // TODO: can this fail if component requires args? (default placeholder args?)
+        // TODO: can this fail if component requires args?
         return this.getComponent().getString();
     }
 
@@ -198,5 +205,10 @@ public class Text implements Serializable, Comparable<Text> {
                 return GSON.fromJson(json, typeOfT);
             }
         }
+    }
+
+    private class Cache {
+        public MutableComponent component;
+        public Object[] args;
     }
 }
