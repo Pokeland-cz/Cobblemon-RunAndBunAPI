@@ -96,6 +96,17 @@ public class Text implements Serializable, Comparable<Text> {
     }
 
     /**
+     * Reports if this Text is empty, which is the case if both, the literal and the
+     * translatable, are either null or empty.
+     * 
+     * @return True if the Text is emtpy.
+     */
+    public boolean isEmpty() {
+        return (this.literal == null || this.literal.isEmpty())
+            && (this.translatable == null || this.translatable.isEmpty());
+    }
+
+    /**
      * Sets the literal of this Text. Clears the cached {@link Component} on change.
      * 
      * @param literal Literal text.
