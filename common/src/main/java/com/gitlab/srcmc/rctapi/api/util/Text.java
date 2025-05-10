@@ -158,13 +158,7 @@ public class Text implements Serializable, Comparable<Text> {
      * @see Text#clearCache()
      */
     public MutableComponent getComponent(Object... args) {
-        var newArgs = !Arrays.equals(this.cache.args, args);
-
-        if(newArgs) {
-            this.cache.args = args;
-        }
-
-        if(newArgs || this.cache.component == null) {
+        if(this.cache.component == null || !Arrays.equals(this.cache.args, args)) {
             this.cache.component = this.translatable != null
                 ? Component.translatableWithFallback(this.translatable, this.literal, args)
                 : (this.literal != null ? Component.literal(String.format(this.literal, args)) : Component.empty());
