@@ -54,7 +54,7 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
-        this(new Text(), team, bag, battleAI, entity);
+        this(Text.empty(), team, bag, battleAI, entity);
     }
 
     /**
@@ -67,7 +67,7 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull String name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
-        this(new Text().setLiteral(name), team, bag, battleAI, entity);
+        this(Text.literal(name), team, bag, battleAI, entity);
     }
 
     /**
@@ -108,7 +108,7 @@ public class TrainerNPC implements Trainer {
      */
     public void setEntity(@NotNull LivingEntity entity) {
         this.entity = entity;
-        this.entityName = new Text().setLiteral(entity.getDisplayName().getString());
+        this.entityName = Text.literal(entity.getDisplayName().getString());
     }
 
     /**

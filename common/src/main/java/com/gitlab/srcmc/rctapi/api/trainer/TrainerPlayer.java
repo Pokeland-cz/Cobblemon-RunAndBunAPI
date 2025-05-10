@@ -39,7 +39,7 @@ public class TrainerPlayer implements Trainer {
      */
     public TrainerPlayer(@NotNull ServerPlayer player) {
         this.player = player;
-        this.playerName = new Text().setLiteral(player.getDisplayName().getString());
+        this.playerName = Text.literal(player.getDisplayName().getString());
     }
 
     /**

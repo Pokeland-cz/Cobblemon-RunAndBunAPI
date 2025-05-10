@@ -44,6 +44,38 @@ public class Text implements Serializable, Comparable<Text> {
     
     private String literal, translatable;
     private transient MutableComponent cache;
+
+    protected Text() {
+    }
+
+    /**
+     * Constructs a new empty Text.
+     * 
+     * @return Empty Text.
+     */
+    public static Text empty() {
+        return new Text();
+    }
+
+    /**
+     * Constructs a new Text with the given literal.
+     * 
+     * @param literal Literal of the Text.
+     * @return Literal Text.
+     */
+    public static Text literal(String literal) {
+        return new Text().setLiteral(literal);
+    }
+
+    /**
+     * Constructs a new Text with the given translatable (language key).
+     * 
+     * @param tranlatable Language key.
+     * @return Translatable Text.
+     */
+    public static Text translatable(String tranlatable) {
+        return new Text().setTranslatable(tranlatable);
+    }
     
     /**
      * Retrieves the configured literal of this Text.
@@ -110,8 +142,10 @@ public class Text implements Serializable, Comparable<Text> {
      * 
      * @param args Format string args.
      * @return {@link MutableComponent} for this Text.
+     * @see Text#clearCache()
      */
     public MutableComponent getComponent(Object... args) {
+        // TODO: clearCache if args are different
         if(this.cache == null) {
             this.cache = this.translatable != null
                 ? Component.translatableWithFallback(this.translatable, this.literal, args)
@@ -148,7 +182,7 @@ public class Text implements Serializable, Comparable<Text> {
         public Text deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try {
                 var t = json.getAsString();
-                return new Text().setLiteral(t);
+                return Text.literal(t);
             } catch(UnsupportedOperationException e) {
                 return GSON.fromJson(json, typeOfT);
             }

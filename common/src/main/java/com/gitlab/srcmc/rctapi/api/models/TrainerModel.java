@@ -42,7 +42,7 @@ public class TrainerModel implements Serializable {
      * Creates a new TrainerModel.
      */
     public TrainerModel() {
-        this(new Text(), JTO.of(RCTBattleAI::new), List.of(), List.of());
+        this(Text.empty(), JTO.of(RCTBattleAI::new), List.of(), List.of());
     }
 
     /**
@@ -54,7 +54,7 @@ public class TrainerModel implements Serializable {
      * @param team Pokemon party of the trainer.
      */
     public TrainerModel(@NotNull String name, @NotNull JTO<BattleAI> ai, @NotNull List<BagItemModel> bag, @NotNull List<PokemonModel> team) {
-        this(new Text().setLiteral(name), ai, bag, team);
+        this(Text.literal(name), ai, bag, team);
     }
 
     /**

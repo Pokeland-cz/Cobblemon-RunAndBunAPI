@@ -597,7 +597,7 @@ public class BattleManager {
             TrainerBag bag,
             BattleAI artificialDecider)
         {
-            this(new Text().setLiteral(name), entity, uuid, pokemonList, bag, artificialDecider);
+            this(Text.literal(name), entity, uuid, pokemonList, bag, artificialDecider);
         }
 
         public TrainerEntityBattleActor(

@@ -154,7 +154,7 @@ public class PokemonModel implements Serializable {
         boolean shiny, @NotNull String heldItem,
         @NotNull Set<String> aspects)
     {
-        this(species, new Text(), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
+        this(species, Text.empty(), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
     }
 
     /**
@@ -181,7 +181,7 @@ public class PokemonModel implements Serializable {
         boolean shiny, @NotNull String heldItem,
         @NotNull Set<String> aspects)
     {
-        this(species, new Text().setLiteral(nickname), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
+        this(species, Text.literal(nickname), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
     }
 
     /**
@@ -229,7 +229,7 @@ public class PokemonModel implements Serializable {
      */
     public PokemonModel(Pokemon pokemon) {
         this.species = pokemon.getSpecies().getName();
-        this.nickname = pokemon.getNickname() != null ? new Text().setLiteral(pokemon.getNickname().getString()) : new Text();
+        this.nickname = pokemon.getNickname() != null ? Text.literal(pokemon.getNickname().getString()) : Text.empty();
         this.gender = pokemon.getGender().getSerializedName();
         this.level = pokemon.getLevel();
         this.nature = pokemon.getNature().getName().toString();
