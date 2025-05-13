@@ -4,7 +4,7 @@
 
 To update be sure to configure your `GsonBuilder` instances with `RCTApi#configureGsonBuilder(GsonBuilder)` or simply use a builder provided by `RCTApi#gsonBuilder()`.
 
-## [0.12.0-beta] - 2025-05-07
+## [0.12.0-beta] - 2025-05-13
 
 **Added:**
 
