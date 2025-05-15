@@ -24,7 +24,6 @@ import java.util.UUID;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 
 /**
  * Utility class to keep track of information throughout a battle.
@@ -32,7 +31,7 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 public final class BattleStates {
     public static class PokemonState {
         private static final int[] ZERO = new int[]{0};
-        private Map<BattleEffect, int[]> turnEffectCounters = new HashMap<>();
+        private Map<BattleEffects.Custom, int[]> turnEffectCounters = new HashMap<>();
         private BattlePokemon switchFor;
         private PokemonState preReset;
         private long effects;
@@ -58,7 +57,7 @@ public final class BattleStates {
             this.switchFor = null;
             this.effects  = 0;
             this.turnEffectCounters.clear();
-            this.add(BattleEffect.TURN);
+            this.add(BattleEffects.Custom.TURN);
             return this;
         }
 
@@ -67,8 +66,8 @@ public final class BattleStates {
         }
 
         private void nextTurn() {
-            if(!this.has(BattleEffect.TURN)) {
-                this.add(BattleEffect.TURN);
+            if(!this.has(BattleEffects.Custom.TURN)) {
+                this.add(BattleEffects.Custom.TURN);
             }
             
             var it = this.turnEffectCounters.entrySet().iterator();
@@ -85,15 +84,15 @@ public final class BattleStates {
             this.switchFor = null;
         }
 
-        public boolean has(BattleEffect e) {
+        public boolean has(BattleEffects.Custom e) {
             return (e.mask() & this.effects) != 0;
         }
 
-        public int age(BattleEffect e) {
+        public int age(BattleEffects.Custom e) {
             return this.has(e) ? e.expires() - this.turnEffectCounters.getOrDefault(e, ZERO)[0] : 0;
         }
 
-        public void add(BattleEffect e) {
+        public void add(BattleEffects.Custom e) {
             if(e.expires() >= 0) {
                 this.turnEffectCounters.put(e, new int[]{e.expires()});
             }

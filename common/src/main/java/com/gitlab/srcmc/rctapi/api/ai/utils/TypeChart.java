@@ -90,7 +90,7 @@ public final class TypeChart {
                 return 0;
             }
 
-            if(PokeContext.State.raised(defender)) {
+            if(BattleEffects.Pokemon.State.raised(defender)) {
                 return 0;
             } else if(defenderType.equals(ElementalTypes.INSTANCE.getFLYING())) {
                 return 1.0;

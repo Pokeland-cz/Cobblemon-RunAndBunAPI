@@ -23,8 +23,8 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
-import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.TypeChart;
@@ -60,11 +60,11 @@ public class RCTBattleAI implements BattleAI {
         // TODO: REMOVE DEBUG
         if(RCTBattleAI.DEBUG) {
             if(pkmn.isAlive()) {
-                PokeContext.dump(pkmn.getBattlePokemon());
+                BattleEffects.dump(pkmn.getBattlePokemon());
                 pkmn.getActor().getSide().getOppositeSide().getActivePokemon()
                     .stream().filter(p -> p.isAlive())
                     .map(p -> p.getBattlePokemon())
-                    .forEach(PokeContext::dump);
+                    .forEach(BattleEffects::dump);
             }
         }
         // // // // // // //
@@ -88,7 +88,7 @@ public class RCTBattleAI implements BattleAI {
         builder.suggestItems(candidates -> candidates
             .map(pair -> new Choice<>(String.format("ITEM %s -> %s", pair.first.getItemName(), pair.second.getName().getString()), pair, 1.0 - evalItem(pair.first, pair.second))));
 
-        if(forceSwitch || !pkmn.hasPokemon() || !PokeContext.State.trapped(pkmn.getBattlePokemon())) {
+        if(forceSwitch || !pkmn.hasPokemon() || !BattleEffects.Pokemon.State.trapped(pkmn.getBattlePokemon())) {
             builder.suggestSwitches(candidates -> candidates
                 .map(bp -> new Choice<>(String.format("SWITCH %s -> %s", pkmn.isAlive() ? pkmn.getBattlePokemon().getName().getString() : "<dead>", bp.getName().getString()), bp, 1.0 - evalSwitch(pkmn, bp))));
         }
@@ -119,16 +119,16 @@ public class RCTBattleAI implements BattleAI {
                 e = ally ? Math.max(this.rngSin()*this.maxSelectMargin, 1.0 - to.getHealth()/(double)to.getMaxHealth())*this.statusMoveBias : 0;
                 break;
             case CURE:
-                e = ally ? (PokeContext.Statuses.any(to) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
+                e = ally ? (BattleEffects.Pokemon.Status.any(to) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
                 break;
             case BUFF:
-                e = ally ? this.rngSin()*Math.min(1.0, 1.0 - PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                e = ally ? this.rngSin()*Math.min(1.0, 1.0 - BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
                 break;
             case MALUS:
-                e = !ally ? this.rngSin()*Math.min(1.0, 1.0 + PokeContext.Boosts.avg(to)*5)*this.statusMoveBias : 0;
+                e = !ally ? this.rngSin()*Math.min(1.0, 1.0 + BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
                 break;
             case STATUS:
-                e = !ally ? ((!PokeContext.Statuses.any(to) && !PokeContext.Volatiles.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
+                e = !ally ? ((!BattleEffects.Pokemon.Status.any(to) && !BattleEffects.Pokemon.Volatile.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
                 break;
             case DAMAGE:
                 e = !ally ? Math.max(this.rngSin()*this.maxSelectMargin, Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth())*this.moveBias : 0;
@@ -150,7 +150,7 @@ public class RCTBattleAI implements BattleAI {
                 : potion == PotionType.FULL_RESTORE ? to.getMaxHealth() : 0;
 
             var estHeal = (Math.min(to.getMaxHealth(), to.getHealth() + amount) - to.getHealth())/(double)amount;
-            return Math.min(1.0, (amount/(double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (PokeContext.Statuses.any(to) && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias);
+            return Math.min(1.0, (amount/(double)to.getMaxHealth()) * (1.0 - to.getHealth()/(double)to.getMaxHealth())*Math.min(1.0, estHeal * (to.isSentOut() ? 1 : 0.75) * (BattleEffects.Pokemon.Status.any(to) && potion.getCuresStatus() ? 1.25 : 1)) * this.itemBias);
         }
 
         return 0;
@@ -158,11 +158,11 @@ public class RCTBattleAI implements BattleAI {
 
     private double evalSwitch(ActiveBattlePokemon from, BattlePokemon to) {
         // stat boosts
-        var fboost = 1.0 - 0.5 * (from.hasPokemon() ? PokeContext.Boosts.avg(from.getBattlePokemon()) : 0);
+        var fboost = 1.0 - 0.5 * (from.hasPokemon() ? BattleEffects.Pokemon.Boost.avg(from.getBattlePokemon()) : 0);
 
         // status effects
-        var fStat = from.hasPokemon() && (PokeContext.Statuses.any(from.getBattlePokemon()) || PokeContext.Volatiles.any(from.getBattlePokemon())) ? 1.25 : 1.0;
-        var tStat = PokeContext.Statuses.any(to) ? 0.75 : 1.0;
+        var fStat = from.hasPokemon() && (BattleEffects.Pokemon.Status.any(from.getBattlePokemon()) || BattleEffects.Pokemon.Volatile.any(from.getBattlePokemon())) ? 1.25 : 1.0;
+        var tStat = BattleEffects.Pokemon.Status.any(to) ? 0.75 : 1.0;
 
         // double[] d = { (thRel > 0 ? thRel < fhRel ? (1.0 + thRel - fhRel)/4.0 : thRel - fhRel : 0.0) * fStat * tStat * fboost};
         double[] d = { fStat * tStat * fboost};

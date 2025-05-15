@@ -25,8 +25,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.EndItemInstruction;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
-import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 
 /**
  * Required to keep track of destroyed/used held items.
@@ -47,7 +47,7 @@ public abstract class EndItemInstructionMixin {
             var pkmn = message.battlePokemon(0, battle);
 
             if(pkmn != null) {
-                BattleStates.get(battle).getPokemonState(pkmn).add(BattleEffect.ITEM_ENDED);
+                BattleStates.get(battle).getPokemonState(pkmn).add(BattleEffects.Custom.ITEM_ENDED);
             }
         }
     }

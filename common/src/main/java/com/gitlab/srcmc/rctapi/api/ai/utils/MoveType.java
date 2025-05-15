@@ -22,7 +22,6 @@ import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.gitlab.srcmc.rctapi.api.ai.utils.PokeContext.BattleEffect;
 
 public enum MoveType {
     DAMAGE, STATUS, HEAL, CURE, BUFF, MALUS;
@@ -54,47 +53,47 @@ public enum MoveType {
 
     // custom move evaluations
     private static final Map<String, Evaluator> MOVE_EVALUATORS = Map.<String, Evaluator>ofEntries(
-        Map.<String, Evaluator>entry("attract", (from, to, move) -> PokeContext.Volatiles.attract(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("confuseray", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("flatter", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("supersonic", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("swagger", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("sweetkiss", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("teeterdance", (from, to, move) -> (PokeContext.Volatiles.confusion(to) || (!PokeContext.State.raised(to) && PokeContext.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("curse", (from, to, move) -> ((ElementalTypes.INSTANCE.getGHOST().equals(from.getEffectedPokemon().getPrimaryType()) || ElementalTypes.INSTANCE.getGHOST().equals(from.getEffectedPokemon().getSecondaryType())) && PokeContext.Volatiles.cursed(to)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("leechseed", (from, to, move) -> PokeContext.Volatiles.leech(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("ingrain", (from, to, move) -> PokeContext.Volatiles.ingrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("aquaring", (from, to, move) -> PokeContext.Volatiles.aquaring(from) ? 0.0 : 1.0),
-        // Map.<String, Evaluator>entry("smackdown", (from, to, move) -> PokeContext.Volatiles.smackdown(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("telekinesis", (from, to, move) -> PokeContext.State.raised(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("magnetrise", (from, to, move) -> PokeContext.State.raised(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("attract", (from, to, move) -> BattleEffects.Pokemon.Volatile.attract(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("confuseray", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("flatter", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("supersonic", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("swagger", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("sweetkiss", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("teeterdance", (from, to, move) -> (BattleEffects.Pokemon.Volatile.confusion(to) || (!BattleEffects.Pokemon.State.raised(to) && BattleEffects.Field.Terrain.mistyterrain(to))) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("curse", (from, to, move) -> ((ElementalTypes.INSTANCE.getGHOST().equals(from.getEffectedPokemon().getPrimaryType()) || ElementalTypes.INSTANCE.getGHOST().equals(from.getEffectedPokemon().getSecondaryType())) && BattleEffects.Pokemon.Volatile.cursed(to)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("leechseed", (from, to, move) -> BattleEffects.Pokemon.Volatile.leech(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("ingrain", (from, to, move) -> BattleEffects.Pokemon.Volatile.ingrain(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("aquaring", (from, to, move) -> BattleEffects.Pokemon.Volatile.aquaring(from) ? 0.0 : 1.0),
+        // Map.<String, Evaluator>entry("smackdown", (from, to, move) -> BattleEffects.Pokemon.Volatile.smackdown(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("telekinesis", (from, to, move) -> BattleEffects.Pokemon.State.raised(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("magnetrise", (from, to, move) -> BattleEffects.Pokemon.State.raised(from) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("flowershield", (from, to, move) -> from.getActor().getSide().getActivePokemon().stream().anyMatch(p -> ElementalTypes.INSTANCE.getGRASS().equals(p.getBattlePokemon().getEffectedPokemon().getPrimaryType()) || ElementalTypes.INSTANCE.getGRASS().equals(p.getBattlePokemon().getEffectedPokemon().getSecondaryType())) ? 1.0 : 0.0),
-        Map.<String, Evaluator>entry("auroraveil", (from, to, move) -> (!PokeContext.Screen.auroraveil(from) && (PokeContext.Weather.snow(from) || PokeContext.Weather.hail(from))) ? 1.0 : 0.0),
-        Map.<String, Evaluator>entry("reflect", (from, to, move) -> (PokeContext.Screen.reflect(from) || PokeContext.Screen.auroraveil(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("lightscreen", (from, to, move) -> (PokeContext.Screen.lightscreen(from) || PokeContext.Screen.auroraveil(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("sunnyday", (from, to, move) -> (PokeContext.Weather.harshsunlight(from) || PokeContext.Weather.extremelyharshsunlight(from) || PokeContext.Weather.heavyrain(from) || PokeContext.Weather.strongwinds(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("raindance", (from, to, move) -> (PokeContext.Weather.rain(from) || PokeContext.Weather.extremelyharshsunlight(from) || PokeContext.Weather.heavyrain(from) || PokeContext.Weather.strongwinds(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("sandstorm", (from, to, move) -> (PokeContext.Weather.sandstorm(from) || PokeContext.Weather.extremelyharshsunlight(from) || PokeContext.Weather.heavyrain(from) || PokeContext.Weather.strongwinds(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("hail", (from, to, move) -> (PokeContext.Weather.hail(from) || PokeContext.Weather.snow(from) || PokeContext.Weather.extremelyharshsunlight(from) || PokeContext.Weather.heavyrain(from) || PokeContext.Weather.strongwinds(from)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("electricterrain", (from, to, move) -> PokeContext.Terrain.electricterrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("grassyterrain", (from, to, move) -> PokeContext.Terrain.grassyterrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("mistyterrain", (from, to, move) -> PokeContext.Terrain.mistyterrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("psychicterrain", (from, to, move) -> PokeContext.Terrain.psychicterrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("sleeptalk", (from, to, move) -> PokeContext.Statuses.slp(to) ? 1.0 : 0.0),
-        Map.<String, Evaluator>entry("yawn", (from, to, move) -> (PokeContext.Volatiles.yawn(to) || PokeContext.Statuses.slp(to)) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("wish", (from, to, move) -> BattleStates.get(from.getActor().battle).getPokemonState(from).has(BattleEffect.WISH) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("meanlook", (from, to, move) -> PokeContext.State.trapped(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("spiderweb", (from, to, move) -> PokeContext.State.trapped(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("block", (from, to, move) -> PokeContext.State.trapped(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("fakeout", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).age(BattleEffect.TURN) > 1 ? 0.0 : 1.0)
+        Map.<String, Evaluator>entry("auroraveil", (from, to, move) -> (!BattleEffects.Side.Screen.auroraveil(from) && (BattleEffects.Field.Weather.snow(from) || BattleEffects.Field.Weather.hail(from))) ? 1.0 : 0.0),
+        Map.<String, Evaluator>entry("reflect", (from, to, move) -> (BattleEffects.Side.Screen.reflect(from) || BattleEffects.Side.Screen.auroraveil(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("lightscreen", (from, to, move) -> (BattleEffects.Side.Screen.lightscreen(from) || BattleEffects.Side.Screen.auroraveil(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("sunnyday", (from, to, move) -> (BattleEffects.Field.Weather.harshsunlight(from) || BattleEffects.Field.Weather.extremelyharshsunlight(from) || BattleEffects.Field.Weather.heavyrain(from) || BattleEffects.Field.Weather.strongwinds(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("raindance", (from, to, move) -> (BattleEffects.Field.Weather.rain(from) || BattleEffects.Field.Weather.extremelyharshsunlight(from) || BattleEffects.Field.Weather.heavyrain(from) || BattleEffects.Field.Weather.strongwinds(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("sandstorm", (from, to, move) -> (BattleEffects.Field.Weather.sandstorm(from) || BattleEffects.Field.Weather.extremelyharshsunlight(from) || BattleEffects.Field.Weather.heavyrain(from) || BattleEffects.Field.Weather.strongwinds(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("hail", (from, to, move) -> (BattleEffects.Field.Weather.hail(from) || BattleEffects.Field.Weather.snow(from) || BattleEffects.Field.Weather.extremelyharshsunlight(from) || BattleEffects.Field.Weather.heavyrain(from) || BattleEffects.Field.Weather.strongwinds(from)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("electricterrain", (from, to, move) -> BattleEffects.Field.Terrain.electricterrain(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("grassyterrain", (from, to, move) -> BattleEffects.Field.Terrain.grassyterrain(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("mistyterrain", (from, to, move) -> BattleEffects.Field.Terrain.mistyterrain(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("psychicterrain", (from, to, move) -> BattleEffects.Field.Terrain.psychicterrain(from) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("sleeptalk", (from, to, move) -> BattleEffects.Pokemon.Status.slp(to) ? 1.0 : 0.0),
+        Map.<String, Evaluator>entry("yawn", (from, to, move) -> (BattleEffects.Pokemon.Volatile.yawn(to) || BattleEffects.Pokemon.Status.slp(to)) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("wish", (from, to, move) -> BattleStates.get(from.getActor().battle).getPokemonState(from).has(BattleEffects.Custom.WISH) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("meanlook", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("spiderweb", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("block", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("fakeout", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).age(BattleEffects.Custom.TURN) > 1 ? 0.0 : 1.0)
     );
 
     // custom move event handlers
     private static final Map<String, Handler> MOVE_HANDLERS = Map.<String, Handler>ofEntries(
-        Map.<String, Handler>entry("wish", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffect.WISH)),
-        Map.<String, Handler>entry("meanlook", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffect.MEANLOOK)),
-        Map.<String, Handler>entry("spiderweb", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffect.SPIDERWEB)),
-        Map.<String, Handler>entry("block", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffect.BLOCK))
+        Map.<String, Handler>entry("wish", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.WISH)),
+        Map.<String, Handler>entry("meanlook", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.MEANLOOK)),
+        Map.<String, Handler>entry("spiderweb", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.SPIDERWEB)),
+        Map.<String, Handler>entry("block", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.BLOCK))
     );
 
     // all moves according to https://pokemondb.net/move/all (05/2025)
