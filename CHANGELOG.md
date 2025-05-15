@@ -8,6 +8,7 @@ To update be sure to configure your `GsonBuilder` instances with `RCTApi#configu
 
 **Changed:**
 
+- *#64* Improved awareness of RCTBattleAI for certain moves (tailwind, gravity, trickroom, spikes, stealthrock, toxicspikes and stickyweb)
 - *#63* Refactored `BattleEffects` (former `PokeContext`) utility class for the battle ai
 
 ## [0.12.0-beta] - 2025-05-13

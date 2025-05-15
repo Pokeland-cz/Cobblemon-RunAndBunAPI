@@ -188,6 +188,7 @@ public class BattleEffects {
                 return false;
             }
 
+            // infestation ?
             // meanlook: https://bulbapedia.bulbagarden.net/wiki/Mean_Look_(move)
             // block: https://bulbapedia.bulbagarden.net/wiki/Block_(move)
             // spiderweb: https://bulbapedia.bulbagarden.net/wiki/Spider_Web_(move)
@@ -222,9 +223,9 @@ public class BattleEffects {
         // https://bulbapedia.bulbagarden.net/wiki/List_of_moves_that_cause_entry_hazards
         public static final class Hazard {
             public static int spikes(BattlePokemon pkmn) { return get(pkmn, "spikes"); } // spikes
-            public static int toxicspikes(BattlePokemon pkmn) { return get(pkmn, "toxicspikes"); } // toxicspikes
-            public static int pointedstones(BattlePokemon pkmn) { return get(pkmn, "pointedstones"); } // stealthrock
-            public static int poisonspikes(BattlePokemon pkmn) { return get(pkmn, "poisonspikes"); } // toxicspikes
+            public static int stealthrock(BattlePokemon pkmn) { return get(pkmn, "stealthrock"); } // stealthrock (pointedstones)
+            public static int toxicspikes(BattlePokemon pkmn) { return get(pkmn, "toxicspikes"); } // toxicspikes (poisonspikes)
+            public static int stickyweb(BattlePokemon pkmn) { return get(pkmn, "stickyweb"); } // stickyweb
             public static int sharpsteel(BattlePokemon pkmn) { return get(pkmn, "sharpsteel"); } // (g-max) steelsurge
 
             private static int get(BattlePokemon pkmn, String hazardId) {
