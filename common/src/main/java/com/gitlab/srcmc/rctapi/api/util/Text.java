@@ -163,7 +163,7 @@ public class Text implements Serializable, Comparable<Text> {
         
         if(this.cache.component == null || !Arrays.equals(this.cache.args, args)) {
             this.cache.component = this.translatable != null
-                ? Component.translatableWithFallback(this.translatable, this.literal, args)
+                ? Component.translatableWithFallback(this.translatable, this.literal == null ? "" : this.literal, args)
                 : (this.literal != null ? Component.literal(String.format(this.literal, args)) : Component.empty());
         }
 

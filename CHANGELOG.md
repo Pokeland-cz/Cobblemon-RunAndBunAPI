@@ -4,12 +4,16 @@
 
 To update be sure to configure your `GsonBuilder` instances with `RCTApi#configureGsonBuilder(GsonBuilder)` or simply use a builder provided by `RCTApi#gsonBuilder()`.
 
-## [0.12.1-beta] - 2025-05-15
+## [0.12.1-beta] - 2025-05-19
 
 **Changed:**
 
-- *#64* Improved awareness of RCTBattleAI for certain moves (tailwind, gravity, trickroom, spikes, stealthrock, toxicspikes and stickyweb)
-- *#63* Refactored `BattleEffects` (former `PokeContext`) utility class for the battle ai
+- *#65* Improved awareness of RCTBattleAI for certain moves (tailwind, gravity, trickroom, spikes, stealthrock, toxicspikes and stickyweb)
+- *#64* Refactored `BattleEffects` (former `PokeContext`) utility class for the battle ai
+
+**Fixed:**
+
+- *#63* `Text#getComponent()` now returns a component with an empty string (instead of the language key itself), this should fix issues with fallback mechanics if certain texts do not have a translation defined (e.g. trainer names)
 
 ## [0.12.0-beta] - 2025-05-13
 
