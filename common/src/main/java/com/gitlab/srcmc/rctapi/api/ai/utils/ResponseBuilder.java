@@ -57,62 +57,78 @@ public class ResponseBuilder {
     private double margin;
 
     public static ResponseBuilder create(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
+        var actorSt = BattleStates.get(pkmn.getBattle()).getActorState(pkmn.getActor());
         var builder = new ResponseBuilder();
-        builder.mustChoose = pkmn.getActor().getMustChoose() && BattleStates.get(pkmn.getBattle()).isTurn(pkmn);
+        builder.mustChoose = pkmn.getActor().getMustChoose();
         builder.forceSwitch = forceSwitch;
         builder.forceMove = false;
         builder.moveset = moveset;
         builder.pkmn = pkmn;
 
-        if(!builder.forceSwitch && builder.mustChoose && pkmn.hasPokemon()) {
-            // all possible move usages
-            if(builder.moveset != null) {
-                if(builder.moveset.moves.stream().findFirst().isPresent()) {
-                    if(builder.moveset.moves.stream().anyMatch(InBattleMove::mustBeUsed)) {
-                        builder.moveCandidates = () -> builder.moveset.moves.stream()
-                            .filter(InBattleMove::mustBeUsed)
-                            .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
-                                ? Stream.of(new Pair<>(mv, (Targetable)null))
-                                : mv.getTargets(pkmn).stream().map(t -> new Pair<>(mv, t)));
+        if(!actorSt.hasResponse(pkmn)) {
+            if(!builder.forceSwitch && builder.mustChoose && pkmn.hasPokemon()) {
+                // all possible move usages
+                if(builder.moveset != null) {
+                    if(builder.moveset.moves.stream().findFirst().isPresent()) {
+                        if(builder.moveset.moves.stream().anyMatch(InBattleMove::mustBeUsed)) {
+                            builder.moveCandidates = () -> builder.moveset.moves.stream()
+                                .filter(InBattleMove::mustBeUsed)
+                                .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
+                                    ? Stream.of(new Pair<>(mv, (Targetable)null))
+                                    : mv.getTargets(pkmn).stream().map(t -> new Pair<>(mv, t)));
 
-                        builder.forceMove = true;
-                    } else {
-                        builder.moveCandidates = () -> builder.moveset.moves.stream()
-                            .filter(InBattleMove::canBeUsed)
-                            .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
-                                ? Stream.of(new Pair<>(mv, (Targetable)null))
-                                : mv.getTargets(pkmn).stream().map(t -> new Pair<>(mv, t)));
+                            builder.forceMove = true;
+                        } else {
+                            builder.moveCandidates = () -> builder.moveset.moves.stream()
+                                .filter(InBattleMove::canBeUsed)
+                                .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
+                                    ? Stream.of(new Pair<>(mv, (Targetable)null))
+                                    : mv.getTargets(pkmn).stream().map(t -> new Pair<>(mv, t)));
+                        }
+                    }
+                }
+
+                if(!builder.forceMove) {
+                    // all possible item usages
+                    if(pkmn.getActor().canFitForcedAction() && pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
+                        builder.itemCandidates = () -> actor.getBag().getItems().stream()
+                            .flatMap(bi -> pkmn.getActor().getPokemonList().stream()
+                                .filter(p -> bi.canUse(pkmn.getBattle(), p))
+                                .map(p -> new Pair<>(bi, p)));
                     }
                 }
             }
 
-            if(!builder.forceMove) {
-                // all possible item usages
-                if(pkmn.getActor().canFitForcedAction() && pkmn.getActor() instanceof TrainerEntityBattleActor actor) {
-                    builder.itemCandidates = () -> actor.getBag().getItems().stream()
-                        .flatMap(bi -> pkmn.getActor().getPokemonList().stream()
-                            .filter(p -> bi.canUse(pkmn.getBattle(), p))
-                            .map(p -> new Pair<>(bi, p)));
-                }
+            if(!pkmn.hasPokemon() || !builder.forceMove) {
+                // all possible switches
+                builder.switchCandidates = () -> pkmn.getActor()
+                    .getPokemonList().stream()
+                    .filter(BattlePokemon::canBeSentOut);
             }
-        }
 
-        if(!builder.forceMove && ((pkmn.hasPokemon() && builder.mustChoose) || builder.forceSwitch != builder.mustChoose)) {
+            actorSt.addResponse(pkmn);
+        } else if(pkmn.isAlive() && builder.mustChoose && builder.forceSwitch) {
             // all possible switches
             builder.switchCandidates = () -> pkmn.getActor()
                 .getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut);
-        }
 
-        BattleStates.setTurn(pkmn, false);
+            actorSt.addResponse(pkmn);
+        }
+        
         return builder;
     }
 
     public ResponseBuilder suggestSwitches(Function<Stream<BattlePokemon>, Stream<Choice<BattlePokemon>>> consumer) {
         consumer.apply(this.switchCandidates.get()).forEach(choice -> {
             this.choices.add(new Choice<>(
-                choice.name, new SwitchActionResponse(choice.value.getUuid()), choice.weight,
-                () -> BattleStates.setWillBeSwitchedFor(choice.value, this.pkmn)));
+                choice.name, new SwitchActionResponse(choice.value.getUuid()), choice.weight, () -> {
+                    choice.value.setWillBeSwitchedIn(true);
+
+                    if(this.pkmn.hasPokemon()) {
+                        this.pkmn.getBattlePokemon().setWillBeSwitchedIn(false);
+                    }
+                }));
         });
         
         return this;
@@ -147,7 +163,7 @@ public class ResponseBuilder {
     public ShowdownActionResponse response(Consumer<ShowdownActionResponse> consumer) {
         // TODO: REMOVE DEBUG
         if(RCTBattleAI.DEBUG) {
-            ModCommon.LOG.info(String.format("[CHOICES OF %s]:", this.pkmn.isAlive() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>"));
+            ModCommon.LOG.info(String.format("[CHOICES OF %s]:%s", this.pkmn.isAlive() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>", ", forceMove: " + this.forceMove + ", forceSwitch: " + this.forceSwitch + ", mustChoose: " + this.mustChoose));
         }
         // // // // // // //
 
@@ -167,7 +183,8 @@ public class ResponseBuilder {
     }
 
     public ShowdownActionResponse response() {
-        return this.response(r -> {});
+        // TODO: REMOVE DEBUG
+        return RCTBattleAI.DEBUG ? this.response(r -> ModCommon.LOG.info("RESPONSE: " + r)) : this.response(r -> {});
     }
 
     public ResponseBuilder margin(double margin) {

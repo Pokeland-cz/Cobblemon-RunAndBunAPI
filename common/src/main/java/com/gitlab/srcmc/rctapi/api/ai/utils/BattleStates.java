@@ -18,10 +18,13 @@
 package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 
@@ -29,43 +32,41 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
  * Utility class to keep track of information throughout a battle.
  */
 public final class BattleStates {
+    public static class ActorState {
+        private final Set<ActiveBattlePokemon> responses = new HashSet<>();
+        private int turn;
+
+        public void addResponse(ActiveBattlePokemon pkmn) {
+            responses.add(pkmn);
+        }
+
+        public void removeResponse(ActiveBattlePokemon pkmn) {
+            this.responses.remove(pkmn);
+        }
+
+        public boolean hasResponse(ActiveBattlePokemon pkmn) {
+            return this.responses.contains(pkmn);
+        }
+
+        public void nextTurn() {
+            this.responses.clear();
+            this.turn++;
+        }
+
+        public int getTurn() {
+            return this.turn;
+        }
+    }
+
     public static class PokemonState {
         private static final int[] ZERO = new int[]{0};
         private Map<BattleEffects.Custom, int[]> turnEffectCounters = new HashMap<>();
-        private BattlePokemon switchFor;
-        private PokemonState preReset;
         private long effects;
 
         private PokemonState() {
-            this(true);
         }
 
-        private PokemonState(boolean resettable) {
-            if(resettable) {
-                this.preReset = new PokemonState(false);
-            }
-        }
-
-        private void copy(PokemonState other) {
-            this.turnEffectCounters = new HashMap<>(other.turnEffectCounters);
-            this.switchFor = other.switchFor;
-            this.effects = other.effects;
-        }
-
-        private PokemonState reset() {
-            this.preReset.copy(this);
-            this.switchFor = null;
-            this.effects  = 0;
-            this.turnEffectCounters.clear();
-            this.add(BattleEffects.Custom.TURN);
-            return this;
-        }
-
-        private void undo() {
-            this.copy(this.preReset);
-        }
-
-        private void nextTurn() {
+        public void nextTurn() {
             if(!this.has(BattleEffects.Custom.TURN)) {
                 this.add(BattleEffects.Custom.TURN);
             }
@@ -80,8 +81,6 @@ public final class BattleStates {
                     it.remove();
                 }
             }
-
-            this.switchFor = null;
         }
 
         public boolean has(BattleEffects.Custom e) {
@@ -103,15 +102,17 @@ public final class BattleStates {
 
     public static class BattleState {
         private Map<BattlePokemon, PokemonState> pokemonStates = new HashMap<>();
-        private Map<ActiveBattlePokemon, Boolean> turnStates = new HashMap<>();
-        private BattleState() {}
+        private Map<BattleActor, ActorState> actorStates = new HashMap<>();
 
-        public boolean isTurn(ActiveBattlePokemon pkmn) {
-            return this.turnStates.getOrDefault(pkmn, false);
+        private BattleState() {
         }
 
         public PokemonState getPokemonState(BattlePokemon pkmn) {
             return this.pokemonStates.computeIfAbsent(pkmn, k -> new PokemonState());
+        }
+
+        public ActorState getActorState(BattleActor actor) {
+            return this.actorStates.computeIfAbsent(actor, k -> new ActorState());
         }
     }
 
@@ -123,45 +124,9 @@ public final class BattleStates {
         return new BattleState();
     }
 
-    public static void setTurn(ActiveBattlePokemon pkmn, boolean turn) {
-        var bs = BattleStates.get(pkmn.getBattle());
-
-        if(turn && pkmn.hasPokemon()) {
-            bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn();
-        }
-        
-        bs.turnStates.put(pkmn, turn);
-    }
-
-    public static void setWillBeSwitchedFor(BattlePokemon in, ActiveBattlePokemon out) {
-        var bs = BattleStates.get(out.getBattle());
-
-        if(out.hasPokemon()) {
-            // store the choice to revert the switch state in case the active pokemon dies
-            var ps = bs.getPokemonState(out.getBattlePokemon());
-
-            if(ps.switchFor != null) {
-                ps.switchFor.setWillBeSwitchedIn(false);
-            }
-
-            out.getBattlePokemon().setWillBeSwitchedIn(false);
-            ps.switchFor = in;
-        }
-
-        bs.getPokemonState(in).reset();
-        in.setWillBeSwitchedIn(true);
-    }
-
     public static void notifyPokemonFainted(PokemonBattle battle, BattlePokemon pkmn) {
         if(BattleStates.STATES.containsKey(battle.getBattleId())) {
-            var bs = BattleStates.get(battle);
-            var ps = bs.getPokemonState(pkmn);
-
-            if(ps.switchFor != null) {
-                bs.getPokemonState(ps.switchFor).undo();
-                ps.switchFor.setWillBeSwitchedIn(false);
-                ps.switchFor = null;
-            }
+            BattleStates.get(battle).getActorState(pkmn.actor).removeResponse(pkmn.actor.getActivePokemon().stream().filter(ap -> ap.getBattlePokemon() == pkmn).findFirst().get());
         }
     }
 

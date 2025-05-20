@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
+import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 
@@ -41,8 +42,19 @@ public class BattleActorMixin {
     @Inject(method = "turn", at = @At("HEAD"), remap = false)
     private void injectTurn(CallbackInfo ci) {
         var self = (BattleActor)(Object)this;
-        self.getPokemonList().forEach(pkmn -> pkmn.setWillBeSwitchedIn(false));
-        self.getActivePokemon().forEach(pkmn  -> BattleStates.setTurn(pkmn, true));
+        var battleState = RCTApi.getInstances()
+            .map(e -> e.getValue().getBattleManager()
+            .getState(self.battle.getBattleId()))
+            .filter(bs -> bs != null)
+            .findFirst().orElse(null);
+        
+        if(battleState != null) {
+            var bs = BattleStates.get(battleState.getBattle());
+            bs.getActorState(self).nextTurn();
+            self.getActivePokemon().stream()
+                .filter(ActiveBattlePokemon::hasPokemon)
+                .forEach(pkmn  -> bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn());
+        }
     }
 
     // This is the only place I could figure to prevent the usage of items for any
@@ -51,19 +63,21 @@ public class BattleActorMixin {
     // started by this api due to the check for a known battle state).
     @Inject(method = "canFitForcedAction", at = @At("RETURN"), cancellable = true, remap = false)
     private void injectCanFitForcedAction(CallbackInfoReturnable<Boolean> cir) {
-        var self = (BattleActor)(Object)this;
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(self.battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
-        
-        if(cir.getReturnValue() && battleState != null) {
-            var maxItems = battleState.getRules().getMaxItemUses();
+        if(cir.getReturnValue()) {
+            var self = (BattleActor)(Object)this;
+            var battleState = RCTApi.getInstances()
+                .map(e -> e.getValue().getBattleManager()
+                .getState(self.battle.getBattleId()))
+                .filter(bs -> bs != null)
+                .findFirst().orElse(null);
             
-            if(maxItems >= 0) {
-                var actorState = battleState.getState(self.getUuid());
-                cir.setReturnValue(actorState.getItemsUsed() < maxItems);
+            if(battleState != null) {
+                var maxItems = battleState.getRules().getMaxItemUses();
+                
+                if(maxItems >= 0) {
+                    var actorState = battleState.getState(self.getUuid());
+                    cir.setReturnValue(actorState.getItemsUsed() < maxItems);
+                }
             }
         }
     }
