@@ -125,6 +125,51 @@ public final class TypeChart {
         });
     }
 
+    public static final int NORMAL = 1<<1;
+    public static final int FIGHTING = 1<<2;
+    public static final int FLYING = 1<<3;
+    public static final int POISON = 1<<4;
+    public static final int GROUND = 1<<5;
+    public static final int ROCK = 1<<6;
+    public static final int BUG = 1<<7;
+    public static final int GHOST = 1<<8;
+    public static final int STEEL = 1<<9;
+    public static final int FIRE = 1<<10;
+    public static final int WATER = 1<<11;
+    public static final int GRASS = 1<<12;
+    public static final int ELECTRIC = 1<<13;
+    public static final int PSYCHIC = 1<<14;
+    public static final int ICE = 1<<15;
+    public static final int DRAGON = 1<<16;
+    public static final int DARK = 1<<17;
+    public static final int FAIRY = 1<<18;
+
+    private static final Map<ElementalType, Integer> TYPE_MASKS = Map.<ElementalType, Integer>ofEntries(
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getNORMAL(), NORMAL),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getFIGHTING(), FIGHTING),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getFLYING(), FLYING),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getPOISON(), POISON),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getGROUND(), GROUND),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getROCK(), ROCK),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getBUG(), BUG),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getGHOST(), GHOST),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getSTEEL(), STEEL),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getFIRE(), FIRE),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getWATER(), WATER),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getGRASS(), GRASS),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getELECTRIC(), ELECTRIC),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getPSYCHIC(), PSYCHIC),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getICE(), ICE),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getDRAGON(), DRAGON),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getDARK(), DARK),
+        Map.<ElementalType, Integer>entry(ElementalTypes.INSTANCE.getFAIRY(), FAIRY)
+    );
+
+    public static boolean is(BattlePokemon pkmn, int type) {
+        var ep = pkmn.getEffectedPokemon();
+        return (type & TYPE_MASKS.getOrDefault(ep.getPrimaryType(), 0) & TYPE_MASKS.getOrDefault(ep.getSecondaryType(), 0)) != 0;
+    }
+
     static {
         var types = ElementalTypes.INSTANCE;
         var NORMAL = types.getNORMAL();

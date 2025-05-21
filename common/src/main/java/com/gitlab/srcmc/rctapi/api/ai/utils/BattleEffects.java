@@ -30,7 +30,14 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 public class BattleEffects {
     // keeps track of custom effects or effects that I could not find anywhere else
     public static enum Custom {
-        TURN(1, Integer.MAX_VALUE), BLOCK(2), MEANLOOK(4), SPIDERWEB(8), ITEM_ENDED(16), WISH(32, 1, true);
+        TURN(1<<0, Integer.MAX_VALUE),
+        BLOCK(1<<1),
+        MEANLOOK(1<<2),
+        SPIDERWEB(1<<3),
+        ITEM_ENDED(1<<4),
+        WISH(1<<5, 1, true),
+        PROTECT(1<<6, 1);
+
         private long mask;
         private int expires;
         private boolean persists; // TODO: has currently no effect
@@ -70,9 +77,10 @@ public class BattleEffects {
             public static double spa(BattlePokemon pkmn) { return get(pkmn, "spa"); }
             public static double spd(BattlePokemon pkmn) { return get(pkmn, "spd"); }
             public static double spe(BattlePokemon pkmn) { return get(pkmn, "spe"); }
+            public static double evasion(BattlePokemon pkmn) { return get(pkmn, "evasion"); }
 
             public static double avg(BattlePokemon pkmn) {
-                return (atk(pkmn) + def(pkmn) + spa(pkmn) + spd(pkmn) + spd(pkmn))/5;
+                return (atk(pkmn) + def(pkmn) + spa(pkmn) + spd(pkmn) + spd(pkmn) + evasion(pkmn))/6;
             }
 
             private static double get(BattlePokemon pkmn, String statId) {
@@ -94,6 +102,7 @@ public class BattleEffects {
             public static boolean telekinesis(BattlePokemon pkmn) { return has(pkmn, "telekinesis"); }
             public static boolean magnetrise(BattlePokemon pkmn) { return has(pkmn, "magnetrise"); }
             public static boolean yawn(BattlePokemon pkmn) { return has(pkmn, "yawn"); }
+            public static boolean taunt(BattlePokemon pkmn) { return has(pkmn, "taunt"); }
 
             public static boolean any(BattlePokemon pkmn) {
                 var ctx = pkmn.getContextManager().get(BattleContext.Type.VOLATILE);
@@ -129,7 +138,9 @@ public class BattleEffects {
         public static final class State {
             // https://pokemondb.net/glossary#def-raised
             public static boolean raised(BattlePokemon pkmn) {
-                // TODO: gravity => false
+                if(BattleEffects.Field.Gravity.gravity(pkmn)) {
+                    return false;
+                }
 
                 if(Volatile.ingrain(pkmn)) {
                     return false;
@@ -169,26 +180,10 @@ public class BattleEffects {
             }
 
             public static boolean magnetic(BattlePokemon pkmn) {
-                for(var t : pkmn.getEffectedPokemon().getTypes()) {
-                    if(t.equals(ElementalTypes.INSTANCE.getSTEEL())) {
-                        return true;
-                    }
-                }
-                
-                return false;
+                return TypeChart.is(pkmn, TypeChart.STEEL);
             }
 
-            public static boolean ghost(BattlePokemon pkmn) {
-                for(var t : pkmn.getEffectedPokemon().getTypes()) {
-                    if(t.equals(ElementalTypes.INSTANCE.getGHOST())) {
-                        return true;
-                    }
-                }
-                
-                return false;
-            }
-
-            // infestation ?
+            // TODO: infestation ?
             // meanlook: https://bulbapedia.bulbagarden.net/wiki/Mean_Look_(move)
             // block: https://bulbapedia.bulbagarden.net/wiki/Block_(move)
             // spiderweb: https://bulbapedia.bulbagarden.net/wiki/Spider_Web_(move)
@@ -196,7 +191,7 @@ public class BattleEffects {
             // shadowtag: https://bulbapedia.bulbagarden.net/wiki/Shadow_Tag_(Ability)
             // magnetpull: https://bulbapedia.bulbagarden.net/wiki/Magnet_Pull_(Ability)
             public static boolean trapped(BattlePokemon pkmn) {
-                return (!ghost(pkmn)
+                return (!TypeChart.is(pkmn, TypeChart.GHOST)
                         && (BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).has(BattleEffects.Custom.BLOCK)
                         || BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).has(BattleEffects.Custom.MEANLOOK)
                         || BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).has(BattleEffects.Custom.SPIDERWEB)))

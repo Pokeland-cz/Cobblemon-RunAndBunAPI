@@ -131,7 +131,8 @@ public class RCTBattleAI implements BattleAI {
                 e = !ally ? ((!BattleEffects.Pokemon.Status.any(to) && !BattleEffects.Pokemon.Volatile.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
                 break;
             case DAMAGE:
-                e = !ally ? Math.max(this.rngSin()*this.maxSelectMargin, Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth())*this.moveBias : 0;
+                var dmg = Math.min(to.getHealth(), PokeMath.damage(from, to, move))/(double)to.getHealth();
+                e = !ally ? (dmg > 0 ? Math.max(this.rngSin()*this.maxSelectMargin, dmg)*this.moveBias : 0) : 0;
                 break;
             default:
                 e = this.rng.nextDouble();
