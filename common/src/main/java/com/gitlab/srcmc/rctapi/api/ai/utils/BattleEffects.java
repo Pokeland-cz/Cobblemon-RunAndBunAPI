@@ -293,13 +293,13 @@ public class BattleEffects {
 
     // debug function
     public static void dump(BattlePokemon pkmn) {
-        ModCommon.LOG.info("CONTEXTS DUMP " + pkmn.getName().getString() + ", turn: " + BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).age(BattleEffects.Custom.TURN));
+        // ModCommon.LOG.info("CONTEXTS DUMP " + pkmn.getName().getString() + ", turn: " + BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).age(BattleEffects.Custom.TURN));
 
-        pkmn.getContextManager().getBuckets().forEach((t, c) -> {
-            c.forEach(bc -> ModCommon.LOG.info(String.format(
-                " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
-                bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
-        });
+        // pkmn.getContextManager().getBuckets().forEach((t, c) -> {
+        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
+        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+        // });
 
         // ModCommon.LOG.info("SIDE CONTEXT:");
         // pkmn.actor.getSide().getContextManager().getBuckets().forEach((t, c) -> {
