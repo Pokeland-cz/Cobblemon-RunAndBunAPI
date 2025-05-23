@@ -90,7 +90,6 @@ public enum MoveType {
         Map.<String, Evaluator>entry("grassyterrain", (from, to, move) -> BattleEffects.Field.Terrain.grassyterrain(from) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("mistyterrain", (from, to, move) -> BattleEffects.Field.Terrain.mistyterrain(from) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("psychicterrain", (from, to, move) -> BattleEffects.Field.Terrain.psychicterrain(from) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("sleeptalk", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0),
         Map.<String, Evaluator>entry("wish", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.WISH) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("meanlook", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("spiderweb", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
@@ -132,7 +131,9 @@ public enum MoveType {
         Map.<String, Evaluator>entry("sing", (from, to, move) -> (BattleEffects.Pokemon.Status.any(to) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose", "soundproof")) ? 0 : 1.0),
         Map.<String, Evaluator>entry("sleeppowder", (from, to, move) -> (BattleEffects.Pokemon.Status.any(to) || TypeChart.is(to, TypeChart.GRASS) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose", "overcoat")) ? 0 : 1.0),
         Map.<String, Evaluator>entry("spore", (from, to, move) -> (BattleEffects.Pokemon.Status.any(to) || TypeChart.is(to, TypeChart.GRASS) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose", "overcoat")) ? 0 : 1.0),
-        Map.<String, Evaluator>entry("yawn", (from, to, move) -> (BattleEffects.Pokemon.Volatile.yawn(to) || BattleEffects.Pokemon.Status.any(to) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose")) ? 0.0 : 1.0)
+        Map.<String, Evaluator>entry("yawn", (from, to, move) -> (BattleEffects.Pokemon.Volatile.yawn(to) || BattleEffects.Pokemon.Status.any(to) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose")) ? 0.0 : 1.0),
+        Map.<String, Evaluator>entry("sleeptalk", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0),
+        Map.<String, Evaluator>entry("snore", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0)
     );
 
     // custom move event handlers
