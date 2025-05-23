@@ -167,7 +167,9 @@ public final class TypeChart {
 
     public static boolean is(BattlePokemon pkmn, int type) {
         var ep = pkmn.getEffectedPokemon();
-        return (type & TYPE_MASKS.getOrDefault(ep.getPrimaryType(), 0) & TYPE_MASKS.getOrDefault(ep.getSecondaryType(), 0)) != 0;
+        var p = ep.getPrimaryType() != null ? TYPE_MASKS.getOrDefault(ep.getPrimaryType(), 0) : 0;
+        var s = ep.getSecondaryType() != null ? TYPE_MASKS.getOrDefault(ep.getSecondaryType(), 0) : p;
+        return (type & (p | s)) != 0;
     }
 
     static {
