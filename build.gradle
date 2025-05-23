@@ -76,4 +76,27 @@ subprojects {
             // retrieving dependencies.
         }
     }
+
+    // Strips debug code
+    task jcut {
+        doLast {
+            def args
+
+            if(System.getProperty("os.name").toLowerCase().contains("win")) {
+                args = ['cmd', '/c']
+            } else {
+                args = ['bash', '-c']
+            }
+
+            project.exec {
+                workingDir = file("$buildDir")
+                // environment 'CLASSPATH', configurations.compileClasspath.asPath
+                commandLine args << 'jcut' << '-v' << '-p' << "classes/java/main" << '-m' << 'com.gitlab.srcmc.rctapi.api.ai.utils.Debug#log'
+            }
+        }
+    }
+
+    if(project.hasProperty('release')) {
+        compileJava.finalizedBy jcut
+    }
 }

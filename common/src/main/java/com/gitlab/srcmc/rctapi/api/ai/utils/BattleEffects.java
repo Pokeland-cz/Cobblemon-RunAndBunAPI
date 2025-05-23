@@ -30,7 +30,7 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 public class BattleEffects {
     // keeps track of custom effects or effects that I could not find anywhere else
     public static enum Custom {
-        TURN(1<<0, Integer.MAX_VALUE),
+        TURN(1, Integer.MAX_VALUE),
         BLOCK(1<<1),
         MEANLOOK(1<<2),
         SPIDERWEB(1<<3),
@@ -172,11 +172,7 @@ public class BattleEffects {
                     return true;
                 }
 
-                if(Volatile.telekinesis(pkmn)) {
-                    return true;
-                }
-
-                return false;
+                return Volatile.telekinesis(pkmn);
             }
 
             public static boolean magnetic(BattlePokemon pkmn) {
@@ -293,32 +289,39 @@ public class BattleEffects {
 
     // debug function
     public static void dump(BattlePokemon pkmn) {
-        // ModCommon.LOG.info("CONTEXTS DUMP " + pkmn.getName().getString() + ", turn: " + BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).age(BattleEffects.Custom.TURN));
+        Debug.log(2, () -> ModCommon.LOG.info("CONTEXTS DUMP "
+            + pkmn.getName().getString() + ", turn: "
+            + BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).age(BattleEffects.Custom.TURN)));
 
-        // pkmn.getContextManager().getBuckets().forEach((t, c) -> {
-        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
-        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
-        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
-        // });
+        Debug.log(2, () -> {
+            ModCommon.LOG.info("CONTEXT TYPES:");
+            pkmn.getContextManager().getBuckets().forEach((t, c) -> {
+                c.forEach(bc -> ModCommon.LOG.info(String.format(
+                    " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+                    bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+            });
 
-        // ModCommon.LOG.info("SIDE CONTEXT:");
-        // pkmn.actor.getSide().getContextManager().getBuckets().forEach((t, c) -> {
-        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
-        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
-        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
-        // });
+            ModCommon.LOG.info("SIDE CONTEXT:");
+            pkmn.actor.getSide().getContextManager().getBuckets().forEach((t, c) -> {
+                c.forEach(bc -> ModCommon.LOG.info(String.format(
+                    " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+                    bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+            });
 
-        // ModCommon.LOG.info("BATTLE CONTEXT:");
-        // pkmn.actor.battle.getContextManager().getBuckets().forEach((t, c) -> {
-        //     c.forEach(bc -> ModCommon.LOG.info(String.format(
-        //         " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
-        //         bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
-        // });
+            ModCommon.LOG.info("BATTLE CONTEXT:");
+            pkmn.actor.battle.getContextManager().getBuckets().forEach((t, c) -> {
+                c.forEach(bc -> ModCommon.LOG.info(String.format(
+                    " - id: %s, turn: %d, type: %s, damaging: %b, exclusive: %b",
+                    bc.getId(), bc.getTurn(), bc.getType().name(), bc.getType().getDamaging(), bc.getType().getExclusive())));
+            });
+        });
 
-        // ModCommon.LOG.info("MAJOR ACTIONS:");
-        // pkmn.actor.battle.getMajorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
+        Debug.log(3, () -> {
+            ModCommon.LOG.info("MAJOR ACTIONS:");
+            pkmn.actor.battle.getMajorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
 
-        // ModCommon.LOG.info("MINOR ACTIONS:");
-        // pkmn.actor.battle.getMinorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
+            ModCommon.LOG.info("MINOR ACTIONS:");
+            pkmn.actor.battle.getMinorBattleActions().values().forEach(msg -> ModCommon.LOG.info(" - " + msg.getRawMessage()));
+        });
     }
 }

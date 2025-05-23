@@ -24,6 +24,7 @@ import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
+import com.gitlab.srcmc.rctapi.api.ai.utils.Debug;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
@@ -34,8 +35,6 @@ import java.util.Random;
 import org.jetbrains.annotations.NotNull;
 
 public class RCTBattleAI implements BattleAI {
-    public static final boolean DEBUG = false;
-
     private double moveBias;
     private double statusMoveBias;
     private double switchBias;
@@ -57,8 +56,7 @@ public class RCTBattleAI implements BattleAI {
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
-        // TODO: REMOVE DEBUG
-        if(RCTBattleAI.DEBUG) {
+        Debug.log(2, () -> {
             if(pkmn.isAlive()) {
                 BattleEffects.dump(pkmn.getBattlePokemon());
                 pkmn.getActor().getSide().getOppositeSide().getActivePokemon()
@@ -66,8 +64,7 @@ public class RCTBattleAI implements BattleAI {
                     .map(p -> p.getBattlePokemon())
                     .forEach(BattleEffects::dump);
             }
-        }
-        // // // // // // //
+        });
 
         var builder = ResponseBuilder
             .create(pkmn, moveset, forceSwitch)

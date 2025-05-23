@@ -118,5 +118,8 @@ run/
 !gradle-wrapper.jar
 
 # Custom
+common/bin/
+fabric/bin/
+neoforge/bin/
 tmp/**/*
 .env

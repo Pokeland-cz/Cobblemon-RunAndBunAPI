@@ -39,7 +39,6 @@ import com.cobblemon.mod.common.battles.Targetable;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.api.ai.RCTBattleAI;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager.TrainerEntityBattleActor;
 
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
@@ -161,16 +160,18 @@ public class ResponseBuilder {
     }
 
     public ShowdownActionResponse response(Consumer<ShowdownActionResponse> consumer) {
-        // TODO: REMOVE DEBUG
-        if(RCTBattleAI.DEBUG) {
-            ModCommon.LOG.info(String.format("[CHOICES OF %s]:%s", this.pkmn.isAlive() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>", ", forceMove: " + this.forceMove + ", forceSwitch: " + this.forceSwitch + ", mustChoose: " + this.mustChoose));
-        }
-        // // // // // // //
-
         var choices = this.choices.stream()
             .filter(c -> c.forced || c.value.isValid(this.pkmn, this.moveset, this.forceMove))
             .toList();
+
+        Debug.log(1, "[CHOICES OF %s]:%s",
+            this.pkmn.isAlive() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>",
+            ", forceMove: " + this.forceMove + ", forceSwitch: " + this.forceSwitch + ", mustChoose: " + this.mustChoose);
             
+        Debug.log(1, () -> choices
+            .stream().sorted()
+            .forEach(ch -> ModCommon.LOG.info(String.format(" - %s: %.4f", ch.name, ch.weight))));
+
         var response = choices.isEmpty()
             ? this.mustChoose && this.pkmn.hasPokemon()
                 ? new DefaultActionResponse()
@@ -183,8 +184,7 @@ public class ResponseBuilder {
     }
 
     public ShowdownActionResponse response() {
-        // TODO: REMOVE DEBUG
-        return RCTBattleAI.DEBUG ? this.response(r -> ModCommon.LOG.info("RESPONSE: " + r)) : this.response(r -> {});
+        return this.response(r -> Debug.log(1, "RESPONSE: " + r));
     }
 
     public ResponseBuilder margin(double margin) {
@@ -258,14 +258,6 @@ public class ResponseBuilder {
     private static <T> Stream<Choice<T>> takeWithMargin(Stream<Choice<T>> in, double margin) {
         double[] w = {Double.NEGATIVE_INFINITY};
 
-        // TODO: REMOVE DEBUG
-        if(RCTBattleAI.DEBUG) {
-            var list = in.toList();
-            list.forEach(ch -> ModCommon.LOG.info(String.format(" - %s: %.4f", ch.name, ch.weight)));
-            in = list.stream();
-        }
-        // // // // // // //
-
         return in.takeWhile(choice -> {
             if(w[0] == Double.NEGATIVE_INFINITY) {
                 w[0] = choice.weight;
@@ -280,7 +272,7 @@ public class ResponseBuilder {
     private static <T> Optional<Choice<T>> getRandom(Stream<Choice<T>> stream, Random rng, double margin) {
         var it = stream.iterator();
         Choice<T> c;
-
+        
         if(it.hasNext()) {
             var next= it.next();
             var start = next.weight;
