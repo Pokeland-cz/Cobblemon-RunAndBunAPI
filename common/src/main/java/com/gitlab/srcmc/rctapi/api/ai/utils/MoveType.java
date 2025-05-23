@@ -105,6 +105,13 @@ public enum MoveType {
         Map.<String, Evaluator>entry("stickyweb", (from, to, move) -> BattleEffects.Side.Hazard.stickyweb(to) > 0 ? 0.0 : 1.0),
         // Map.<String, Evaluator>entry("steelsurge", (from, to, move) -> BattleEffects.Side.Hazard.sharpsteel(to) > 0 ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("protect", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("detect", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("endure", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("wideguard", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("quickguard", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("spikyshield", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("kingsshield", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
+        Map.<String, Evaluator>entry("banefulbunker", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
         Map.<String, Evaluator>entry("taunt", (from, to, move) -> BattleEffects.Pokemon.Volatile.taunt(to) ? 0 : 1.0),
         //PARALYSIS https://bulbapedia.bulbagarden.net/wiki/Paralysis_(status_condition)#Prevention TODO: leafguard + harshsunlight, etc.
         Map.<String, Evaluator>entry("glare", (from, to, move) -> (BattleEffects.Pokemon.Status.any(to) || TypeChart.is(to, TypeChart.ELECTRIC) || ability(to, "limber", "comatose", "purifyingsalt")) ? 0 : 1.0),
@@ -134,7 +141,14 @@ public enum MoveType {
         Map.<String, Handler>entry("meanlook", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.MEANLOOK)),
         Map.<String, Handler>entry("spiderweb", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.SPIDERWEB)),
         Map.<String, Handler>entry("block", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.BLOCK)),
-        Map.<String, Handler>entry("protect", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT))
+        Map.<String, Handler>entry("protect", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("detect", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("endure", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("wideguard", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("quickguard", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("spikyshield", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("kingsshield", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
+        Map.<String, Handler>entry("banefulbunker", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT))
     );
 
     // all moves according to https://pokemondb.net/move/all (05/2025)
