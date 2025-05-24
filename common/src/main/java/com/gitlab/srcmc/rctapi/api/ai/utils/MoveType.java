@@ -133,7 +133,15 @@ public enum MoveType {
         Map.<String, Evaluator>entry("spore", (from, to, move) -> (BattleEffects.Pokemon.Status.any(to) || TypeChart.is(to, TypeChart.GRASS) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose", "overcoat")) ? 0 : 1.0),
         Map.<String, Evaluator>entry("yawn", (from, to, move) -> (BattleEffects.Pokemon.Volatile.yawn(to) || BattleEffects.Pokemon.Status.any(to) || ability(to, "insomnia", "vitalspirit", "purifyingsalt", "comatose")) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("sleeptalk", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0),
-        Map.<String, Evaluator>entry("snore", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0)
+        Map.<String, Evaluator>entry("snore", (from, to, move) -> (BattleEffects.Pokemon.Status.slp(from) || ability(from, "comatose")) ? 1.0 : 0.0),
+        // SACRIFICE https://bulbapedia.bulbagarden.net/wiki/Category:Moves_that_cause_the_user_to_faint
+        Map.<String, Evaluator>entry("explosion", (from, to, move) -> ability(to, "damp") ? 0.0 : (1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth()))),
+        Map.<String, Evaluator>entry("mistyexplosion", (from, to, move) -> ability(to, "damp") ? 0.0 : (1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth()))),
+        Map.<String, Evaluator>entry("selfdestruct", (from, to, move) -> ability(to, "damp") ? 0.0 : (1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth()))),
+        Map.<String, Evaluator>entry("lunardance", (from, to, move) -> 1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth())),
+        Map.<String, Evaluator>entry("finalgambit", (from, to, move) -> 1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth())),
+        Map.<String, Evaluator>entry("memento", (from, to, move) -> 1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth())),
+        Map.<String, Evaluator>entry("healingwish", (from, to, move) -> 1.0 - 0.5 * (from.getHealth() / (double)from.getMaxHealth()))
     );
 
     // custom move event handlers
