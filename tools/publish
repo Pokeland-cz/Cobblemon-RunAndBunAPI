@@ -181,7 +181,7 @@ fi
 
 # create clean build
 ./gradlew clean --console=plain
-./gradlew build --console=plain
+./gradlew build -Prelease --console=plain
 
 # commit changes if version was updated
 if [ "$(git status --porcelain)" ]; then
