@@ -9,9 +9,9 @@ To update be sure to configure your `GsonBuilder` instances with `RCTApi#configu
 **Changed:**
 
 - *#66* General improvements for `RCTBattleAI`
-  - Custom evaluations for sacrificial moves (like explosion or memento)
   - Custom evaluations for hazard and field manipulating moves (tailwind, gravity, trickroom, spikes, stealthrock, toxicspikes and stickyweb)
   - Custom evaluations for moves that inflict major status conditions (like spore or glare)
+  - Custom evaluations for sacrificial moves (like explosion or memento)
   - Custom evaluations for some common moves with very specific effects (like taunt or protect)
   - Custom evaluations for weather and terrain moves (like raindance or mistyterrain)
   - Some minor fixes and adjustments here and there (e.g. sleeptalk checking the opponents sleep status instead of the users)
