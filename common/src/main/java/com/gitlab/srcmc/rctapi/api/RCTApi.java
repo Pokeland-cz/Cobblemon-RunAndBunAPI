@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.events.EventContext;
+import com.gitlab.srcmc.rctapi.api.models.HeldItemsModel;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
 import com.gitlab.srcmc.rctapi.api.util.Text;
 import com.google.gson.GsonBuilder;
@@ -62,7 +63,9 @@ public class RCTApi {
      * @see Text.Deserializer
      */
     public GsonBuilder configureGsonBuilder(GsonBuilder builder) {
-        return builder.registerTypeAdapter(Text.class, new Text.Deserializer());
+        return builder
+            .registerTypeAdapter(Text.class, new Text.Deserializer())
+            .registerTypeAdapter(HeldItemsModel.class, new HeldItemsModel.Deserializer());
     }
 
     /**

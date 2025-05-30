@@ -4,6 +4,12 @@
 
 To update be sure to configure your `GsonBuilder` instances with `RCTApi#configureGsonBuilder(GsonBuilder)` or simply use a builder provided by `RCTApi#gsonBuilder()`.
 
+## [0.13.0] - 2025-05-30
+
+**Changed:**
+
+- *#67* Pokemon models may now alternatively accept a list of held items (if one item was not found the next item is checked)
+
 ## [0.12.1-beta] - 2025-05-24
 
 **Changed:**

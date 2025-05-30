@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.api.models;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -108,7 +109,7 @@ public class PokemonModel implements Serializable {
     private StatsModel ivs;
     private StatsModel evs;
     private boolean shiny;
-    private String heldItem;
+    private HeldItemsModel heldItem;
     private Set<String> aspects;
     
     public String getSpecies() { return this.species; }
@@ -121,7 +122,7 @@ public class PokemonModel implements Serializable {
     public StatsModel getIVs() { return this.ivs; }
     public StatsModel getEVs() { return this.evs; }
     public boolean isShiny() { return this.shiny; }
-    public String getHeldItem() { return this.heldItem; }
+    public String[] getHeldItems() { return this.heldItem.getItemIds(); }
     public Set<String> getAspects() { return Collections.unmodifiableSet(this.aspects); }
 
     /**
@@ -143,7 +144,7 @@ public class PokemonModel implements Serializable {
      * @param ivs Pokemon ivs.
      * @param evs Pokemon evs.
      * @param shiny If the pokemon is shiny or not.
-     * @param heldItem Item held by the pokemon.
+     * @param heldItem Possible item held by the pokemon.
      * @param aspects Set of pokemon aspects.
      */
     public PokemonModel(
@@ -197,7 +198,7 @@ public class PokemonModel implements Serializable {
      * @param ivs Pokemon ivs.
      * @param evs Pokemon evs.
      * @param shiny If the pokemon is shiny or not.
-     * @param heldItem Item held by the pokemon.
+     * @param heldItem Possible item held by the pokemon.
      * @param aspects Set of pokemon aspects.
      */
     public PokemonModel(
@@ -218,7 +219,45 @@ public class PokemonModel implements Serializable {
         this.ivs = ivs;
         this.evs = evs;
         this.shiny = shiny;
-        this.heldItem = heldItem;
+        this.heldItem = new HeldItemsModel(heldItem);
+        this.aspects = aspects;
+    }
+
+    /**
+     * Creates a new pokemon model with the given properties.
+     * 
+     * @param species Pokemon species.
+     * @param nickname Pokemon nickname.
+     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
+     * @param level Pokemon level.
+     * @param nature Pokemon nature.
+     * @param ability Pokemon ability.
+     * @param moveset Set of moves.
+     * @param ivs Pokemon ivs.
+     * @param evs Pokemon evs.
+     * @param shiny If the pokemon is shiny or not.
+     * @param heldItems Possible items held by the pokemon.
+     * @param aspects Set of pokemon aspects.
+     */
+    public PokemonModel(
+        @NotNull String species, @NotNull Text nickname,
+        @NotNull String gender, int level, @NotNull String nature,
+        @NotNull String ability, @NotNull Set<String> moveset,
+        @NotNull StatsModel ivs, @NotNull StatsModel evs,
+        boolean shiny, @NotNull List<String> heldItems,
+        @NotNull Set<String> aspects)
+    {
+        this.species = species;
+        this.nickname = nickname;
+        this.gender = gender;
+        this.level = level;
+        this.nature = nature;
+        this.ability = ability;
+        this.moveset = moveset;
+        this.ivs = ivs;
+        this.evs = evs;
+        this.shiny = shiny;
+        this.heldItem = new HeldItemsModel(heldItems);
         this.aspects = aspects;
     }
 
@@ -250,7 +289,7 @@ public class PokemonModel implements Serializable {
         this.evs.spd = pokemon.getEvs().getOrDefault(Stats.SPECIAL_DEFENCE);
         this.evs.spe = pokemon.getEvs().getOrDefault(Stats.SPEED);
         this.shiny = pokemon.getShiny();
-        this.heldItem = BuiltInRegistries.ITEM.getKey(pokemon.heldItem().getItem()).toString();
+        this.heldItem = new HeldItemsModel(BuiltInRegistries.ITEM.getKey(pokemon.heldItem().getItem()).toString());
         this.aspects = pokemon.getAspects();
     }
 

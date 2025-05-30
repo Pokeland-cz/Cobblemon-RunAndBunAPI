@@ -116,13 +116,16 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         pokemon.setShiny(model.isShiny());
         pokemon.setForcedAspects(model.getAspects());
 
-        if(!model.getHeldItem().isBlank()) {
-            var item = Locations.withNamespace("cobblemon", model.getHeldItem());
+        for(var itemId : model.getHeldItems()) {
+            var item = Locations.withNamespace("cobblemon", itemId);
             var rl = ResourceLocation.parse(item);
 
-            errors.doif(BuiltInRegistries.ITEM.containsKey(rl), v -> v,
+            if(errors.doif(BuiltInRegistries.ITEM.containsKey(rl), v -> v,
                 v -> pokemon.swapHeldItem(BuiltInRegistries.ITEM.get(rl).getDefaultInstance(), true),
-                "invalid held item '" + item + "'");
+                "invalid held item '" + item + "'"))
+            {
+                break;
+            }
         }
 
         return pokemon;
