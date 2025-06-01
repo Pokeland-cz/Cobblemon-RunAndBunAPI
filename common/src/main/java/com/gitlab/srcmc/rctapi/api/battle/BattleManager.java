@@ -287,7 +287,7 @@ public class BattleManager {
         if(errors.isEmpty()) {
             Cobblemon.INSTANCE.getBattleRegistry().startBattle(
                 battleFormat.getCobblemonBattleFormat(),
-                side1, side2, false
+                side1, side2, true
             ).ifErrored(error -> {
                 ModCommon.LOG.error("Failed to start battle: " + toBattleArgsString(participants1, participants2));
                 sendErrors(error, participants1, participants2);
