@@ -85,6 +85,10 @@ public class RCTBattleAI implements BattleAI {
                 var gimmicks = trainer.getGimmicks().of(pkmn.getBattlePokemon().getOriginalPokemon());
                 moveset.setCanTerastallize(gimmicks.tera() != null && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId()) ? gimmicks.tera() : null);
                 moveset.setCanDynamax(ModCommon.modLoader().isLoaded("mega_showdown") && gimmicks.dynamax() && !actorState.hasGimmick(Gimmick.DYNAMAX.getId()) && !pkmnState.has(Custom.MEGA) && !pkmnState.has(Custom.TERA) && moveset.getCanZMove() == null && !moveset.getCanUltraBurst() && !moveset.getCanMegaEvo());
+
+                if(!moveset.getCanDynamax()) {
+                    moveset.setMaxMoves(null); // TODO: could this cause issues if transformation would be possible later?
+                }
             }
         }
 
