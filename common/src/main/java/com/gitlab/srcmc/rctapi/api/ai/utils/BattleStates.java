@@ -34,7 +34,16 @@ import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 public final class BattleStates {
     public static class ActorState {
         private final Set<ActiveBattlePokemon> responses = new HashSet<>();
+        private final Set<String> gimmicks = new HashSet<>();
         private int turn;
+
+        public void addGimmick(String showdownId) {
+            this.gimmicks.add(showdownId);
+        }
+
+        public boolean hasGimmick(String showdownId) {
+            return this.gimmicks.contains(showdownId);
+        }
 
         public void addResponse(ActiveBattlePokemon pkmn) {
             responses.add(pkmn);

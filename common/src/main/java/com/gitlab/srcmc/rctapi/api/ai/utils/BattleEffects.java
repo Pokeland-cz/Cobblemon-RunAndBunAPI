@@ -36,7 +36,10 @@ public class BattleEffects {
         SPIDERWEB(1<<3),
         ITEM_ENDED(1<<4),
         WISH(1<<5, 1, true),
-        PROTECT(1<<6, 1);
+        PROTECT(1<<6, 1),
+        MEGA(1<<7),
+        TERA(1<<8),
+        DYNAMAX(1<<9);
 
         private long mask;
         private int expires;

@@ -18,18 +18,25 @@
 package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.battles.*;
+import com.cobblemon.mod.common.battles.ShowdownMoveset.Gimmick;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
+import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.ai.utils.Debug;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMath;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.TypeChart;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects.Custom;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
+import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
+
 import java.util.Random;
 
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +73,20 @@ public class RCTBattleAI implements BattleAI {
             }
         });
 
+        if(pkmn.hasPokemon()) {
+            if(RCTApi.getInstances()
+                .map(rct -> rct.getValue().getTrainerRegistry().getByOT(pkmn.getBattlePokemon().getEffectedPokemon()))
+                .filter(t -> t != null && t instanceof TrainerNPC).findFirst().orElse(null) instanceof TrainerNPC trainer)
+            {
+                var battleState = BattleStates.get(pkmn.getBattle());
+                var actorState = battleState.getActorState(pkmn.getActor());
+                var pkmnState = battleState.getPokemonState(pkmn.getBattlePokemon());
+                var gimmicks = trainer.getGimmicks().of(pkmn.getBattlePokemon().getOriginalPokemon());
+                moveset.setCanTerastallize(gimmicks.tera() != null && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId()) ? gimmicks.tera() : null);
+                moveset.setCanDynamax(gimmicks.dynamax() && !actorState.hasGimmick(Gimmick.DYNAMAX.getId()) && !pkmnState.has(Custom.MEGA) && !pkmnState.has(Custom.TERA) && moveset.getCanZMove() == null && !moveset.getCanUltraBurst() && !moveset.getCanMegaEvo());
+            }
+        }
+
         var builder = ResponseBuilder
             .create(pkmn, moveset, forceSwitch)
             .margin(this.rng.nextDouble(this.maxSelectMargin))
@@ -75,11 +96,11 @@ public class RCTBattleAI implements BattleAI {
             .filter(pair -> !(pair.second instanceof ActiveBattlePokemon targetPkmn) || targetPkmn.isAlive())
             .map(pair -> {
                 if(pair.second instanceof ActiveBattlePokemon targetPkmn) {
-                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.move, targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
+                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.getName(), targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
                 }
 
                 // non or multi-target move
-                return new Choice<>(String.format("MOVE %s -> <multi/none>", pair.first.move), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
+                return new Choice<>(String.format("MOVE %s -> <multi/none>", pair.first.getName()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
             }));
 
         builder.suggestItems(candidates -> candidates
@@ -93,7 +114,7 @@ public class RCTBattleAI implements BattleAI {
         return builder.response();
     }
 
-    private double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {        
+    private double evalMove(BattlePokemon from, BattlePokemon to, Move move) {        
         var mt = MoveType.of(move);
 
         if(to == null) {
@@ -136,7 +157,7 @@ public class RCTBattleAI implements BattleAI {
                 break;
         }
 
-        return e == 0 ? -1.0 : MoveType.eval(from, to, move) * e;
+        return e == 0 ? -1.0 : MoveType.eval(from, to, move.getName()) * e;
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {

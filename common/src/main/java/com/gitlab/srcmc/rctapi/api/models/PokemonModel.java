@@ -111,6 +111,7 @@ public class PokemonModel implements Serializable {
     private boolean shiny;
     private HeldItemsModel heldItem;
     private Set<String> aspects;
+    private Gimmicks gimmicks;
     
     public String getSpecies() { return this.species; }
     public Text getNickname() { return this.nickname; }
@@ -124,6 +125,7 @@ public class PokemonModel implements Serializable {
     public boolean isShiny() { return this.shiny; }
     public String[] getHeldItems() { return this.heldItem.getItemIds(); }
     public Set<String> getAspects() { return Collections.unmodifiableSet(this.aspects); }
+    public Gimmicks getGimmicks() { return this.gimmicks; }
 
     /**
      * Creates a new pokemon model.
@@ -209,18 +211,7 @@ public class PokemonModel implements Serializable {
         boolean shiny, @NotNull String heldItem,
         @NotNull Set<String> aspects)
     {
-        this.species = species;
-        this.nickname = nickname;
-        this.gender = gender;
-        this.level = level;
-        this.nature = nature;
-        this.ability = ability;
-        this.moveset = moveset;
-        this.ivs = ivs;
-        this.evs = evs;
-        this.shiny = shiny;
-        this.heldItem = new HeldItemsModel(heldItem);
-        this.aspects = aspects;
+        this(species, nickname, gender, level, nature, ability, moveset, ivs, evs, shiny, List.of(heldItem), aspects, new Gimmicks());
     }
 
     /**
@@ -238,6 +229,7 @@ public class PokemonModel implements Serializable {
      * @param shiny If the pokemon is shiny or not.
      * @param heldItems Possible items held by the pokemon.
      * @param aspects Set of pokemon aspects.
+     * @param gimmicks Set of pokemon gimmicks.
      */
     public PokemonModel(
         @NotNull String species, @NotNull Text nickname,
@@ -245,7 +237,7 @@ public class PokemonModel implements Serializable {
         @NotNull String ability, @NotNull Set<String> moveset,
         @NotNull StatsModel ivs, @NotNull StatsModel evs,
         boolean shiny, @NotNull List<String> heldItems,
-        @NotNull Set<String> aspects)
+        @NotNull Set<String> aspects, @NotNull Gimmicks gimmicks)
     {
         this.species = species;
         this.nickname = nickname;
@@ -259,6 +251,7 @@ public class PokemonModel implements Serializable {
         this.shiny = shiny;
         this.heldItem = new HeldItemsModel(heldItems);
         this.aspects = aspects;
+        this.gimmicks = gimmicks;
     }
 
     /**
@@ -291,6 +284,7 @@ public class PokemonModel implements Serializable {
         this.shiny = pokemon.getShiny();
         this.heldItem = new HeldItemsModel(BuiltInRegistries.ITEM.getKey(pokemon.heldItem().getItem()).toString());
         this.aspects = pokemon.getAspects();
+        this.gimmicks = new Gimmicks(); // TODO: possible to derive gimmick from current pokemon state?
     }
 
     @Override
@@ -307,7 +301,8 @@ public class PokemonModel implements Serializable {
             && this.evs.equals(other.evs)
             && this.shiny == other.shiny
             && this.heldItem.equals(other.heldItem)
-            && this.aspects.equals(other.aspects);
+            && this.aspects.equals(other.aspects)
+            && this.gimmicks.equals(other.gimmicks);
     }
 
     @Override
@@ -318,6 +313,6 @@ public class PokemonModel implements Serializable {
             this.nature, this.ability,
             this.moveset, this.ivs, this.evs,
             this.shiny, this.heldItem,
-            this.aspects);
+            this.aspects, this.gimmicks);
     }
 }

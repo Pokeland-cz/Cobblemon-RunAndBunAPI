@@ -57,6 +57,7 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
         }
 
         var battleAI = model.getAI().get();
+        var gimmicks = new TrainerNPC.GimmicksMap();
 
         if(battleAI == null) {
             errors.add(RCTError.of("unknown AI type"));
@@ -64,7 +65,7 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
         }
 
         var team = model.getTeam().stream().limit(6)
-            .map(pkModel -> this.pmc.toTarget(pkModel, errors))
+            .map(pkModel -> gimmicks.to(this.pmc.toTarget(pkModel, errors), pkModel.getGimmicks()))
             .toList().toArray(new Pokemon[0]);
 
         var bag = new TrainerBag();
@@ -77,6 +78,6 @@ public class TrainerModelConverter implements Converter<TrainerModel, TrainerNPC
             }
         });
 
-        return new TrainerNPC(model.getName(), team, bag, battleAI, TrainerNPC.getDummyEntity(this.server));
+        return new TrainerNPC(model.getName(), team, gimmicks, bag, battleAI, TrainerNPC.getDummyEntity(this.server));
     }
 }

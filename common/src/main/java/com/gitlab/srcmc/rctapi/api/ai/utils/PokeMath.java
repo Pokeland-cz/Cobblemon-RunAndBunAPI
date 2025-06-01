@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.Random;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext.Type;
+import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.pokemon.status.Statuses;
@@ -67,8 +68,8 @@ public class PokeMath {
         if(multiTarget) baseDamage *= 0.75;
         if(parentalBond) baseDamage *= 0.25;
         if(glaiveRush) baseDamage *= 2;
-        if(burn && physical && !attackerAbility.getDisplayName().equals("cobblemon.ability.guts")) baseDamage *= 0.5;
-        if(attackerHasStatus && attackerAbility.getDisplayName().equals("cobblemon.ability.guts")) baseDamage *= 1.5;
+        if(burn && physical && !attackerAbility.getName().equals("guts")) baseDamage *= 0.5;
+        if(attackerHasStatus && attackerAbility.getName().equals("guts")) baseDamage *= 1.5;
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getFIRE()) || rain && moveType.equals(ElementalTypes.INSTANCE.getWATER())) baseDamage *= 1.5;
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getWATER()) || rain && moveType.equals(ElementalTypes.INSTANCE.getFIRE())) baseDamage *= 0.5;
         if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) baseDamage *= 1.5;
@@ -80,7 +81,10 @@ public class PokeMath {
     }
     
     public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove) {
-        var move = TypeChart.getMove(inBattleMove);
+        return damage(attacker, defender, TypeChart.getMove(inBattleMove));
+    }
+
+    public static int damage(BattlePokemon attacker, BattlePokemon defender, Move move) {
         var damageCategory = move.getDamageCategory().getName();
 
         if(damageCategory.equals(DamageCategories.INSTANCE.getSTATUS().getName())) {

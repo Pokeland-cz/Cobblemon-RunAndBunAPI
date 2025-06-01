@@ -17,12 +17,15 @@
  */
 package com.gitlab.srcmc.rctapi.api.trainer;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.gitlab.srcmc.rctapi.ModCommon;
+import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
 import com.gitlab.srcmc.rctapi.api.util.Text;
 
 import net.minecraft.server.MinecraftServer;
@@ -41,6 +44,7 @@ public class TrainerNPC implements Trainer {
 
     private Text name, entityName;
     private Pokemon[] team;
+    private GimmicksMap gimmicks;
     private TrainerBag bag;
     private BattleAI battleAI;
     private LivingEntity entity;
@@ -80,8 +84,23 @@ public class TrainerNPC implements Trainer {
      * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
      */
     public TrainerNPC(@NotNull Text name, @NotNull Pokemon[] team, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
+        this(name, team, new GimmicksMap(), bag, battleAI, entity);
+    }
+
+    /**
+     * Constructs a new {@link TrainerNPC}.
+     * 
+     * @param name The name of the trainer.
+     * @param team The {@link Pokemon} party of the trainer.
+     * @param gimmicks The {@link Pokemon} party of the trainer.
+     * @param bag {@link TrainerBag} containing the items a trainer can use per battle.
+     * @param battleAI {@link BattleAI} used by this trainer.
+     * @param entity {@link LivingEntity} this trainer is (initially) attached to (ideally an entity that never dies).
+     */
+    public TrainerNPC(@NotNull Text name, @NotNull Pokemon[] team, @NotNull GimmicksMap gimmicks, @NotNull TrainerBag bag, @NotNull BattleAI battleAI, @NotNull LivingEntity entity) {
         this.name = name;
         this.team = team;
+        this.gimmicks = gimmicks;
         this.bag = bag;
         this.battleAI = battleAI;
         this.setEntity(entity);
@@ -98,6 +117,7 @@ public class TrainerNPC implements Trainer {
         this.team = copyTeam(other.team);
         this.bag = other.bag;
         this.battleAI = other.battleAI;
+        this.gimmicks = new GimmicksMap(other.gimmicks);
         this.setEntity(other.entity);
     }
 
@@ -129,6 +149,17 @@ public class TrainerNPC implements Trainer {
     @NotNull
     public TrainerBag getBag() {
         return this.bag;
+    }
+
+    /**
+     * Retrieves {@link Gimmick}s that are mapped to {@link Pokemon} of this trainers
+     * team.
+     * 
+     * @return {@link Gimmicks} map.
+     */
+    @NotNull
+    public GimmicksMap getGimmicks() {
+        return this.gimmicks;
     }
 
     @Override @NotNull
@@ -193,4 +224,38 @@ public class TrainerNPC implements Trainer {
 
         return dummyEntity;
     };
+
+    /**
+     * Small utility to map available {@link Gimmicks} to pokemon from a {@link TrainerNPC}.
+     */
+    public static class GimmicksMap {
+        private Map<Pokemon, Gimmicks> map;
+
+        public GimmicksMap() {
+            this.map = new HashMap<>();
+        }
+
+        public GimmicksMap(GimmicksMap other) {
+            this.map = Map.copyOf(other.map);
+        }
+
+        public Pokemon to(Pokemon p, Gimmicks g) {
+            this.map.put(p, g);
+            return p;
+        }
+
+        public Gimmicks of(Pokemon p) {
+            return this.map.computeIfAbsent(p, k -> new Gimmicks());
+        }
+
+        @Override
+        public int hashCode() {
+            return this.map.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof GimmicksMap other) && this.map.equals(other.map);
+        }
+    }
 }

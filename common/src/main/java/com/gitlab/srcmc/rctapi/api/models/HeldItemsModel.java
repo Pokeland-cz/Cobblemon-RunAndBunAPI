@@ -63,7 +63,7 @@ public class HeldItemsModel implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        return (obj instanceof HeldItemsModel other) && Arrays.equals(this.itemIds, other.itemIds);
+        return (obj instanceof HeldItemsModel other) && (this == other || Arrays.equals(this.itemIds, other.itemIds));
     }
 
     public static class Deserializer implements JsonDeserializer<HeldItemsModel> {

@@ -18,6 +18,8 @@
 package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.Map;
+
+import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
@@ -26,7 +28,7 @@ public enum MoveType {
     DAMAGE, STATUS, HEAL, CURE, BUFF, MALUS;
 
     public interface Evaluator {
-        double eval(BattlePokemon from, BattlePokemon to, InBattleMove move);
+        double eval(BattlePokemon from, BattlePokemon to, Object move);
     }
 
     public interface Handler {
@@ -34,16 +36,20 @@ public enum MoveType {
     }
 
     public static MoveType of(InBattleMove move) {
-        var mt = MOVE_TYPES.get(move.id);
+        return of(TypeChart.getMove(move));
+    }
+
+    public static MoveType of(Move move) {
+        var mt = MOVE_TYPES.get(move.getName());
 
         return mt == null
-            ? (DamageCategories.INSTANCE.getSTATUS().getName().equals(TypeChart.getMove(move).getDamageCategory().getName())
+            ? (DamageCategories.INSTANCE.getSTATUS().getName().equals(move.getDamageCategory().getName())
                 ? STATUS
                 : DAMAGE) : mt;
     }
 
-    public static double eval(BattlePokemon from, BattlePokemon to, InBattleMove move) {
-        return MOVE_EVALUATORS.getOrDefault(move.id, (f, t, m) -> 1.0).eval(from, to, move);
+    public static double eval(BattlePokemon from, BattlePokemon to, String moveId) {
+        return MOVE_EVALUATORS.getOrDefault(moveId, (f, t, m) -> 1.0).eval(from, to, null);
     }
 
     public static void handle(String moveId, BattlePokemon from, BattlePokemon to) {

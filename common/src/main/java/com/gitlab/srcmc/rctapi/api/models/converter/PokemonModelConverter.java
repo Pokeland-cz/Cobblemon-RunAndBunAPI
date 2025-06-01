@@ -23,6 +23,7 @@ import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
+import com.cobblemon.mod.common.api.types.tera.TeraTypes;
 import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.gitlab.srcmc.rctapi.api.errors.RCTError;
@@ -92,7 +93,7 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
             errors.add(RCTError.of("too many moves " + model.getMoveset().size() + "/4"));
         }
 
-        model.getMoveset().stream().limit(42).forEach(m -> {
+        model.getMoveset().stream().limit(4).forEach(m -> {
             var move = Locations.withoutNamespace(m);
 
             errors.doif(
@@ -115,6 +116,17 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
         pokemon.setEV(Stats.SPEED, errors.expect(model.getEVs().getSpe(), v -> v >=0 && v <= 255, "invalid spe ev '%s'"));
         pokemon.setShiny(model.isShiny());
         pokemon.setForcedAspects(model.getAspects());
+        pokemon.setGmaxFactor(model.getGimmicks().gmax());
+
+        if(model.getGimmicks().tera() != null) {
+            var tt = TeraTypes.get(model.getGimmicks().tera());
+
+            if(tt != null) {
+                pokemon.setTeraType(tt);
+            } else {
+                errors.add(RCTError.of(String.format("invalid tera type '%s'", model.getGimmicks().tera())));
+            }
+        }
 
         for(var itemId : model.getHeldItems()) {
             var item = Locations.withNamespace("cobblemon", itemId);
