@@ -20,17 +20,25 @@ package com.gitlab.srcmc.rctapi.neoforge;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLLoader;
 
+import com.gitlab.srcmc.rctapi.IModLoader;
 import com.gitlab.srcmc.rctapi.ModCommon;
 
 @Mod(ModCommon.MOD_ID)
 public final class NeoForgeCommon {
+    class ModLoader implements IModLoader {
+        public boolean isLoaded(String modId) {
+            return FMLLoader.getLoadingModList().getModFileById(modId) != null;
+        }
+    }
+
     public NeoForgeCommon(ModContainer container) {
         container.getEventBus().addListener(this::onCommonSetup);
     }
 
     void onCommonSetup(FMLCommonSetupEvent event) {
-        ModCommon.init();
+        ModCommon.init(new ModLoader());
         // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
     }
 }

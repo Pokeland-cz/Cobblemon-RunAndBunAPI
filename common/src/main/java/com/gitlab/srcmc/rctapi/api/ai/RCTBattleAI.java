@@ -24,6 +24,7 @@ import com.cobblemon.mod.common.battles.ShowdownMoveset.Gimmick;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
@@ -83,7 +84,7 @@ public class RCTBattleAI implements BattleAI {
                 var pkmnState = battleState.getPokemonState(pkmn.getBattlePokemon());
                 var gimmicks = trainer.getGimmicks().of(pkmn.getBattlePokemon().getOriginalPokemon());
                 moveset.setCanTerastallize(gimmicks.tera() != null && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId()) ? gimmicks.tera() : null);
-                moveset.setCanDynamax(gimmicks.dynamax() && !actorState.hasGimmick(Gimmick.DYNAMAX.getId()) && !pkmnState.has(Custom.MEGA) && !pkmnState.has(Custom.TERA) && moveset.getCanZMove() == null && !moveset.getCanUltraBurst() && !moveset.getCanMegaEvo());
+                moveset.setCanDynamax(ModCommon.modLoader().isLoaded("mega_showdown") && gimmicks.dynamax() && !actorState.hasGimmick(Gimmick.DYNAMAX.getId()) && !pkmnState.has(Custom.MEGA) && !pkmnState.has(Custom.TERA) && moveset.getCanZMove() == null && !moveset.getCanUltraBurst() && !moveset.getCanMegaEvo());
             }
         }
 

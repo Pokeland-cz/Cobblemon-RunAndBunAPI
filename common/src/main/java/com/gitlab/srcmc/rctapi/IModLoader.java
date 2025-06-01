@@ -15,23 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.fabric;
+package com.gitlab.srcmc.rctapi;
 
-import com.gitlab.srcmc.rctapi.IModLoader;
-import com.gitlab.srcmc.rctapi.ModCommon;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
-
-public final class FabricCommon implements ModInitializer {
-    class ModLoader implements IModLoader {
-        public boolean isLoaded(String modId) {
-            return FabricLoader.getInstance().isModLoaded(modId);
-        }
-    }
-
-    @Override
-    public void onInitialize() {
-        ModCommon.init(new ModLoader());
-        // com.gitlab.srcmc.rctapi.example.ExampleMod.init(); // uncomment for example
-    }
+public interface IModLoader {
+    public boolean isLoaded(String modId);
 }

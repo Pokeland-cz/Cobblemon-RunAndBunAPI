@@ -12,9 +12,9 @@ Yet it is designed as independent library to provide a subset of similar feature
 - Support for different battle formats (1v1 SINGLE, 1v1 DOUBLE, 2v2 MULTI, ...)
 - Custom battle rules (e.g. max item usages per battle)
 - Extended AI features (currently only supported by `RCTBattleAI`):
-  - usual battle activities (move selection, switch, ...)
-  - gimmicks: mega evolve, dynamax, z-moves, terastallize (TODO)
-  - trainers can carry and use items
+  - Usual battle activities (move selection, switch, ...)
+  - Gimmicks: Mega evolve, Dynamax, Z-Moves, Terastallize, etc. (most gimmicks that are activated by held items will require another mod to provide them. [Mega Showdown](https://modrinth.com/mod/cobblemon-mega-showdown) would be an example and is also required for dyna- and gmax)
+  - Trainers can carry and use items
 - Trainer and pokemon models (pojos) for easy parsing
   - Converters to Cobblemon types
   - Model validation (collects all errors before an exception is thrown)

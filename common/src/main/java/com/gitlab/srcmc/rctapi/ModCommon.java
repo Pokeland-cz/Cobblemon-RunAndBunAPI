@@ -43,8 +43,10 @@ import net.minecraft.server.MinecraftServer;
 public class ModCommon {
     public static final String MOD_ID = "rctapi";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
+    private static IModLoader modLoader = modId -> false;
 
-    public static void init() {
+    public static void init(IModLoader modLoader) {
+        ModCommon.modLoader = modLoader;
         RCTBattleAIConfig.register();
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();
@@ -54,6 +56,10 @@ public class ModCommon {
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
+    }
+
+    public static IModLoader modLoader() {
+        return ModCommon.modLoader;
     }
 
     static void handleServerTick(MinecraftServer server) {
