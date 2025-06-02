@@ -74,7 +74,7 @@ public class RCTBattleAI implements BattleAI {
             }
         });
 
-        if(pkmn.hasPokemon()) {
+        if(pkmn.hasPokemon() && moveset != null) {
             if(RCTApi.getInstances()
                 .map(rct -> rct.getValue().getTrainerRegistry().getByOT(pkmn.getBattlePokemon().getEffectedPokemon()))
                 .filter(t -> t != null && t instanceof TrainerNPC).findFirst().orElse(null) instanceof TrainerNPC trainer)
