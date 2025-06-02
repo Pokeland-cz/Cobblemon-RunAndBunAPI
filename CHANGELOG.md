@@ -1,13 +1,13 @@
 # Changelog
 
-## [0.13.0] - 2025-06-02
+## [0.13.0-beta] - 2025-06-02
 
 **Changed:**
 
 - *#69* Allow cobblemons `BATTLE_STARTED_PRE` event to intercept battles started by this api
 - *#68* Pokemon models may now alternatively accept a list of held items (if one item was not found the next item is checked)
 - *#67* Trainer pokemon now support usage of gimmicks (zmoves, mega evolution, dynamax, etc.)
-  - Added `gimmicks` property to `PokemonModel`: Allows to enable and define a terrastalization type (`tera`), as well as to activate dyna- and gigantamax (`dynamax` and `gmax`), **latter two require the mega showdown mod to work**
+  - Added `gimmicks` property to `PokemonModel`: Allows to enable and define a terastalization type (`tera`), as well as to activate dyna- and gigantamax (`dynamax` and `gmax`), **latter two require the mega showdown mod to work**
   - Most gimmicks require specific items to be activated, which are not provided by this mod (you can use other mods like mega showdown for that)
 
 ## [0.12.1-beta] - 2025-05-24
