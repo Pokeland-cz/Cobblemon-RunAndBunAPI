@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.2-beta] - 2025-06-02
+
+**Fixed:**
+
+- *#71* Hotfix for potential `UnsupportedOperationException` when attempting to start a battle
+
 ## [0.13.1-beta] - 2025-06-02
 
 **Fixed:**

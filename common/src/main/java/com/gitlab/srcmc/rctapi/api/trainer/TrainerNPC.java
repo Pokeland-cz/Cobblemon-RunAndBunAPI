@@ -236,7 +236,7 @@ public class TrainerNPC implements Trainer {
         }
 
         public GimmicksMap(GimmicksMap other) {
-            this.map = Map.copyOf(other.map);
+            this.map = new HashMap<>(other.map);
         }
 
         public Pokemon to(Pokemon p, Gimmicks g) {
