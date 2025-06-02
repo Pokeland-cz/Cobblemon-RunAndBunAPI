@@ -83,8 +83,23 @@ public class RCTBattleAI implements BattleAI {
                 var actorState = battleState.getActorState(pkmn.getActor());
                 var pkmnState = battleState.getPokemonState(pkmn.getBattlePokemon());
                 var gimmicks = trainer.getGimmicks().of(pkmn.getBattlePokemon().getOriginalPokemon());
-                moveset.setCanTerastallize(gimmicks.tera() != null && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId()) && !pkmnState.has(Custom.MEGA) && !moveset.getCanMegaEvo() ? gimmicks.tera() : null);
-                moveset.setCanDynamax(ModCommon.modLoader().isLoaded("mega_showdown") && gimmicks.dynamax() && !actorState.hasGimmick(Gimmick.DYNAMAX.getId()) && !pkmnState.has(Custom.MEGA) && !pkmnState.has(Custom.TERA) && moveset.getCanZMove() == null && !moveset.getCanUltraBurst() && !moveset.getCanMegaEvo());
+
+                moveset.setCanTerastallize(gimmicks.tera() != null
+                    && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId())
+                    && !pkmnState.has(Custom.MEGA)
+                    && !pkmnState.has(Custom.ZMOVE)
+                    && !moveset.getCanUltraBurst()
+                    && !moveset.getCanMegaEvo()
+                    && moveset.getCanZMove() == null ? gimmicks.tera() : null);
+
+                moveset.setCanDynamax(ModCommon.modLoader().isLoaded("mega_showdown")
+                    && gimmicks.dynamax()
+                    && !actorState.hasGimmick(Gimmick.DYNAMAX.getId())
+                    && !pkmnState.has(Custom.MEGA)
+                    && !pkmnState.has(Custom.TERA)
+                    && !moveset.getCanUltraBurst()
+                    && !moveset.getCanMegaEvo()
+                    && moveset.getCanZMove() == null);
 
                 if(!moveset.getCanDynamax()) {
                     moveset.setMaxMoves(null); // TODO: could this cause issues if transformation would be possible later?

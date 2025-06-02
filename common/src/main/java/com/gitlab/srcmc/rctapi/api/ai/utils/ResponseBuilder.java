@@ -184,6 +184,8 @@ public class ResponseBuilder {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.MEGA);
                         } else if(Gimmick.TERASTALLIZATION.getId().equals(gimmickFin)) {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.TERA);
+                        } else if(Gimmick.Z_POWER.getId().equals(gimmickFin) || Gimmick.ULTRA_BURST.getId().equals(gimmickFin)) {
+                            battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.ZMOVE);
                         }
                     }
                 })); // TODO: getSideState()?

@@ -39,7 +39,8 @@ public class BattleEffects {
         PROTECT(1<<6, 1),
         MEGA(1<<7),
         TERA(1<<8),
-        DYNAMAX(1<<9);
+        DYNAMAX(1<<9),
+        ZMOVE(1<<10);
 
         private long mask;
         private int expires;
