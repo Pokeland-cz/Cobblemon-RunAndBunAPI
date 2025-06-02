@@ -180,7 +180,8 @@ if [ "$answer" != "confirm" ]; then
 fi
 
 # create clean build
-./gradlew clean build -Prelease --console=plain
+# ./gradlew clean build -Prelease --console=plain
+./gradlew clean build --console=plain
 
 # commit changes if version was updated
 if [ "$(git status --porcelain)" ]; then
