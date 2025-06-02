@@ -86,6 +86,7 @@ public class RCTBattleAI implements BattleAI {
 
                 moveset.setCanTerastallize(gimmicks.tera() != null
                     && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId())
+                    && !actorState.hasGimmick(Gimmick.MEGA_EVOLUTION.getId())
                     && !pkmnState.has(Custom.MEGA)
                     && !pkmnState.has(Custom.ZMOVE)
                     && !moveset.getCanUltraBurst()
