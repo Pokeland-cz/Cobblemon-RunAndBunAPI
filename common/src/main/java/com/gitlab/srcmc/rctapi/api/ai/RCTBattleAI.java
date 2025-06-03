@@ -18,7 +18,6 @@
 package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
-import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.ShowdownMoveset.Gimmick;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
@@ -117,11 +116,11 @@ public class RCTBattleAI implements BattleAI {
             .filter(pair -> !(pair.second instanceof ActiveBattlePokemon targetPkmn) || targetPkmn.isAlive())
             .map(pair -> {
                 if(pair.second instanceof ActiveBattlePokemon targetPkmn) {
-                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.getName(), targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
+                    return new Choice<>(String.format("MOVE %s -> %s", pair.first.id, targetPkmn.getBattlePokemon().getName().getString()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), targetPkmn.getBattlePokemon(), pair.first));
                 }
 
                 // non or multi-target move
-                return new Choice<>(String.format("MOVE %s -> <multi/none>", pair.first.getName()), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
+                return new Choice<>(String.format("MOVE %s -> <multi/none>", pair.first.id), pair, 1.0 - evalMove(pkmn.getBattlePokemon(), null, pair.first));
             }));
 
         builder.suggestItems(candidates -> candidates
@@ -135,7 +134,7 @@ public class RCTBattleAI implements BattleAI {
         return builder.response();
     }
 
-    private double evalMove(BattlePokemon from, BattlePokemon to, Move move) {        
+    private double evalMove(BattlePokemon from, BattlePokemon to, InBattleMove move) {
         var mt = MoveType.of(move);
 
         if(to == null) {
@@ -178,7 +177,7 @@ public class RCTBattleAI implements BattleAI {
                 break;
         }
 
-        return e == 0 ? -1.0 : MoveType.eval(from, to, move.getName()) * e;
+        return e == 0 ? -1.0 : MoveType.eval(from, to, move.id) * e;
     }
 
     private double evalItem(BagItem item, BattlePokemon to) {

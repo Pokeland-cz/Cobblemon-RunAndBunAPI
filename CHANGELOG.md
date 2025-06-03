@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.3-beta] - 2025-06-03
+
+**Fixed:**
+
+- *#72* Trainers attempting to activate ZPowers with wrong moves
+
 ## [0.13.2-beta] - 2025-06-02
 
 **Fixed:**

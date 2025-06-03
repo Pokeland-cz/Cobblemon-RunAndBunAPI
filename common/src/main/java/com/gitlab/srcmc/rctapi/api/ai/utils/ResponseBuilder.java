@@ -25,7 +25,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BagItemActionResponse;
 import com.cobblemon.mod.common.battles.DefaultActionResponse;
@@ -49,7 +48,7 @@ import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Cons
 public class ResponseBuilder {
     private Supplier<Stream<BattlePokemon>> switchCandidates = Stream::empty;
     private Supplier<Stream<Pair<BagItem, BattlePokemon>>> itemCandidates = Stream::empty;
-    private Supplier<Stream<Pair<Move, Targetable>>> moveCandidates = Stream::empty;
+    private Supplier<Stream<Pair<InBattleMove, Targetable>>> moveCandidates = Stream::empty;
     private List<Choice<ShowdownActionResponse>> choices = new ArrayList<>();
     private Random rng = new Random(0);
 
@@ -72,23 +71,22 @@ public class ResponseBuilder {
                 // all possible move usages
                 if(builder.moveset != null) {
                     if(builder.moveset.moves.stream().findFirst().isPresent()) {
-                        if(builder.moveset.moves.stream().anyMatch(InBattleMove::mustBeUsed)) {
-                            builder.moveCandidates = () -> builder.moveset.moves.stream()
-                                .filter(InBattleMove::mustBeUsed)
-                                .flatMap(mv -> {
-                                    return Stream.of(mv); // TODO: replace here with gimmick moves for evaluation?
-                                }).flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
-                                    ? Stream.of(new Pair<>(TypeChart.getMove(mv), (Targetable)null))
-                                    : mv.getTargets(pkmn).stream().map(t -> new Pair<>(TypeChart.getMove(mv), t)));
+                        Stream<InBattleMove> stream;
 
+                        if(builder.moveset.moves.stream().anyMatch(InBattleMove::mustBeUsed)) {
+                            stream = builder.moveset.moves.stream().filter(InBattleMove::mustBeUsed);
                             builder.forceMove = true;
                         } else {
-                            builder.moveCandidates = () -> builder.moveset.moves.stream()
-                                .filter(InBattleMove::canBeUsed)
-                                .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
-                                    ? Stream.of(new Pair<>(TypeChart.getMove(mv), (Targetable)null))
-                                    : mv.getTargets(pkmn).stream().map(t -> new Pair<>(TypeChart.getMove(mv), t)));
+                            stream = builder.moveset.moves.stream().filter(InBattleMove::canBeUsed);
                         }
+
+                        builder.moveCandidates = () -> stream
+                            // .flatMap(mv -> {
+                            //     return Stream.of(mv); // TODO: replace here with gimmick moves for evaluation?
+                            // })
+                            .flatMap(mv -> mv.getTargets(pkmn) == null || mv.getTargets(pkmn).isEmpty()
+                                ? Stream.of(new Pair<>(mv, (Targetable)null))
+                                : mv.getTargets(pkmn).stream().map(t -> new Pair<>(mv, t)));
                     }
                 }
 
@@ -153,38 +151,42 @@ public class ResponseBuilder {
         return this;
     }
 
-    public ResponseBuilder suggestMoves(Function<Stream<Pair<Move, Targetable>>, Stream<Choice<Pair<Move, Targetable>>>> consumer) {
+    public ResponseBuilder suggestMoves(Function<Stream<Pair<InBattleMove, Targetable>>, Stream<Choice<Pair<InBattleMove, Targetable>>>> consumer) {
+        var gimmick = (this.moveset != null && this.moveset.getGimmicks().size() > 0)
+            ? this.moveset.getGimmicks().get(this.rng.nextInt(this.moveset.getGimmicks().size()))
+            : null;
+            
+        Debug.log(1, () -> {
+            ModCommon.LOG.info("[GIMMICKS of " + ((this.pkmn.hasPokemon() ? this.pkmn.getBattlePokemon().getName().getString() : "<dead>") + "]"));
+
+            if(this.moveset != null) {
+                this.moveset.getGimmicks().forEach(g -> ModCommon.LOG.info(" - " + g.getId() + ", " + g.name()));
+            }
+
+            if(gimmick != null) {
+                ModCommon.LOG.info("ACTIVATED: " + gimmick.getId());
+            }
+        });
+
         consumer.apply(this.moveCandidates.get()).forEach(choice -> {
             var move = choice.value.first;
             var target = choice.value.second;
-            String gimmick = null;
-
-            Debug.log(1, () -> {
-                ModCommon.LOG.info("GIMMICKS:");
-                this.moveset.getGimmicks().forEach(g -> ModCommon.LOG.info(" - " + g.getId() + ", " + g.name()));
-            });
-            
-            if(this.moveset.getGimmicks().size() > 0) {
-                gimmick = this.moveset.getGimmicks().get(this.rng.nextInt(this.moveset.getGimmicks().size())).getId();
-                Debug.log(1, "ACTIVATED: " + gimmick);
-            }
-
-            var gimmickFin = gimmick;
+            var gimmickId = (gimmick != null && (!Gimmick.Z_POWER.equals(gimmick) || move.getGimmickMove() != null)) ? gimmick.getId() : null;
 
             this.choices.add(new Choice<>(choice.name,
-                new MoveActionResponse(move.getName(), target != null ? target.getPNX() : null, gimmick), choice.weight,
+                new MoveActionResponse(move.id, target != null ? target.getPNX() : null, gimmickId), choice.weight,
                 () -> {
                     var battleState = BattleStates.get(this.pkmn.getBattle());
-                    battleState.getActorState(this.pkmn.getActor()).addGimmick(gimmickFin);
+                    battleState.getActorState(this.pkmn.getActor()).addGimmick(gimmickId);
 
-                    if(this.pkmn.hasPokemon()) {
-                        if(Gimmick.DYNAMAX.getId().equals(gimmickFin)) {
+                    if(this.pkmn.hasPokemon() && gimmickId != null) {
+                        if(Gimmick.DYNAMAX.getId().equals(gimmickId)) {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.DYNAMAX);
-                        } else if(Gimmick.MEGA_EVOLUTION.getId().equals(gimmickFin)) {
+                        } else if(Gimmick.MEGA_EVOLUTION.getId().equals(gimmickId)) {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.MEGA);
-                        } else if(Gimmick.TERASTALLIZATION.getId().equals(gimmickFin)) {
+                        } else if(Gimmick.TERASTALLIZATION.getId().equals(gimmickId)) {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.TERA);
-                        } else if(Gimmick.Z_POWER.getId().equals(gimmickFin) || Gimmick.ULTRA_BURST.getId().equals(gimmickFin)) {
+                        } else if(Gimmick.Z_POWER.getId().equals(gimmickId) || Gimmick.ULTRA_BURST.getId().equals(gimmickId)) {
                             battleState.getPokemonState(this.pkmn.getBattlePokemon()).add(Custom.ZMOVE);
                         }
                     }
