@@ -161,9 +161,11 @@ public class RCTBattleAI implements BattleAI {
                 break;
             case BUFF:
                 e = ally ? this.rngSin()*Math.min(1.0, 1.0 - BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
+                e *= (0.25 + 0.75*from.getHealth()/(double)from.getMaxHealth());
                 break;
             case MALUS:
                 e = !ally ? this.rngSin()*Math.min(1.0, 1.0 + BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
+                e *= (0.25 + 0.75*to.getHealth()/(double)to.getMaxHealth());
                 break;
             case STATUS:
                 e = !ally ? ((!BattleEffects.Pokemon.Status.any(to) && !BattleEffects.Pokemon.Volatile.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
@@ -251,7 +253,7 @@ public class RCTBattleAI implements BattleAI {
         var thRel = to.getHealth()/(double)to.getMaxHealth();
         d[0] *= thRel < 1.0 ? this.rng.nextDouble(thRel, 1.0) : 1.0;
 
-        return Math.min(1, d[0]) * this.switchBias;
+        return Math.min(1, d[0]) * this.switchBias * ((from.hasPokemon() && BattleStates.get(from.getBattle()).getPokemonState(from.getBattlePokemon()).has(BattleEffects.Custom.DYNAMAX)) ? 0.25: 1.0);
     }
 
     private double rngSin() {

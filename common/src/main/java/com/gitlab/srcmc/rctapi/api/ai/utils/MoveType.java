@@ -100,7 +100,7 @@ public enum MoveType {
         Map.<String, Evaluator>entry("meanlook", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("spiderweb", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("block", (from, to, move) -> BattleEffects.Pokemon.State.trapped(to) ? 0.0 : 1.0),
-        Map.<String, Evaluator>entry("fakeout", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).age(BattleEffects.Custom.TURN) > 1 ? 0.0 : 1.25),
+        Map.<String, Evaluator>entry("fakeout", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).age(BattleEffects.Custom.TURN) > 1 ? 0.0 : 1.75),
         Map.<String, Evaluator>entry("tailwind", (from, to, move) -> BattleEffects.Side.Tailwind.tailwind(from) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("gravity", (from, to, move) -> BattleEffects.Field.Gravity.gravity(from) ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("trickroom", (from, to, move) -> BattleEffects.Field.Room.trickroom(from) ? 0.0 : 1.0),

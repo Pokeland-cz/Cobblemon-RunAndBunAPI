@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.4] - 2025-06-03
+
+**Changed:**
+
+- *#74* Lowered base chance for trainers to switch out a dynamaxed pokemon
+- *#73* Minor adjustments to boost move evaluation (less likely on targets with lower health)
+
 ## [0.13.3-beta] - 2025-06-03
 
 **Fixed:**
