@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.MoveInstruction;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
 
@@ -49,8 +50,13 @@ public abstract class MoveInstructionMixin {
             if(!message.hasOptionalArgument("still") && !message.hasOptionalArgument("miss")) {
                 var from = message.battlePokemon(0, battle);
                 var to = message.battlePokemon(2, battle);
-                var mv = message.moveAt(1);
-                MoveType.handle(mv.getName(), from, to);
+                var mv = message.argumentAt(1);
+
+                if(from != null && to != null && mv != null) {
+                    MoveType.handle(mv.toLowerCase().replaceAll("[^a-z0-9]", ""), from, to);
+                } else {
+                    ModCommon.LOG.error("unexpected message: " + message.getRawMessage());
+                }
             }
         }
     }

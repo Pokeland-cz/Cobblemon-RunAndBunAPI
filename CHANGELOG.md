@@ -1,11 +1,15 @@
 # Changelog
 
-## [0.13.4] - 2025-06-03
+## [0.13.4-beta] - 2025-06-10
 
 **Changed:**
 
-- *#74* Lowered base chance for trainers to switch out a dynamaxed pokemon
-- *#73* Minor adjustments to boost move evaluation (less likely on targets with lower health)
+- *#75* Lowered base chance for trainers to switch out a dynamaxed pokemon
+- *#74* Minor adjustments to boost move evaluation (less likely for users with lower health)
+
+**Fixed:**
+
+- *#73* Usage of moves unknown to cobblemon causing battles to softlock
 
 ## [0.13.3-beta] - 2025-06-03
 
