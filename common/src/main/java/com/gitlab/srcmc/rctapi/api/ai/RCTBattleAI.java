@@ -149,7 +149,7 @@ public class RCTBattleAI implements BattleAI {
         }
 
         var ally = from.actor.getSide().equals(to.actor.getSide());
-        double e;
+        double e, h;
 
         switch(mt) {
             case HEAL:
@@ -161,11 +161,13 @@ public class RCTBattleAI implements BattleAI {
                 break;
             case BUFF:
                 e = ally ? this.rngSin()*Math.min(1.0, 1.0 - BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
-                e *= (0.25 + 0.75*from.getHealth()/(double)from.getMaxHealth());
+                h = from.getHealth()/(double)from.getMaxHealth();
+                e *= h * h;
                 break;
             case MALUS:
                 e = !ally ? this.rngSin()*Math.min(1.0, 1.0 + BattleEffects.Pokemon.Boost.avg(to)*5)*this.statusMoveBias : 0;
-                e *= (0.25 + 0.75*to.getHealth()/(double)to.getMaxHealth());
+                h = to.getHealth()/(double)to.getMaxHealth();
+                e *= h * h;
                 break;
             case STATUS:
                 e = !ally ? ((!BattleEffects.Pokemon.Status.any(to) && !BattleEffects.Pokemon.Volatile.any(to)) ? this.rngSin() : this.rngSin()*this.maxSelectMargin)*this.statusMoveBias : 0;
