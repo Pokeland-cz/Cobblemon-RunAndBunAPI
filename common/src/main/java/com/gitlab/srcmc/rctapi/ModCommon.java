@@ -25,11 +25,13 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.events.battles.BattleFaintedEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleFledEvent;
 import com.cobblemon.mod.common.api.events.battles.BattleVictoryEvent;
+import com.cobblemon.mod.common.api.events.battles.instruction.TerastallizationEvent;
 import com.cobblemon.mod.common.api.events.entity.PokemonEntitySaveToWorldEvent;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.config.RCTBattleAIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.SelfdotGen5AIConfig;
 import com.gitlab.srcmc.rctapi.api.ai.config.StrongBattleAIConfig;
+import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
@@ -56,6 +58,7 @@ public class ModCommon {
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
+        CobblemonEvents.TERASTALLIZATION.subscribe(Priority.NORMAL, ModCommon::handleTerastallization);
     }
 
     public static IModLoader modLoader() {
@@ -64,6 +67,12 @@ public class ModCommon {
 
     static void handleServerTick(MinecraftServer server) {
         BattleManager.tick();
+    }
+
+    static Unit handleTerastallization(TerastallizationEvent e) {
+        // required to keep track of tera state for non-rctai battle actors for damage calculation purposes
+        BattleStates.get(e.getBattle()).getPokemonState(e.getPokemon()).add(BattleEffects.Custom.TERA);
+        return Unit.INSTANCE;
     }
 
     static Unit handlePokemonEntitySaveToWorld(PokemonEntitySaveToWorldEvent event) {
