@@ -46,7 +46,7 @@ public final class TypeChart {
      * 
      * @deprecated This overload will be removed in 0.14.
      */
-    @Deprecated(since = "0.13.6")
+    @Deprecated(since = "0.13.5")
     public static double getEffectiveness(InBattleMove move, BattlePokemon defender) {
         return getEffectiveness(getMove(move).getType(), defender);
     }
