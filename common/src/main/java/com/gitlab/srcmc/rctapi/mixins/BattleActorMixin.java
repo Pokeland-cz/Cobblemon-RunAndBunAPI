@@ -35,10 +35,7 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
  */
 @Mixin(BattleActor.class)
 public class BattleActorMixin {
-    // Keeping track of the 'turn' instructions helps the RCTBattleAI to circumvent
-    // issues with switch moves and similar in double/triple battles. Additionaly
-    // calling setWillBeSwitchedIn(false) here should ensure that the value is as
-    // expected on the start of every turn.
+    // Updates battle states.
     @Inject(method = "turn", at = @At("HEAD"), remap = false)
     private void injectTurn(CallbackInfo ci) {
         var self = (BattleActor)(Object)this;

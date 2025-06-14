@@ -9,6 +9,7 @@
     "MoveInstructionMixin",
     "BagItemInstructionMixin",
     "EndItemInstructionMixin",
+    "SwitchInstructionMixin",
     "AIBattleActorMixin",
     "BattleActorMixin",
     "PokemonMixin"

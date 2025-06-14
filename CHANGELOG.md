@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.5-beta] - 2025-06-14
+
+**Fixed:**
+
+- *#76* Some battle issues related to moves that force opponent pokemon to switch
+
 ## [0.13.4-beta] - 2025-06-10
 
 **Changed:**
