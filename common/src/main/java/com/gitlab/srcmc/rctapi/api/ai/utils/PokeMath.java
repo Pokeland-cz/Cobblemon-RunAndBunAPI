@@ -61,6 +61,7 @@ public class PokeMath {
         var attackerEp = attacker.getEffectedPokemon();
         var attackerPrimaryType = attackerEp.getPrimaryType();
         var attackerSecondaryType = attackerEp.getSecondaryType();
+        var attackerTeraType = attackerEp.getTeraType();
         var attackerAbility = attackerEp.getAbility();
 
         // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
@@ -72,7 +73,28 @@ public class PokeMath {
         if(attackerHasStatus && attackerAbility.getName().equals("guts")) baseDamage *= 1.5;
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getFIRE()) || rain && moveType.equals(ElementalTypes.INSTANCE.getWATER())) baseDamage *= 1.5;
         if(sun && moveType.equals(ElementalTypes.INSTANCE.getWATER()) || rain && moveType.equals(ElementalTypes.INSTANCE.getFIRE())) baseDamage *= 0.5;
-        if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) baseDamage *= 1.5;
+
+        // STAB
+        double stab = 1.0;
+        var terastal = BattleStates.get(attacker.actor.battle).getPokemonState(attacker).has(BattleEffects.Custom.TERA);
+        var adapt = attackerAbility.getName().equals("adaptability");
+
+        if(terastal && attackerTeraType != null) {
+            if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType) || moveType.getName().equals(attackerTeraType.showdownId())) {
+                var teraSame = attackerTeraType.showdownId().equals(attackerPrimaryType.getName())
+                    || (attackerSecondaryType != null && attackerTeraType.showdownId().equals(attackerSecondaryType.getName()));
+                    
+                stab = (teraSame && !adapt) ? 2.0
+                    : (teraSame && adapt) ? 2.25
+                    : 1.5; // (!teraSame && !adapt) || (!teraSame && adapt)
+            }
+        } else if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) {
+            stab = adapt ? 2.0 : 1.5;
+        }
+
+        baseDamage *= stab;
+
+        // TYPE
         baseDamage = (int)(baseDamage * TypeChart.getEffectiveness(moveType, defender));
 
         return baseDamage > 0

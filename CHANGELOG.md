@@ -2,6 +2,10 @@
 
 ## [0.13.5-beta] - 2025-06-14
 
+**Changed:**
+
+- *#77* Awareness of tera types in damage calculations
+
 **Fixed:**
 
 - *#76* Some battle issues related to moves that force opponent pokemon to switch

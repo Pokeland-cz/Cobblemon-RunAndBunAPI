@@ -50,7 +50,9 @@ public final class TypeChart {
 
     public static double getEffectiveness(ElementalType attackerType, BattlePokemon defender) {
         var ep = defender.getEffectedPokemon();
-        var eff = (getEffectiveness(attackerType, ep.getPrimaryType(), defender)) * (ep.getSecondaryType() != null ?  getEffectiveness(attackerType, ep.getSecondaryType(), defender) : 1.0);
+        var eff = BattleStates.get(defender.actor.battle).getPokemonState(defender).has(BattleEffects.Custom.TERA)
+            ? getEffectiveness(attackerType, ElementalTypes.INSTANCE.get(ep.getTeraType().showdownId()), defender)
+            : ((getEffectiveness(attackerType, ep.getPrimaryType(), defender)) * (ep.getSecondaryType() != null ?  getEffectiveness(attackerType, ep.getSecondaryType(), defender) : 1.0));
 
         if(eff < 2.0 && ep.getAbility().getName().equals("wonderguard")) {
             return 0;
@@ -61,7 +63,7 @@ public final class TypeChart {
 
     /**
      * @return 1.0
-     * @deprecated This overload will be removed in 0.13.
+     * @deprecated This overload will be removed in 0.14.
      */
     @Deprecated(since = "0.11.1")
     public static double getEffectiveness(ElementalType attackerType, ElementalType defenderPrimaryType, ElementalType defenderSecondaryType, Ability defenderAbility) {
