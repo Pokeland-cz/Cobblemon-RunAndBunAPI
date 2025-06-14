@@ -4,7 +4,8 @@
 
 **Changed:**
 
-- *#77* Awareness of tera types in damage calculations
+- *#78* Battle AI is now aware of hiddenpower types from pokemon
+- *#77* Battle AI is now aware of tera types from terastallized pokemon
 
 **Fixed:**
 

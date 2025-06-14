@@ -23,6 +23,7 @@ import java.util.Map;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
+import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.types.ElementalType;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
@@ -37,8 +38,16 @@ public final class TypeChart {
     private static final double NOT_VERY_EFFECTIVE = 0.5;
     private static final double IMMUNE = 0;
 
+    // deprecated: 
+
+    /**
+     * No hiddedpower support. Use {@link TypeChart#getHiddenPowerType(BattlePokemon)}
+     * and {@link TypeChart#getEffectiveness(ElementalType, BattlePokemon)} instead.
+     * 
+     * @deprecated This overload will be removed in 0.14.
+     */
+    @Deprecated(since = "0.13.6")
     public static double getEffectiveness(InBattleMove move, BattlePokemon defender) {
-        // TODO: hiddenpower type
         return getEffectiveness(getMove(move).getType(), defender);
     }
 
@@ -125,6 +134,37 @@ public final class TypeChart {
 
             return m.create();
         });
+    }
+
+    private static final ElementalType[] HIDDENPOWER_TYPES = new ElementalType[]{
+        ElementalTypes.INSTANCE.getFIGHTING(),
+        ElementalTypes.INSTANCE.getFLYING(),
+        ElementalTypes.INSTANCE.getPOISON(),
+        ElementalTypes.INSTANCE.getGROUND(),
+        ElementalTypes.INSTANCE.getROCK(),
+        ElementalTypes.INSTANCE.getBUG(),
+        ElementalTypes.INSTANCE.getGHOST(),
+        ElementalTypes.INSTANCE.getSTEEL(),
+        ElementalTypes.INSTANCE.getFIRE(),
+        ElementalTypes.INSTANCE.getWATER(),
+        ElementalTypes.INSTANCE.getGRASS(),
+        ElementalTypes.INSTANCE.getELECTRIC(),
+        ElementalTypes.INSTANCE.getPSYCHIC(),
+        ElementalTypes.INSTANCE.getICE(),
+        ElementalTypes.INSTANCE.getDRAGON(),
+        ElementalTypes.INSTANCE.getDARK()
+    };
+
+    // see: https://bulbapedia.bulbagarden.net/wiki/Hidden_Power_(move)/Calculation
+    public static ElementalType getHiddenPowerType(BattlePokemon pkmn) {
+        var ivs = pkmn.getEffectedPokemon().getIvs();
+        return HIDDENPOWER_TYPES[((
+            (ivs.get(Stats.HP) & 1)
+            + (ivs.get(Stats.ATTACK) & 1) * 2
+            + (ivs.get(Stats.DEFENCE) & 1) * 4
+            + (ivs.get(Stats.SPEED) & 1) * 8
+            + (ivs.get(Stats.SPECIAL_ATTACK) & 1) * 16
+            + (ivs.get(Stats.SPECIAL_DEFENCE) & 1) * 32)*15) / 63];
     }
 
     public static final int NORMAL = 1<<1;

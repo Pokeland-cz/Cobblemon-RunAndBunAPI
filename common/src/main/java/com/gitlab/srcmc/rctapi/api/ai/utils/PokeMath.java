@@ -141,7 +141,7 @@ public class PokeMath {
             false, // reflect
             false, // lightscreen
             status != null && !status.isEmpty(),
-            move.getType(),
+            move.getName().equals("hiddenpower") ? TypeChart.getHiddenPowerType(attacker) : move.getType(),
             attacker,
             defender));
     }
