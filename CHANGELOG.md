@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.6] - 2025-06-17
+
+**Changed:**
+
+- *#79* Errors for invalid held items are now only logged for the last checked held item of a pokemon (in case multiple options have been configured)
+
 ## [0.13.5-beta] - 2025-06-14
 
 **Changed:**

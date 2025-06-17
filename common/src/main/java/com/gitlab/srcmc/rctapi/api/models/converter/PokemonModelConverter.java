@@ -128,16 +128,22 @@ public class PokemonModelConverter implements Converter<PokemonModel, Pokemon> {
             }
         }
 
+        String item = null;
+        var itemValid = false;
+
         for(var itemId : model.getHeldItems()) {
-            var item = Locations.withNamespace("cobblemon", itemId);
+            item = Locations.withNamespace("cobblemon", itemId);
             var rl = ResourceLocation.parse(item);
 
-            if(errors.doif(BuiltInRegistries.ITEM.containsKey(rl), v -> v,
-                v -> pokemon.swapHeldItem(BuiltInRegistries.ITEM.get(rl).getDefaultInstance(), true),
-                "invalid held item '" + item + "'"))
-            {
+            if(BuiltInRegistries.ITEM.containsKey(rl)) {
+                pokemon.swapHeldItem(BuiltInRegistries.ITEM.get(rl).getDefaultInstance(), true);
+                itemValid = true;
                 break;
             }
+        }
+
+        if(item != null && !itemValid) {
+            errors.add(RCTError.of("invalid held item '" + item + "'"));
         }
 
         return pokemon;

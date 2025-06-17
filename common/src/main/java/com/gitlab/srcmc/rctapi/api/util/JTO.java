@@ -42,9 +42,9 @@ import com.google.gson.JsonParser;
  *  "data": { ... }
  *}
  * </pre>
- * Where {@code "type"} might name any registered parser (see {@link JTO#registerParser(String, Function)})
- * and {@code "data"} define a json object that will be supplied (as {@link JsonObject}) to the json parser
- * ({@code "data"} may be omitted in which case {@code null} will be supplied to the parser).
+ * Where {@code type} might name any registered parser (see {@link JTO#registerParser(String, Function)})
+ * and {@code data} is a json object that will be supplied (as {@link JsonObject}) to the json parser
+ * ({@code data} may be omitted in which case {@code null} will be supplied).
  */
 public class JTO<T> implements Serializable {
     private static final long serialVersionUID = 0L;
