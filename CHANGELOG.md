@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.7-beta] - 2025-07-05
+
+**Fixed:**
+
+- *#80* Issues with multiturn moves
+
 ## [0.13.6-beta] - 2025-06-17
 
 **Changed:**

@@ -210,7 +210,9 @@ public class ResponseBuilder {
             .forEach(ch -> ModCommon.LOG.info(String.format(" - %s: %.4f", ch.name, ch.weight))));
 
         var response = choices.isEmpty()
-            ? PassActionResponse.INSTANCE
+            ? this.forceMove && this.mustChoose && this.pkmn.hasPokemon()
+                ? new DefaultActionResponse()
+                : PassActionResponse.INSTANCE
             : getRandom(takeWithMargin(choices.stream().sorted(), this.margin), this.rng, this.margin)
                 .orElse(new Choice<>("DEFAULT", new DefaultActionResponse(), 0)).pick().value;
 
