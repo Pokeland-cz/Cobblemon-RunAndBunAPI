@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.8-beta] - 2025-08-12
+
+**Fixed:**
+
+- *#81* Fixed dyna- and gmax failing for some status moves
+
 ## [0.13.7-beta] - 2025-07-05
 
 **Fixed:**

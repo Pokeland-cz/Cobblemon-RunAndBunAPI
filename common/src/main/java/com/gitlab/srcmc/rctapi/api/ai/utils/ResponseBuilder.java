@@ -25,6 +25,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.cobblemon.mod.common.api.moves.Moves;
+import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BagItemActionResponse;
 import com.cobblemon.mod.common.battles.DefaultActionResponse;
@@ -172,9 +174,11 @@ public class ResponseBuilder {
             var move = choice.value.first;
             var target = choice.value.second;
             var gimmickId = (gimmick != null && (!Gimmick.Z_POWER.equals(gimmick) || move.getGimmickMove() != null)) ? gimmick.getId() : null;
+            var max = Gimmick.DYNAMAX.getId().equals(gimmickId);
+            var status = Moves.INSTANCE.getByName(move.id).getDamageCategory().equals(DamageCategories.INSTANCE.getSTATUS());
 
             this.choices.add(new Choice<>(choice.name,
-                new MoveActionResponse(move.id, target != null ? target.getPNX() : null, gimmickId), choice.weight,
+                new MoveActionResponse(move.id, ((!max || !status) && target != null) ? target.getPNX() : null, gimmickId), choice.weight,
                 () -> {
                     var battleState = BattleStates.get(this.pkmn.getBattle());
                     battleState.getActorState(this.pkmn.getActor()).addGimmick(gimmickId);
