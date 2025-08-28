@@ -57,7 +57,10 @@ public abstract class BattleGUIMixin {
             if(request.getForceSwitch()) {
                 // delayed (waits for BattleMakeChoiceRequest)
                 ClientTasks.BATTLE_SELECTIONS.runIf(
-                    battle::checkForFinishedChoosing,
+                    () -> {
+                        battle.checkForFinishedChoosing();
+                        ModClient.BATTLE_STATE.unlock();
+                    },
                     ModClient.BATTLE_STATE::isReady,
                     SELECT_DELAY + SELECT_DELAY * battle.getBattleFormat().getBattleType().getPokemonPerSide());
             } else {
