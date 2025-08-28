@@ -17,61 +17,12 @@
  */
 package com.gitlab.srcmc.rctapi.client;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.cobblemon.mod.common.client.battle.ActiveClientBattlePokemon;
-import com.gitlab.srcmc.rctapi.ModCommon;
-
-import net.minecraft.client.Minecraft;
-
 public class ModClient {
     public static final BattleState BATTLE_STATE = new BattleState();
 
     public static class BattleState {
-        // private final Set<ActiveClientBattlePokemon> recentlyFainted = new HashSet<>();
-        // private int choiceRequestCount;
-        // private int expectedRequests;
-
         private boolean locked;
-
-        // public void addFainted(ActiveClientBattlePokemon pkmn) {
-        //     synchronized(this.recentlyFainted) {
-        //         this.recentlyFainted.add(pkmn);
-        //     }
-        // }
-
-        // public boolean removeFainted(ActiveClientBattlePokemon pkmn) {
-        //     boolean removed;
-
-        //     synchronized(this.recentlyFainted) {
-        //         removed = this.recentlyFainted.remove(pkmn);
-        //     }
-
-        //     return removed;
-        // }
-
-        // public void addExpectedRequests(int count) {
-        //     this.expectedRequests += count;
-        // }
-
-        // public int getExpectedRequests() {
-        //     return this.expectedRequests;
-        // }
-
-        // public void resetRequests() {
-        //     this.choiceRequestCount = 0;
-        //     this.expectedRequests = 0;
-        // }
-
-        // public void incChoiceRequestCount() {
-        //     this.choiceRequestCount++;
-        // }
-
-        // public int getChoiceRequestCount() {
-        //     return this.choiceRequestCount;
-        // }
-
+        
         public void lock() {
             this.locked = true;
         }
@@ -83,64 +34,8 @@ public class ModClient {
         public boolean isReady() {
             return !this.locked;
         }
-
-        // public void reset() {
-        //     synchronized(this.recentlyFainted) {
-        //         this.recentlyFainted.clear();
-        //     }
-
-        //     this.resetChoiceRequestCount();
-        // }
     }
 
     public static void init() {
     }
-
-    // private static Thread delayThread;
-
-    // public static void runLater(Runnable r, long delay) {
-    //     new Thread(() -> {
-    //         try {
-    //             Thread.sleep(delay);
-    //         } catch(InterruptedException e) {
-    //         }
-
-    //         Minecraft.getInstance().execute(r);
-    //     }).start();
-    // }
-
-    // public static void execAfterDelay(Runnable r) {
-    //     var delay = ModClient.delayThread;
-
-    //     new Thread(() -> {
-    //         if(delay != null) {
-    //             try {
-    //                 delay.join();
-    //             } catch(InterruptedException e) {
-    //             }
-    //         }
-
-    //         Minecraft.getInstance().execute(r);
-    //     }).start();
-    // }
-
-    // public static void setDelay(long delay) {
-    //     ModClient.delayThread = new Thread(() -> {
-    //         try {
-    //             ModCommon.LOG.info("DELAY START: " + delay + "ms");
-    //             Thread.sleep(delay);
-    //         } catch(InterruptedException e) {
-    //         }
-
-    //         ModCommon.LOG.info("DELAY OVER: " + delay + "ms");
-    //     });
-
-    //     ModClient.delayThread.start();
-    // }
-
-    // public static void cancelDelay() {
-    //     if(ModClient.delayThread != null) {
-    //         ModClient.delayThread.interrupt();
-    //     }
-    // }
 }

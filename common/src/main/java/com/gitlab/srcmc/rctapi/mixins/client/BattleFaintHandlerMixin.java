@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.mixins;
+package com.gitlab.srcmc.rctapi.mixins.client;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,19 +23,33 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.cobblemon.mod.common.client.CobblemonClient;
-import com.cobblemon.mod.common.client.net.battle.BattleUpdateTeamPokemonHandler;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleMakeChoicePacket;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleUpdateTeamPokemonPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
+import com.cobblemon.mod.common.client.net.battle.BattleFaintHandler;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleFaintPacket;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
 import net.minecraft.client.Minecraft;
 
-@Mixin(BattleUpdateTeamPokemonHandler.class)
-public abstract class BattleUpdateTeamPokemonHandlerMixin {
-    // debugging/logging
-    @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
-    private void injectHandle(BattleUpdateTeamPokemonPacket packet, Minecraft client, CallbackInfo ci) {
-        ModCommon.LOG.info("BattleUpdateTeamPokemonPacket: " + packet.getId() + ", " + packet.getPokemon());
+@Mixin(BattleFaintHandler.class)
+public abstract class BattleFaintHandlerMixin {
+    /**
+     * End of turn faint softlock 'fix'.
+     * 
+     * @see {@link BattleGUIMixin#injectSelectAction}
+     * @see {@link BattleMakeChoiceHandlerMixin#injectHandle}
+     */
+    @Inject(method = "handle", at = @At("HEAD"), remap = false)
+    private void injectHandle(BattleFaintPacket packet, Minecraft client, CallbackInfo ci) {
+        // Observation/Idea: After a pokemon faints the player will receive a
+        // BattleMakeChoiceRequests. Delay the SwitchResponse until it arrives.
+        var battle = CobblemonClient.INSTANCE.getBattle();
+
+        if(battle != null) {
+            var actorAndPkmn = battle.getPokemonFromPNX(packet.getPnx());
+            var player = Minecraft.getInstance().player;
+
+            if(battle.getParticipatingActor(player.getUUID()) == actorAndPkmn.component1()) {
+                ModClient.BATTLE_STATE.lock();
+            }
+        }
     }
 }

@@ -2,6 +2,6 @@ build:
   develop: ./gradlew clean build
   release: ./gradlew clean build -Prelease
 copyto:
-  fabric: version=$(grep "mod_version" "gradle.properties"); version="${version:12}"; cp "fabric/build/libs/rctapi-fabric-1.21.1-$version.jar" "$HOME/.local/share/ModrinthApp/profiles/Radical/mods"
+  fabric: version=$(grep "mod_version" "gradle.properties"); version="${version:12}"; cp "fabric/build/libs/rctapi-fabric-1.21.1-$version.jar" "$HOME/.local/share/ModrinthApp/profiles/Radical (fabric)/mods"
   neoforge: version=$(grep "mod_version" "gradle.properties"); version="${version:12}"; cp "neoforge/build/libs/rctapi-neoforge-1.21.1-$version.jar" "$HOME/.local/share/ModrinthApp/profiles/Radical/mods"
 publish: inenv ./tools/publish

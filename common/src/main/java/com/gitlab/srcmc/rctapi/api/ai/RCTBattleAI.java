@@ -18,13 +18,9 @@
 package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
-import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
-import com.cobblemon.mod.common.api.pokemon.stats.Stat;
-import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.ShowdownMoveset.Gimmick;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.cobblemon.mod.common.entity.pokemon.effects.BattleEffect;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
 import com.gitlab.srcmc.rctapi.ModCommon;
@@ -67,9 +63,9 @@ public class RCTBattleAI implements BattleAI {
 
     @Override
     public ShowdownActionResponse choose(ActiveBattlePokemon pkmn, ShowdownMoveset moveset, boolean forceSwitch) {
-        Debug.log(1, "[REQUEST for %s, turn %d]: noCancel: %b, wait: %b, must: %b, fitForced: %b, sending: %d, responses: %d, active: %d, forceSwitch: [%s ]",
+        Debug.log(1, () -> ModCommon.LOG.info(String.format(
+            "[REQUEST for %s]: noCancel: %b, wait: %b, must: %b, fitForced: %b, sending: %d, responses: %d, active: %d, forceSwitch: [%s ]",
             pkmn.getActor().getName().getString(),
-            BattleStates.get(pkmn.getBattle()).getActorState(pkmn.getActor()).getTurn(),
             pkmn.getActor().getRequest().getNoCancel(),
             pkmn.getActor().getRequest().getWait(),
             pkmn.getActor().getMustChoose(),
@@ -78,7 +74,7 @@ public class RCTBattleAI implements BattleAI {
             pkmn.getActor().getResponses() != null ? pkmn.getActor().getResponses().size() : 0,
             pkmn.getActor().getRequest().getActive() != null ? pkmn.getActor().getRequest().getActive().size() : 0,
             pkmn.getActor().getRequest().getForceSwitch() != null ? pkmn.getActor().getRequest().getForceSwitch().stream().map(String::valueOf).reduce("", (a, b) -> a + " " + b) : ""
-        );
+        )));
 
         Debug.log(2, () -> {
             if(pkmn.isAlive()) {
@@ -89,45 +85,6 @@ public class RCTBattleAI implements BattleAI {
                     .forEach(BattleEffects::dump);
             }
         });
-
-        // if(!forceSwitch && pkmn.getActor().getRequest().getForceSwitch().contains(true)) {
-        //     return PassActionResponse.INSTANCE;
-        // }
-
-        // var actorSt = BattleStates.get(pkmn.getBattle()).getActorState(pkmn.getActor());
-        // var response = actorSt.getResponse(pkmn);
-
-        // if(response != null && response.isValid(pkmn, moveset, forceSwitch)) {
-        //     return PassActionResponse.INSTANCE;
-        // }
-
-        // if(pkmn.getActor().getResponses() != null) {
-        //     var response = pkmn.getActor().getResponses().stream().filter(r -> r.isValid(pkmn, moveset, forceSwitch)).findFirst().orElse(null);
-
-        //     if(response != null) {
-        //         ModCommon.LOG.info("=> PREVIOUS RESPONSE: " + response.toString() + ", " + response.toShowdownString(pkmn, moveset));
-        //         // return response;
-        //         return PassActionResponse.INSTANCE; // TEST
-        //     }
-        // }
-        
-        // if(forceSwitch) {
-        //     var actorSt = BattleStates.get(pkmn.getBattle()).getActorState(pkmn.getActor());
-
-        //     if(actorSt.getResponse(pkmn) instanceof SwitchActionResponse response) {
-        //         return response;
-        //     } else {
-        //         actorSt.setResponse(pkmn, null);
-        //     }
-        // }
-
-        // if(pkmn.getActor().getResponses() != null && pkmn.getActor().getResponses().size() > 0) {
-        //     return pkmn.getActor().getResponses().get(0);
-        // }
-
-        // if(forceSwitch && !pkmn.getActor().getMustChoose()) {
-        //     return new ForcePassActionResponse();
-        // }
 
         if(pkmn.hasPokemon() && moveset != null) {
             if(RCTApi.getInstances()

@@ -18,15 +18,17 @@
 package com.gitlab.srcmc.rctapi.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.MoveInstruction;
 import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
  * Custom event for successful moves.
@@ -35,17 +37,13 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
  */
 @Mixin(MoveInstruction.class)
 public abstract class MoveInstructionMixin {
+    @Shadow(remap = false)
+    public abstract BattleMessage getMessage();
+
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
-        var self = (MoveInstruction)(Object)this;
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
-
-        if(battleState != null) {
-            var message = self.getMessage();
+        if(BattleState.findFirst(battle) != null) {
+            var message = this.getMessage();
 
             if(!message.hasOptionalArgument("still") && !message.hasOptionalArgument("miss")) {
                 var from = message.battlePokemon(0, battle);

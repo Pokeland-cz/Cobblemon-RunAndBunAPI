@@ -4,32 +4,21 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
+    "client.BattleFaintHandlerMixin",
+    "client.BattleGUIMixin",
+    "client.BattleMakeChoiceHandlerMixin"
   ],
   "mixins": [
-    "MoveInstructionMixin",
-    "BagItemInstructionMixin",
-    "EndItemInstructionMixin",
-    "SwitchInstructionMixin",
-    "TransformInstructionMixin",
     "AIBattleActorMixin",
+    "BagItemInstructionMixin",
     "BattleActorMixin",
-    "PokemonMixin",
+    "EndItemInstructionMixin",
+    "MoveInstructionMixin",
     "PokemonBattleMixin",
-    "ShowdownInterpreterMixin",
-    "TurnInstructionMixin",
-    "FaintInstructionMixin",
-    "BattleSelectActionsHandlerMixin",
+    "PokemonMixin",
     "RequestInstructionMixin",
-    "BattleApplyPassResponseHandlerMixin",
-    "ClientBattleMixin",
-    "BattleGUIMixin",
-    "BattleSwapPokemonHandleMixin",
-    "BattleMakeChoiceHandlerMixin",
-    "BattleSwitchPokemonHandlerMixin",
-    "BattleQueueRequestHandlerMixin",
-    "BattleFaintHandlerMixin",
-    "BattleMessageHandlerMixin",
-    "BattleUpdateTeamPokemonHandlerMixin"
+    "SwitchInstructionMixin",
+    "TransformInstructionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -22,10 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
+import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 
 /**
@@ -186,6 +190,33 @@ public class BattleState {
      */
     public boolean isEndForced() {
         return this.endForced;
+    }
+
+    /**
+     * Retrieves the first available {@link BattleState} for the given {@link PokemonBattle}
+     * or null if the battle was never registered by this api.
+     * 
+     * @param battle Active pokemon battle.
+     * @return {@link BattleState} for the given {@link PokemonBattle} or null.
+     */
+    public static @Nullable BattleState findFirst(@NotNull PokemonBattle battle) {
+        return BattleState
+            .findAll(battle)
+            .findFirst().orElse(null);
+    }
+
+    /**
+     * Retrieves a stream of available {@link BattleState}s for the given
+     * {@link PokemonBattle}.
+     * 
+     * @param battle Active pokemon battle.
+     * @return Stream of {@link BattleState}s for the given {@link PokemonBattle}.
+     */
+    public static Stream<BattleState> findAll(@NotNull PokemonBattle battle) {
+        return RCTApi.getInstances()
+            .map(e -> e.getValue().getBattleManager()
+            .getState(battle.getBattleId()))
+            .filter(bs -> bs != null);
     }
 
     /**

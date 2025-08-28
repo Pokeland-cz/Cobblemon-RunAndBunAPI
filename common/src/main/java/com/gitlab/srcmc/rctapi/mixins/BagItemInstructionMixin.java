@@ -18,14 +18,16 @@
 package com.gitlab.srcmc.rctapi.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.BagItemInstruction;
 
-import com.gitlab.srcmc.rctapi.api.RCTApi;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
  * Required to keep track of the number of items used by actors per battle.
@@ -34,17 +36,15 @@ import com.gitlab.srcmc.rctapi.api.RCTApi;
  */
 @Mixin(BagItemInstruction.class)
 public abstract class BagItemInstructionMixin {
+    @Shadow(remap = false)
+    public abstract BattleMessage getMessage();
+
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
-        var self = (BagItemInstruction)(Object)this;
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
+        var battleState = BattleState.findFirst(battle);
 
         if(battleState != null) {
-            var message = self.getMessage();
+            var message = this.getMessage();
             var pkmn = message.pokemonByUuid(0, battle);
 
             if(pkmn != null) {

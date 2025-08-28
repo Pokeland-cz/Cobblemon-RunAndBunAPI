@@ -17,12 +17,18 @@
  */
 package com.gitlab.srcmc.rctapi.mixins;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
-import com.gitlab.srcmc.rctapi.api.RCTApi;
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
+import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
  * Fixes bug (?) in {@link AIBattleActor#onChoiceRequested()}. Potential NPE if no
@@ -33,18 +39,15 @@ import com.gitlab.srcmc.rctapi.api.RCTApi;
  * Note: Appears to be fixed in latest Cobblemon.
  */
 @Mixin(AIBattleActor.class)
-public class AIBattleActorMixin {
+public abstract class AIBattleActorMixin extends BattleActor {
+    public AIBattleActorMixin(UUID arg0, List<BattlePokemon> arg1) {
+        super(arg0, arg1);
+    }
+
     @Inject(method = "onChoiceRequested", at = @At("HEAD"), cancellable = true, remap = false)
     private void injectOnChoiceRequested(CallbackInfo ci) {
-        var self = (AIBattleActor)(Object)this;
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(self.battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
-        
-        if(battleState != null) {
-            if(self.getRequest() == null) {
+        if(BattleState.findFirst(this.getBattle()) != null) {
+            if(this.getRequest() == null) {
                 ci.cancel();
             }
         }

@@ -18,32 +18,30 @@
 package com.gitlab.srcmc.rctapi.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.EndItemInstruction;
-import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
  * Required to keep track of destroyed/used held items.
  */
 @Mixin(EndItemInstruction.class)
 public abstract class EndItemInstructionMixin {
+    @Shadow(remap = false)
+    public abstract BattleMessage getMessage();
+
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
-        var self = (EndItemInstruction)(Object)this;
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
-
-        if(battleState != null) {
-            var message = self.getMessage();
+        if(BattleState.findFirst(battle) != null) {
+            var message = this.getMessage();
             var pkmn = message.battlePokemon(0, battle);
 
             if(pkmn != null) {

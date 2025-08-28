@@ -27,17 +27,23 @@ import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.battles.interpreter.instructions.TransformInstruction;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 @Mixin(TransformInstruction.class)
 public abstract class TransformInstructionMixin {
-    @Shadow
+    @Shadow(remap = false)
     public abstract BattleMessage getMessage();
-    
+
+    /**
+     * Creates and stores all properties for a transformation
+     * target (i.e. from Dittos transform).
+     */
     @Inject(method = "invoke", at = @At("TAIL"), remap = false)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
-        // keep track of properties from transformation target
-        var pkmn = this.getMessage().battlePokemon(0, battle);
-        var target = this.getMessage().battlePokemon(1, battle);
-        BattleStates.get(battle).getPokemonState(pkmn).setTransformation(target);
+            if(BattleState.findFirst(battle) != null) {
+            var pkmn = this.getMessage().battlePokemon(0, battle);
+            var target = this.getMessage().battlePokemon(1, battle);
+            BattleStates.get(battle).getPokemonState(pkmn).setTransformation(target);
+        }
     }
 }

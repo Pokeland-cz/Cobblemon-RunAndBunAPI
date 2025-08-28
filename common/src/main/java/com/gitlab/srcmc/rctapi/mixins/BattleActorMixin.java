@@ -17,19 +17,22 @@
  */
 package com.gitlab.srcmc.rctapi.mixins;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
+import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleMakeChoicePacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.api.RCTApi;
+import com.cobblemon.mod.common.battles.ShowdownActionRequest;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
+import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
  * Restricts usage of bag items based on configurable limits per battle.
@@ -37,78 +40,29 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
  * @see BagItemInstructionMixin
  */
 @Mixin(BattleActor.class)
-public class BattleActorMixin {
-    // Updates battle states.
+public abstract class BattleActorMixin {
+    @Shadow(remap = false)
+    public abstract ShowdownActionRequest getRequest();
+
+    @Shadow(remap = false)
+    public abstract PokemonBattle getBattle();
+
+    @Shadow(remap = false)
+    public abstract List<ActiveBattlePokemon> getActivePokemon();
+
+    @Shadow(remap = false)
+    public abstract UUID getUuid();
+
+    // Updates active pokemon turns.
     @Inject(method = "turn", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectTurn(CallbackInfo ci) {
-        var self = (BattleActor)(Object)this;
-        ModCommon.LOG.info("TURN: " + self.getName().getString() + ", pkmn: " + self.getActivePokemon().stream().filter(p -> p.isAlive()).count() + ", " + self.getRequest());
-
-        var battleState = RCTApi.getInstances()
-            .map(e -> e.getValue().getBattleManager()
-            .getState(self.battle.getBattleId()))
-            .filter(bs -> bs != null)
-            .findFirst().orElse(null);
-        
-        if(battleState != null) {
-            var bs = BattleStates.get(battleState.getBattle());
-            // bs.getActorState(self).nextTurn();
-            self.getActivePokemon().stream()
+        if(BattleState.findFirst(this.getBattle()) != null) {
+            var bs = BattleStates.get(this.getBattle());
+            this.getActivePokemon().stream()
                 .filter(ActiveBattlePokemon::hasPokemon)
                 .forEach(pkmn  -> bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn());
         }
-
-        // // reimplementation in java
-        // var request = self.getRequest();
-
-        // if(request == null) {
-        //     ci.cancel();
-        //     return;
-        // }
-
-        // self.getResponses().clear();
-
-        // if(self.getActivePokemon().stream().anyMatch(p -> p.isAlive())) {
-        //     ModCommon.LOG.info("SENDING CHOICE PACKET");
-        //     self.setMustChoose(true);
-        //     self.sendUpdate(new BattleMakeChoicePacket());
-        // }
-
-        // var requestActive = request.getActive();
-
-        // if(requestActive == null || requestActive.isEmpty() || request.getWait()) {
-        //     ModCommon.LOG.info("REQUEST NOT ACTIVE: " + (requestActive == null) + ", " + requestActive.isEmpty() + ", " + request.getWait());
-        //     self.setRequest(null);
-        //     self.getExpectingPassActions().clear();
-        // }
-
-        // ci.cancel();
     }
-
-    // debugging/testing stuff
-    // @Inject(method = "upkeep", at = @At("HEAD"), remap = false)
-    // private void injectUpkeep(CallbackInfo ci) {
-    //     var self = (BattleActor)(Object)this;
-    //     ModCommon.LOG.info("UPKEEP: " + self.getName().getString() + ", request: " + self.getRequest());
-
-    //     var battleState = RCTApi.getInstances()
-    //         .map(e -> e.getValue().getBattleManager()
-    //         .getState(self.battle.getBattleId()))
-    //         .filter(bs -> bs != null)
-    //         .findFirst().orElse(null);
-        
-    //     if(battleState != null) {
-    //         var bs = BattleStates.get(battleState.getBattle());
-    //         bs.getActorState(self).nextRequest();
-    //     }
-    // }
-
-    // // debugging/testing stuff
-    // @Inject(method = "writeShowdownResponse", at = @At("HEAD"), remap = false)
-    // private void injectWriteShowdownResponse(CallbackInfo ci) {
-    //     var self = (BattleActor)(Object)this;
-    //     ModCommon.LOG.info("RESPONSE: " + self.getName().getString());
-    // }
 
     // This is the only place I could figure to prevent the usage of items for any
     // battle actors. By the looks of it it shouldn't have any other than the desired
@@ -117,18 +71,13 @@ public class BattleActorMixin {
     @Inject(method = "canFitForcedAction", at = @At("RETURN"), cancellable = true, remap = false)
     private void injectCanFitForcedAction(CallbackInfoReturnable<Boolean> cir) {
         if(cir.getReturnValue()) {
-            var self = (BattleActor)(Object)this;
-            var battleState = RCTApi.getInstances()
-                .map(e -> e.getValue().getBattleManager()
-                .getState(self.battle.getBattleId()))
-                .filter(bs -> bs != null)
-                .findFirst().orElse(null);
-            
+            var battleState = BattleState.findFirst(this.getBattle());
+
             if(battleState != null) {
                 var maxItems = battleState.getRules().getMaxItemUses();
                 
                 if(maxItems >= 0) {
-                    var actorState = battleState.getState(self.getUuid());
+                    var actorState = battleState.getState(this.getUuid());
                     cir.setReturnValue(actorState.getItemsUsed() < maxItems);
                 }
             }

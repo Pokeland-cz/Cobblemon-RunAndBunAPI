@@ -19,9 +19,7 @@ package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,21 +30,15 @@ import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.gitlab.srcmc.rctapi.ModCommon;
-
-import net.minecraft.server.MinecraftServer;
 
 /**
  * Utility class to keep track of information throughout a battle.
  */
 public final class BattleStates {
     public static class ActorState {
-        // private final Map<ActiveBattlePokemon, ShowdownActionResponse> responses = new HashMap<>();
-        // private final Set<ActiveBattlePokemon> responses = new HashSet<>();
         private final Map<ActiveBattlePokemon, ShowdownActionResponse> responses = new HashMap<>();
         private final Set<BattlePokemon> switchChoices = new HashSet<>();
         private final Set<String> gimmicks = new HashSet<>();
-        private int turn;
 
         public void addGimmick(String showdownId) {
             this.gimmicks.add(showdownId);
@@ -55,18 +47,6 @@ public final class BattleStates {
         public boolean hasGimmick(String showdownId) {
             return this.gimmicks.contains(showdownId);
         }
-
-        // public void setResponse(ActiveBattlePokemon pkmn, ShowdownActionResponse response) {
-        //     if(response == null) {
-        //         responses.remove(pkmn);
-        //     } else {
-        //         responses.put(pkmn, response);
-        //     }
-        // }
-
-        // public ShowdownActionResponse getResponse(ActiveBattlePokemon pkmn) {
-        //     return this.responses.get(pkmn);
-        // }
 
         public void setWillBeSwitchedIn(BattlePokemon pkmn) {
             this.setWillBeSwitchedIn(pkmn, true);
@@ -84,14 +64,6 @@ public final class BattleStates {
             return this.switchChoices.contains(pkmn);
         }
 
-        // public void addResponse(ActiveBattlePokemon pkmn) {
-        //     this.responses.add(pkmn);
-        // }
-
-        // public void removeResponse(ActiveBattlePokemon pkmn) {
-        //     this.responses.remove(pkmn);
-        // }
-
         public void setResponse(ActiveBattlePokemon pkmn, ShowdownActionResponse response) {
             if(response != null) {
                 this.responses.put(pkmn, response);
@@ -107,25 +79,10 @@ public final class BattleStates {
         public boolean hasResponse(ActiveBattlePokemon pkmn) {
             return this.responses.containsKey(pkmn);
         }
-
-        // public void nextUpkeep() {
-        //     this.switchChoices.clear();
-        // }
-
+        
         public void nextRequest() {
             this.switchChoices.clear();
-            this.responses.clear(); // will it work?
-        }
-
-        // deprecated ?
-        public void nextTurn() {
-            // this.switchChoices.clear();
             this.responses.clear();
-            this.turn++;
-        }
-
-        public int getTurn() {
-            return this.turn;
         }
     }
 
@@ -215,51 +172,8 @@ public final class BattleStates {
         private Map<BattlePokemon, PokemonState> pokemonStates = new HashMap<>();
         private Map<BattleActor, ActorState> actorStates = new HashMap<>();
 
-        private Queue<Runnable> execLaterHandlers = new LinkedList<>();
-        private int forcedSwitches;
-
         private BattleState() {
         }
-
-        // public int getForcedSwitches() {
-        //     return this.forcedSwitches;
-        // }
-
-        // public void incForcedSwitches() {
-        //     this.forcedSwitches++;
-        // }
-
-        // public void decForcedSwitches() {
-        //     if(this.forcedSwitches > 0 && --this.forcedSwitches == 0) {
-        //         this.execAll();
-        //     }
-        // }
-
-        // public void execAfterForceSwitch(MinecraftServer server, Runnable r) {
-        //     this.execAfterForceSwitch(server, r, 0);
-        // }
-
-        // public void execAfterForceSwitch(MinecraftServer server, Runnable r, int timeout) {
-        //     if(this.forcedSwitches > 0) {
-        //         ModCommon.LOG.info("EXEC LATER");
-        //         this.execLaterHandlers.offer(() -> {
-        //             // try {Thread.sleep(timeout);} catch (InterruptedException e) {}
-        //             server.execute(r);
-        //         });
-        //     } else {
-        //         ModCommon.LOG.info("EXEC NOW");
-        //         server.execute(r);
-        //     }
-        // }
-
-        // private void execAll() {
-        //     ModCommon.LOG.info("AFTER SWITCHES (" + this.forcedSwitches + ")");
-
-        //     while(!this.execLaterHandlers.isEmpty()) {
-        //         this.execLaterHandlers.poll().run();
-        //         // new Thread(this.execLaterHandlers.poll()).start();
-        //     }
-        // }
 
         public PokemonState getPokemonState(BattlePokemon pkmn) {
             return this.pokemonStates.computeIfAbsent(pkmn, k -> new PokemonState());
@@ -282,12 +196,6 @@ public final class BattleStates {
         var transformation = BattleStates.get(pkmn.actor.battle).getPokemonState(pkmn).getTransformation();
         return transformation != null ? transformation : pkmn.getEffectedPokemon();
     }
-
-    // public static void notifyPokemonFainted(PokemonBattle battle, BattlePokemon pkmn) {
-    //     if(BattleStates.STATES.containsKey(battle.getBattleId())) {
-    //         BattleStates.get(battle).getActorState(pkmn.actor).removeResponse(pkmn.actor.getActivePokemon().stream().filter(ap -> ap.getBattlePokemon() == pkmn).findFirst().get());
-    //     }
-    // }
 
     public static void notifyBattleEnded(PokemonBattle battle) {
         BattleStates.STATES.remove(battle.getBattleId());

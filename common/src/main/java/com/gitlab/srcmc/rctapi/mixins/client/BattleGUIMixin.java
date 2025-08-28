@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.mixins;
+package com.gitlab.srcmc.rctapi.mixins.client;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
-import com.cobblemon.mod.common.battles.SwitchActionResponse;
 import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.battle.SingleActionRequest;
 import com.cobblemon.mod.common.client.gui.battle.BattleGUI;
@@ -35,9 +34,10 @@ import com.gitlab.srcmc.rctapi.client.ModClient;
 
 @Mixin(BattleGUI.class)
 public abstract class BattleGUIMixin {
+    // max delay is based of this and pokemon per side (faint softlock fix)
     private static final long SELECT_DELAY = 5000;
 
-    @Shadow
+    @Shadow(remap = false)
     public abstract void changeActionSelection(@Nullable BattleActionSelection arg0);
 
     /**
@@ -54,60 +54,18 @@ public abstract class BattleGUIMixin {
             request.setResponse(response);
             this.changeActionSelection(null);
 
-            // if(request.getForceSwitch() && (response instanceof SwitchActionResponse) && ModClient.BATTLE_STATE.removeFainted(request.getActivePokemon())) {
             if(request.getForceSwitch()) {
+                // delayed (waits for BattleMakeChoiceRequest)
                 ClientTasks.BATTLE_SELECTIONS.runIf(
                     battle::checkForFinishedChoosing,
                     ModClient.BATTLE_STATE::isReady,
                     SELECT_DELAY + SELECT_DELAY * battle.getBattleFormat().getBattleType().getPokemonPerSide());
             } else {
+                // immediately (normal)
                 ClientTasks.BATTLE_SELECTIONS.run(battle::checkForFinishedChoosing);
             }
         }
 
         ci.cancel();
     }
-
-    // @Inject(method = "deriveRootActionSelection", at = @At("HEAD"), remap = false, cancellable = true)
-    // private void injectDeriveRootActionSelection(ClientBattleActor actor, SingleActionRequest request, CallbackInfoReturnable<BattleActionSelection> cir) {
-    //     // if(request.getForceSwitch()) { // TODO: this is only required if BOTH sides have to force switch
-    //     //     ModClient.setDelay(DELAY);
-    //     // }
-    //     ModCommon.LOG.info("deriveRootActionSelection");
-    // }
-
-    // private long ticks;
-
-    // // debugging/logging
-    // @Inject(method = "render", at = @At("TAIL"), remap = false)
-    // private void injectRender(GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-    //     var self = (BattleGUI)(Object)this;
-    //     var battle = CobblemonClient.INSTANCE.getBattle();
-
-    //     if(battle != null && self.getActor() != null) {
-    //         if((ticks++) % 240 == 0) {
-    //             ModCommon.LOG.info("GUI RENDER: " + battle.getMustChoose() + ", " + self.getCurrentActionSelection() + ", " + battle.getFirstUnansweredRequest() + ", " + self.getActor().getDisplayName().getString());
-    //         }
-
-    //         if(battle.getMustChoose()) {
-    //             if(self.getCurrentActionSelection() == null) {
-    //                 var unanswered = battle.getFirstUnansweredRequest();
-
-    //                 if((ticks-1) % 240 == 0) {
-    //                     ModCommon.LOG.info("UNANSWERED: " + unanswered);
-    //                 }
-
-    //                 if(unanswered != null) {
-    //                     // self.changeActionSelection(self.deriveRootActionSelection(self.getActor(), unanswered));
-    //                 }
-    //             }
-    //         } else if (self.getCurrentActionSelection() != null) {
-    //             if((ticks-1) % 240 == 0) {
-    //                 ModCommon.LOG.info("NO CHOOSE AND SELECTION");
-    //             }
-
-    //             // self.changeActionSelection(null);
-    //         }
-    //     }
-    // }
 }
