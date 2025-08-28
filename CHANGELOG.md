@@ -1,10 +1,16 @@
 # Changelog
 
-## [0.13.8-beta] - 2025-08-12
+## [0.13.8-beta] - 2025-08-26
+
+**Changed:**
+
+- *#84* Improved AI awareness of many battle effects (like "Wish" being passed to a switched pokemon)
 
 **Fixed:**
 
-- *#81* Fixed dyna- and gmax failing for some status moves
+- *#83* Battle AI not taking all changes from transformed pokemon (ditto) into account, in some cases causing issues
+- *#82* Fixed dyna- and gmax failing for some status moves
+- *#81* Trainer pokemon fainting in certain situations at the end of a turn causing battles to softlock (e.g. by moves like "Perish Song")
 
 ## [0.13.7-beta] - 2025-07-05
 

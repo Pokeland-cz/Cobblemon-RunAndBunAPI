@@ -57,7 +57,7 @@ public enum MoveType {
     }
 
     private static boolean ability(BattlePokemon p, String... names) {
-        var a = p.getEffectedPokemon().getAbility().getName();
+        var a = BattleStates.getTransformationOrEffected(p).getAbility().getName();
 
         for(var n : names) {
             if(a.equals(n)) {
@@ -153,8 +153,8 @@ public enum MoveType {
     // custom move event handlers
     private static final Map<String, Handler> MOVE_HANDLERS = Map.<String, Handler>ofEntries(
         Map.<String, Handler>entry("wish", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.WISH)),
-        Map.<String, Handler>entry("meanlook", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.MEANLOOK)),
-        Map.<String, Handler>entry("spiderweb", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.SPIDERWEB)),
+        Map.<String, Handler>entry("meanlook", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(t).add(BattleEffects.Custom.MEANLOOK)),
+        Map.<String, Handler>entry("spiderweb", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(t).add(BattleEffects.Custom.SPIDERWEB)),
         Map.<String, Handler>entry("block", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.BLOCK)),
         Map.<String, Handler>entry("protect", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),
         Map.<String, Handler>entry("detect", (f, t) -> BattleStates.get(f.actor.battle).getPokemonState(f).add(BattleEffects.Custom.PROTECT)),

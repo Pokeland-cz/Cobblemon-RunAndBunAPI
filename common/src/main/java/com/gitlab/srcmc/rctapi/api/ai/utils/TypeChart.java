@@ -52,13 +52,13 @@ public final class TypeChart {
     }
 
     public static double getEffectiveness(BattlePokemon attacker, BattlePokemon defender) {
-        var aep = attacker.getEffectedPokemon();
+        var aep = BattleStates.getTransformationOrEffected(attacker);
         var sec = aep.getSecondaryType();
         return getEffectiveness(aep.getPrimaryType(), defender) * (sec != null ? getEffectiveness(sec, defender) : 1.0);
     }
 
     public static double getEffectiveness(ElementalType attackerType, BattlePokemon defender) {
-        var ep = defender.getEffectedPokemon();
+        var ep = BattleStates.getTransformationOrEffected(defender);
         var eff = BattleStates.get(defender.actor.battle).getPokemonState(defender).has(BattleEffects.Custom.TERA)
             ? getEffectiveness(attackerType, ElementalTypes.INSTANCE.get(ep.getTeraType().showdownId()), defender)
             : ((getEffectiveness(attackerType, ep.getPrimaryType(), defender)) * (ep.getSecondaryType() != null ?  getEffectiveness(attackerType, ep.getSecondaryType(), defender) : 1.0));
@@ -80,7 +80,7 @@ public final class TypeChart {
     }
 
     private static double getEffectiveness(ElementalType attackerType, ElementalType defenderType, BattlePokemon defender) {
-        var defenderAbilityId = defender.getEffectedPokemon().getAbility().getName();
+        var defenderAbilityId = BattleStates.getTransformationOrEffected(defender).getAbility().getName();
 
         if(attackerType.equals(ElementalTypes.INSTANCE.getWATER())) {
             if(defenderAbilityId.equals("stormdrain")
@@ -208,7 +208,7 @@ public final class TypeChart {
     );
 
     public static boolean is(BattlePokemon pkmn, int type) {
-        var ep = pkmn.getEffectedPokemon();
+        var ep = BattleStates.getTransformationOrEffected(pkmn);
         var p = ep.getPrimaryType() != null ? TYPE_MASKS.getOrDefault(ep.getPrimaryType(), 0) : 0;
         var s = ep.getSecondaryType() != null ? TYPE_MASKS.getOrDefault(ep.getSecondaryType(), 0) : p;
         return (type & (p | s)) != 0;

@@ -55,7 +55,7 @@ public class ModCommon {
 
         TickEvent.SERVER_POST.register(ModCommon::handleServerTick);
         CobblemonEvents.POKEMON_ENTITY_SAVE_TO_WORLD.subscribe(Priority.HIGH, ModCommon::handlePokemonEntitySaveToWorld);
-        CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
+        // CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGH, ModCommon::handleBattleFainted);
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, ModCommon::handleBattleVictory);
         CobblemonEvents.BATTLE_FLED.subscribe(Priority.NORMAL, ModCommon::handleBattleFled);
         CobblemonEvents.TERASTALLIZATION.subscribe(Priority.NORMAL, ModCommon::handleTerastallization);
@@ -85,10 +85,10 @@ public class ModCommon {
         return Unit.INSTANCE;
     }
 
-    static Unit handleBattleFainted(BattleFaintedEvent event) {
-        BattleStates.notifyPokemonFainted(event.getBattle(), event.getKilled());
-        return Unit.INSTANCE;
-    }
+    // static Unit handleBattleFainted(BattleFaintedEvent event) {
+    //     BattleStates.notifyPokemonFainted(event.getBattle(), event.getKilled());
+    //     return Unit.INSTANCE;
+    // }
 
     static Unit handleBattleVictory(BattleVictoryEvent event) {
         // TODO: why does Cobblemon not do this?

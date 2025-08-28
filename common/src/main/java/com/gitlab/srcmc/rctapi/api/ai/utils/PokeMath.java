@@ -58,10 +58,10 @@ public class PokeMath {
         BattlePokemon attacker,
         BattlePokemon defender)
     {
-        var attackerEp = attacker.getEffectedPokemon();
+        var attackerEp = BattleStates.getTransformationOrEffected(attacker);
         var attackerPrimaryType = attackerEp.getPrimaryType();
         var attackerSecondaryType = attackerEp.getSecondaryType();
-        var attackerTeraType = attackerEp.getTeraType();
+        var attackerTeraType = attacker.getEffectedPokemon().getTeraType();
         var attackerAbility = attackerEp.getAbility();
 
         // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
@@ -127,8 +127,8 @@ public class PokeMath {
         // accuracy factor is a custom modification
         return (int)Math.ceil((acc + RANDOM.nextDouble() * (1.0 - acc)) * damage(
             attacker.getEffectedPokemon().getLevel(),
-            attacker.getEffectedPokemon().getStat(isPhysicalMove ? Stats.ATTACK : Stats.SPECIAL_ATTACK),
-            defender.getEffectedPokemon().getStat(isPhysicalMove ? Stats.DEFENCE : Stats.SPECIAL_DEFENCE),
+            BattleStates.getTransformationOrEffected(attacker).getStat(isPhysicalMove ? Stats.ATTACK : Stats.SPECIAL_ATTACK),
+            BattleStates.getTransformationOrEffected(defender).getStat(isPhysicalMove ? Stats.DEFENCE : Stats.SPECIAL_DEFENCE),
             move.getPower(),
             isPhysicalMove,
             false, // multiTarget

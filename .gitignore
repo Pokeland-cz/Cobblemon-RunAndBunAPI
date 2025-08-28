@@ -122,4 +122,5 @@ common/bin/
 fabric/bin/
 neoforge/bin/
 tmp/**/*
+logs/**/*
 .env

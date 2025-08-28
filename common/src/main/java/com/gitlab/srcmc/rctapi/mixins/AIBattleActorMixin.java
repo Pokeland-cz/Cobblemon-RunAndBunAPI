@@ -29,6 +29,8 @@ import com.gitlab.srcmc.rctapi.api.RCTApi;
  * request is present. (TODO open ticket: 'request?' instead of 'request!!')
  * 
  * @see https://gitlab.com/cable-mc/cobblemon/-/blob/main/common/src/main/kotlin/com/cobblemon/mod/common/api/battles/model/actor/AIBattleActor.kt#L38
+ * 
+ * Note: Appears to be fixed in latest Cobblemon.
  */
 @Mixin(AIBattleActor.class)
 public class AIBattleActorMixin {

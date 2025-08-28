@@ -15,39 +15,26 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with Radical Cobblemon Trainers API. If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-package com.gitlab.srcmc.rctapi.api.ai.utils;
+package com.gitlab.srcmc.rctapi.mixins;
 
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.cobblemon.mod.common.client.net.battle.BattleSwitchPokemonHandler;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleSwitchPokemonPacket;
 import com.gitlab.srcmc.rctapi.ModCommon;
 
-// Method calls can be easily stripped from bytecode (see https://gitlab.com/srcjava/jcut).
-public final class Debug {
-    // 0: no logging, 1: log ai choices, 2: log battle contexts, 3: log battle actions
-    private final static int LEVEL = 1;
+import net.minecraft.client.Minecraft;
 
-    public static void log(Action action) {
-        log(0, action);
-    }
-
-    public static void log(int level, Action action) {
-        if(LEVEL >= level) {
-            action.perform();
-        }
-    }
-
-    public static void log(String format, Object... args) {
-        log(0, format, args);
-    }
-
-    public static void log(int level, String format, Object... args) {
-        if(LEVEL >= level) {
-            ModCommon.LOG.info(String.format(format, args));
-        }
-    }
-
-    public interface Action {
-        void perform();
-    }
-
-    private Debug() {
-    }
+/**
+ * For debugging/testing.
+ */
+@Mixin(BattleSwitchPokemonHandler.class)
+public abstract class BattleSwitchPokemonHandlerMixin {
+    // @Inject(method = "handle", at = @At("HEAD"), remap = false)
+    // private void injectHandle(BattleSwitchPokemonPacket packet, Minecraft client, CallbackInfo ci) {
+    //     ModCommon.LOG.info("BattleSwitchPokemonHandler: " + packet.getPnx());
+    // }
 }

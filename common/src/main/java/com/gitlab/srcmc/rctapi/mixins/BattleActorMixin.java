@@ -23,8 +23,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleMakeChoicePacket;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 
@@ -36,9 +39,11 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 @Mixin(BattleActor.class)
 public class BattleActorMixin {
     // Updates battle states.
-    @Inject(method = "turn", at = @At("HEAD"), remap = false)
+    @Inject(method = "turn", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectTurn(CallbackInfo ci) {
         var self = (BattleActor)(Object)this;
+        ModCommon.LOG.info("TURN: " + self.getName().getString() + ", pkmn: " + self.getActivePokemon().stream().filter(p -> p.isAlive()).count() + ", " + self.getRequest());
+
         var battleState = RCTApi.getInstances()
             .map(e -> e.getValue().getBattleManager()
             .getState(self.battle.getBattleId()))
@@ -47,12 +52,63 @@ public class BattleActorMixin {
         
         if(battleState != null) {
             var bs = BattleStates.get(battleState.getBattle());
-            bs.getActorState(self).nextTurn();
+            // bs.getActorState(self).nextTurn();
             self.getActivePokemon().stream()
                 .filter(ActiveBattlePokemon::hasPokemon)
                 .forEach(pkmn  -> bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn());
         }
+
+        // // reimplementation in java
+        // var request = self.getRequest();
+
+        // if(request == null) {
+        //     ci.cancel();
+        //     return;
+        // }
+
+        // self.getResponses().clear();
+
+        // if(self.getActivePokemon().stream().anyMatch(p -> p.isAlive())) {
+        //     ModCommon.LOG.info("SENDING CHOICE PACKET");
+        //     self.setMustChoose(true);
+        //     self.sendUpdate(new BattleMakeChoicePacket());
+        // }
+
+        // var requestActive = request.getActive();
+
+        // if(requestActive == null || requestActive.isEmpty() || request.getWait()) {
+        //     ModCommon.LOG.info("REQUEST NOT ACTIVE: " + (requestActive == null) + ", " + requestActive.isEmpty() + ", " + request.getWait());
+        //     self.setRequest(null);
+        //     self.getExpectingPassActions().clear();
+        // }
+
+        // ci.cancel();
     }
+
+    // debugging/testing stuff
+    // @Inject(method = "upkeep", at = @At("HEAD"), remap = false)
+    // private void injectUpkeep(CallbackInfo ci) {
+    //     var self = (BattleActor)(Object)this;
+    //     ModCommon.LOG.info("UPKEEP: " + self.getName().getString() + ", request: " + self.getRequest());
+
+    //     var battleState = RCTApi.getInstances()
+    //         .map(e -> e.getValue().getBattleManager()
+    //         .getState(self.battle.getBattleId()))
+    //         .filter(bs -> bs != null)
+    //         .findFirst().orElse(null);
+        
+    //     if(battleState != null) {
+    //         var bs = BattleStates.get(battleState.getBattle());
+    //         bs.getActorState(self).nextRequest();
+    //     }
+    // }
+
+    // // debugging/testing stuff
+    // @Inject(method = "writeShowdownResponse", at = @At("HEAD"), remap = false)
+    // private void injectWriteShowdownResponse(CallbackInfo ci) {
+    //     var self = (BattleActor)(Object)this;
+    //     ModCommon.LOG.info("RESPONSE: " + self.getName().getString());
+    // }
 
     // This is the only place I could figure to prevent the usage of items for any
     // battle actors. By the looks of it it shouldn't have any other than the desired

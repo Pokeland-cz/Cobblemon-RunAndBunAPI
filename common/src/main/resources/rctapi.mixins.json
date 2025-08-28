@@ -10,9 +10,26 @@
     "BagItemInstructionMixin",
     "EndItemInstructionMixin",
     "SwitchInstructionMixin",
+    "TransformInstructionMixin",
     "AIBattleActorMixin",
     "BattleActorMixin",
-    "PokemonMixin"
+    "PokemonMixin",
+    "PokemonBattleMixin",
+    "ShowdownInterpreterMixin",
+    "TurnInstructionMixin",
+    "FaintInstructionMixin",
+    "BattleSelectActionsHandlerMixin",
+    "RequestInstructionMixin",
+    "BattleApplyPassResponseHandlerMixin",
+    "ClientBattleMixin",
+    "BattleGUIMixin",
+    "BattleSwapPokemonHandleMixin",
+    "BattleMakeChoiceHandlerMixin",
+    "BattleSwitchPokemonHandlerMixin",
+    "BattleQueueRequestHandlerMixin",
+    "BattleFaintHandlerMixin",
+    "BattleMessageHandlerMixin",
+    "BattleUpdateTeamPokemonHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

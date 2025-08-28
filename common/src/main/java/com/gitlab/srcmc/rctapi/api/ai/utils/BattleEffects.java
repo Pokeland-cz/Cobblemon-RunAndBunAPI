@@ -30,21 +30,28 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 public class BattleEffects {
     // keeps track of custom effects or effects that I could not find anywhere else
     public static enum Custom {
-        TURN(1, Integer.MAX_VALUE),
-        BLOCK(1<<1),
-        MEANLOOK(1<<2),
-        SPIDERWEB(1<<3),
+        TURN(1, Integer.MAX_VALUE, true),
+        BLOCK(1<<1, -1, true),
+        MEANLOOK(1<<2, -1, true),
+        SPIDERWEB(1<<3, -1, true),
         ITEM_ENDED(1<<4),
-        WISH(1<<5, 1, true),
-        PROTECT(1<<6, 1),
+        WISH(1<<5, 1, true, true),
+        PROTECT(1<<6, 1, true),
         MEGA(1<<7),
         TERA(1<<8),
         DYNAMAX(1<<9),
         ZMOVE(1<<10);
 
         private long mask;
+
+        // number of turns the effect will stay
         private int expires;
-        private boolean persists; // TODO: has currently no effect
+
+        // volatile effects are removed on switch
+        private boolean isVolatile;
+
+        // effect will be passed down to switched pokemon
+        private boolean canBePassed;
 
         private Custom(int mask) {
             this(mask, -1);
@@ -54,10 +61,15 @@ public class BattleEffects {
             this(mask, expires, false);
         }
 
-        private Custom(int mask, int expires, boolean persists) {
+        private Custom(int mask, int expires, boolean isVolatile) {
+            this(mask, expires, isVolatile, false);
+        }
+
+        private Custom(int mask, int expires, boolean isVolatile, boolean canBePassed) {
             this.mask = mask;
             this.expires = expires;
-            this.persists = persists;
+            this.isVolatile = isVolatile;
+            this.canBePassed = canBePassed;
         }
 
         public long mask() {
@@ -68,8 +80,12 @@ public class BattleEffects {
             return this.expires;
         }
 
-        public boolean persists() {
-            return this.persists;
+        public boolean isVolatile() {
+            return this.isVolatile;
+        }
+
+        public boolean canBePassed() {
+            return this.canBePassed;
         }
     }
 
@@ -162,11 +178,11 @@ public class BattleEffects {
                     return true;
                 }
 
-                if(pkmn.getEffectedPokemon().getAbility().getName().equals("levitate")) {
+                if(BattleStates.getTransformationOrEffected(pkmn).getAbility().getName().equals("levitate")) {
                     return true;
                 }
 
-                for(var t : pkmn.getEffectedPokemon().getTypes()) {
+                for(var t : BattleStates.getTransformationOrEffected(pkmn).getTypes()) {
                     if(t.equals(ElementalTypes.INSTANCE.getFLYING())) {
                         return true;
                     }
@@ -196,9 +212,9 @@ public class BattleEffects {
                         || BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).has(BattleEffects.Custom.MEANLOOK)
                         || BattleStates.get(pkmn.getActor().getBattle()).getPokemonState(pkmn).has(BattleEffects.Custom.SPIDERWEB)))
                     || (!pkmn.getEffectedPokemon().getHeldItem$common().is(CobblemonItems.SHED_SHELL)
-                        && ((!pkmn.getEffectedPokemon().getAbility().getName().equals("shadowtag") && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> p.getEffectedPokemon().getAbility().getName().equals("shadowtag")))
-                        || (magnetic(pkmn) && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> p.getEffectedPokemon().getAbility().getName().equals("magnetpull")))
-                        || (!raised(pkmn) && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> p.getEffectedPokemon().getAbility().getName().equals("arenatrap")))));
+                        && ((!BattleStates.getTransformationOrEffected(pkmn).getAbility().getName().equals("shadowtag") && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> BattleStates.getTransformationOrEffected(p).getAbility().getName().equals("shadowtag")))
+                        || (magnetic(pkmn) && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> BattleStates.getTransformationOrEffected(p).getAbility().getName().equals("magnetpull")))
+                        || (!raised(pkmn) && pkmn.getActor().getSide().getOppositeSide().getActivePokemon().stream().filter(p -> p.isAlive()).map(p -> p.getBattlePokemon()).anyMatch(p -> BattleStates.getTransformationOrEffected(p).getAbility().getName().equals("arenatrap")))));
             }
         }
     }

@@ -29,7 +29,7 @@ import com.gitlab.srcmc.rctapi.api.RCTApi;
 import com.gitlab.srcmc.rctapi.api.ai.utils.MoveType;
 
 /**
- * Custom event for successfull moves.
+ * Custom event for successful moves.
  * 
  * @see MoveType#handle(String, com.cobblemon.mod.common.battles.pokemon.BattlePokemon, com.cobblemon.mod.common.battles.pokemon.BattlePokemon)
  */
@@ -55,7 +55,7 @@ public abstract class MoveInstructionMixin {
                 if(from != null && to != null && mv != null) {
                     MoveType.handle(mv.toLowerCase().replaceAll("[^a-z0-9]", ""), from, to);
                 } else {
-                    ModCommon.LOG.error("unexpected message: " + message.getRawMessage());
+                    ModCommon.LOG.warn("unexpected message: " + message.getRawMessage());
                 }
             }
         }
