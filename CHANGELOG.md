@@ -1,6 +1,8 @@
 # Changelog
 
-## [0.13.8-beta] - 2025-08-26
+The latest release contains various fixes and workarounds to prevent errors in battles. Single-, double- and triple battles seem to be rather stable right now. Multi battles (2v2) unfortunately not (will look into it).
+
+## [0.13.8-beta] - 2025-08-29
 
 **Changed:**
 
