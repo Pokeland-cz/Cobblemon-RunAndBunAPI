@@ -17,15 +17,17 @@
  */
 package com.gitlab.srcmc.rctapi.mixins.client;
 
+import java.util.stream.Stream;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.net.battle.BattleFaintHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleFaintPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
 import net.minecraft.client.Minecraft;
@@ -35,24 +37,20 @@ public abstract class BattleFaintHandlerMixin {
     /**
      * End of turn faint softlock 'fix'.
      * 
+     * Triggered by pokemon fainting at the end of turn on both sides and the player
+     * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
+     * 
      * @see {@link BattleGUIMixin#injectSelectAction}
      * @see {@link BattleMakeChoiceHandlerMixin#injectHandle}
+     * @see {@link BattleQueueRequestPacketMixin#injectHandle}
      */
     @Inject(method = "handle", at = @At("HEAD"), remap = false)
     private void injectHandle(BattleFaintPacket packet, Minecraft client, CallbackInfo ci) {
-        // Observation/Idea: After a pokemon faints the player will receive a
-        // BattleMakeChoiceRequests. Delay the SwitchResponse until it arrives.
+        // Observation/Idea: After a pokemon faints the player will receive a BattleMakeChoiceRequests.
+        // Delay the SwitchResponse if pokemon fainted on both sides until it arrives.
         var battle = CobblemonClient.INSTANCE.getBattle();
 
-        if(battle != null) {
-            var actorAndPkmn = battle.getPokemonFromPNX(packet.getPnx());
-            ModCommon.LOG.info("++ FAINTED: " + actorAndPkmn.getFirst().getDisplayName().getString() + ", " + actorAndPkmn.getSecond().getBattlePokemon().getSpecies().getName());
-            // var player = Minecraft.getInstance().player;
-
-            // if(battle.getParticipatingActor(player.getUUID()) == actorAndPkmn.component1()) {
-            //     ModClient.BATTLE_STATE.lock();
-            // }
-
+        if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
             ModClient.BATTLE_STATE.lock(battle.getPokemonFromPNX(packet.getPnx()).component1().getSide());
         }
     }

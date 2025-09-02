@@ -21,8 +21,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.function.Supplier;
 
-import com.gitlab.srcmc.rctapi.ModCommon;
-
 import net.minecraft.client.Minecraft;
 
 public class ClientTasks {
@@ -42,14 +40,8 @@ public class ClientTasks {
     public void runIf(Runnable task, Supplier<Boolean> predicate, long maxTimeout) {
         this.addTask(() -> {
             try {
-                long t = 0;
-
-                for(; t < maxTimeout && !predicate.get(); t += PREDICATE_CHECK_TIMEOUT) {
+                for(long t = 0; t < maxTimeout && !predicate.get(); t += PREDICATE_CHECK_TIMEOUT) {
                     Thread.sleep(PREDICATE_CHECK_TIMEOUT);
-                }
-
-                if(t >= maxTimeout) {
-                    ModCommon.LOG.info("++++ FORCED UNLOCK (TIMEOUT)");
                 }
             } catch(InterruptedException e) {}
             

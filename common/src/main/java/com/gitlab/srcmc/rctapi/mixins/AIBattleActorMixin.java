@@ -49,6 +49,8 @@ public abstract class AIBattleActorMixin extends BattleActor {
     private void injectOnChoiceRequested(CallbackInfo ci) {
         if(BattleState.findFirst(this.getBattle()) != null) {
             if(this.getRequest() == null) {
+                // Something went wrong? Ignore it and try to continue (in my latest
+                // tests this never happened but no reason to remove this).
                 ModCommon.LOG.error("no showdown action request " + this.getName().getString());
                 ci.cancel();
             }

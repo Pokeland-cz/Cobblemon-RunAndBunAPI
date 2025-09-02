@@ -19,8 +19,7 @@
     "PokemonMixin",
     "RequestInstructionMixin",
     "SwitchInstructionMixin",
-    "TransformInstructionMixin",
-    "BattleSelectActionsHandlerMixin"
+    "TransformInstructionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

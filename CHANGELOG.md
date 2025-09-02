@@ -1,18 +1,16 @@
 # Changelog
 
-The latest release contains various fixes and workarounds to prevent errors in battles. Single-, double- and triple battles seem to be rather stable right now. Multi battles (2v2) unfortunately not (will look into it).
-
-## [0.13.8-beta] - 2025-08-29
+## [0.13.8-beta] - 2025-09-02
 
 **Changed:**
 
-- *#84* Improved AI awareness of many battle effects (like "Wish" being passed to a switched pokemon)
+- *#84* Improved AI awareness of battle effects (like "Wish" being passed to a switched pokemon)
 
 **Fixed:**
 
 - *#83* Battle AI not taking all changes from transformed pokemon (ditto) into account, in some cases causing issues
 - *#82* Fixed dyna- and gmax failing for some status moves
-- *#81* Trainer pokemon fainting in certain situations at the end of a turn causing battles to softlock (e.g. by moves like "Perish Song")
+- *#81* Introduced *fixes* (mostly workarounds) to deal with various somewhat uncommon issues in battles (often resulting in softlocks or battles ending abruptly). For example: Pokemon fainting at the end of a turn on both sides (e.g. by moves like "Perish Song") and the player chosing a pokemon to switch very quickly. Note that these changes are mostly limited to battles started by this api for now (it is currently unclear if these kind of issues also occur in other types of battles like PvP).
 
 ## [0.13.7-beta] - 2025-07-05
 

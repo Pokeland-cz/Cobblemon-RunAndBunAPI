@@ -17,96 +17,56 @@
  */
 package com.gitlab.srcmc.rctapi.mixins.client;
 
+import java.util.stream.Stream;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
-import com.cobblemon.mod.common.client.battle.ClientBattleActor;
 import com.cobblemon.mod.common.client.battle.SingleActionRequest;
 import com.cobblemon.mod.common.client.net.battle.BattleQueueRequestHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleQueueRequestPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
-import com.google.common.collect.Streams;
-
 import net.minecraft.client.Minecraft;
 
 @Mixin(BattleQueueRequestHandler.class)
 public abstract class BattleQueueRequestPacketMixin {
+    /**
+     * End of turn faint softlock 'fix'.
+     * 
+     * Triggered by pokemon fainting at the end of turn on both sides and the player
+     * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
+     * 
+     * @see {@link BattleFaintHandlerMixin#injectHandle}
+     * @see {@link BattleGUIMixin#injectSelectAction}
+     * @see {@link BattleMakeChoiceHandlerMixin#injectHandle}
+     */
     @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectHandle(BattleQueueRequestPacket packet, Minecraft client, CallbackInfo ci) {
-        ModCommon.LOG.info("++ RECEIVED BattleQueueRequestPacket (QUEUED)");
-        ClientTasks.BATTLE_SELECTIONS.run(() -> {
-            ModCommon.LOG.info("++ RECEIVED BattleQueueRequestPacket (HANDLED)");
-            var battle = CobblemonClient.INSTANCE.getBattle();
-            var player = Minecraft.getInstance().player;
+        var battle = CobblemonClient.INSTANCE.getBattle();
 
-            if(battle != null && player != null) {
-                var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
-                
-                if(actor != null) {
-                    battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest()));
+        if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
+            // since the handling of BattleMakeChoiceRequests might
+            // be delayed these have to be queued as well.
+            ClientTasks.BATTLE_SELECTIONS.run(() -> {
+                var player = Minecraft.getInstance().player;
+
+                if(player != null) {
+                    var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
+                    
+                    if(actor != null) {
+                        battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest()));
+                    }
                 }
-            }
-        });
+            });
 
-        ModClient.BATTLE_STATE.unlock();
-        ci.cancel();
+            // unlocks potential delay from previous turn
+            ModClient.BATTLE_STATE.unlock();
+            ci.cancel();
+        }
     }
-
-    // @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
-    // private void injectHandle(BattleQueueRequestPacket packet, Minecraft client, CallbackInfo ci) {
-    //     ModCommon.LOG.info("++ RECEIVED BattleQueueRequestPacket");
-    //     ModClient.BATTLE_STATE.unlock();
-
-    //     // if(packet.getRequest().getForceSwitch().contains(true)) {
-    //     //     ModCommon.LOG.info("++++ LOCKED BATTLE_STATE (force switch)");
-    //     //     ModClient.BATTLE_STATE.lock(); // unlocked in BattleMakeChoiceHandler
-    //     // }
-    // }
-
-    // @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
-    // private void injectHandle(BattleQueueRequestPacket packet, Minecraft client, CallbackInfo ci) {
-    //     var battle = CobblemonClient.INSTANCE.getBattle();
-    //     var player = Minecraft.getInstance().player;
-
-    //     if(battle != null && player != null) {
-    //         if(battle.getFirstUnansweredRequest() == null || (battle.getMustChoose() && battle.getFirstUnansweredRequest().getForceSwitch())) {
-    //             ModClient.BATTLE_STATE.unlock();
-    //         }
-
-    //         var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
-    //         var request = new Object[]{battle.getFirstUnansweredRequest()};
-
-    //         // delayed until all requests have been either answered or canceled
-    //         ModCommon.LOG.info("++++ QUEUED REQUEST: first=" + battle.getFirstUnansweredRequest() + ", must=" + battle.getMustChoose());
-
-    //         new Thread(() -> {
-    //             int[] delayedCount = {0}; // for debugging
-
-    //             try {
-    //                 while(request[0] != null) {
-    //                     Minecraft.getInstance().execute(() -> request[0] = battle.getFirstUnansweredRequest());
-    //                     Thread.sleep(750);
-    //                     delayedCount[0]++;
-    //                 }
-    //             } catch (InterruptedException e) {
-    //                 ModCommon.LOG.error("interrupted delay of BattleQueueRequestHandler", e);
-    //             }
-
-    //             Minecraft.getInstance().execute(() -> {
-    //                 if(delayedCount[0] > 0) {
-    //                     ModCommon.LOG.info("++++ DELAYED BattleQueueRequestHandler by " + (delayedCount[0]*500) + "ms");
-    //                 }
-
-    //                 battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest()));
-    //             });
-    //         }).start();
-    //     }
-
-    //     ci.cancel();
-    // }
 }
