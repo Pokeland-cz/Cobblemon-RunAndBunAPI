@@ -22,7 +22,7 @@ import com.gitlab.srcmc.rctapi.ModCommon;
 // Method calls can be easily stripped from bytecode (see https://gitlab.com/srcjava/jcut).
 public final class Debug {
     // 0: no logging, 1: log ai choices, 2: log battle contexts, 3: log battle actions
-    private final static int LEVEL = 0;
+    private final static int LEVEL = 1;
 
     public static void log(Action action) {
         log(0, action);

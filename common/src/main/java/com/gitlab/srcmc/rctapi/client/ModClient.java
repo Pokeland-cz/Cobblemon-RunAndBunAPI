@@ -17,22 +17,53 @@
  */
 package com.gitlab.srcmc.rctapi.client;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.cobblemon.mod.common.client.battle.ClientBattleSide;
+
 public class ModClient {
     public static final BattleState BATTLE_STATE = new BattleState();
+    private static final long MIN_LOCK_TIME_MS = 4000;
 
     public static class BattleState {
-        private boolean locked;
-        
-        public void lock() {
-            this.locked = true;
+        private Set<ClientBattleSide> locked = new HashSet<>();
+        private boolean forced;
+        private Thread unforce;
+
+        public void lock(ClientBattleSide side) {
+            this.locked.add(side);
+            
+            if(this.unforce != null) {
+                this.unforce.interrupt();
+
+                try {
+                    this.unforce.join();
+                } catch (InterruptedException e) {
+                }
+            }
+
+            if(this.locked.size() < 2) {
+                this.forced = true;
+                this.unforce = new Thread(() -> {
+                    try {
+                        Thread.sleep(MIN_LOCK_TIME_MS);
+                        this.forced = false;
+                    } catch(InterruptedException e) {
+                    }
+                });
+
+                this.unforce.start();
+            }
         }
 
         public void unlock() {
-            this.locked = false;
+            this.locked = new HashSet<>();
+            this.forced = false;
         }
 
-        public boolean isReady() {
-            return !this.locked;
+        public boolean isOpen() {
+            return !this.forced && this.locked.size() < 2;
         }
     }
 

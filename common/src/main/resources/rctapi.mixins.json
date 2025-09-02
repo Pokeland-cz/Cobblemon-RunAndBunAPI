@@ -6,7 +6,8 @@
   "client": [
     "client.BattleFaintHandlerMixin",
     "client.BattleGUIMixin",
-    "client.BattleMakeChoiceHandlerMixin"
+    "client.BattleMakeChoiceHandlerMixin",
+    "client.BattleQueueRequestPacketMixin"
   ],
   "mixins": [
     "AIBattleActorMixin",
@@ -18,7 +19,8 @@
     "PokemonMixin",
     "RequestInstructionMixin",
     "SwitchInstructionMixin",
-    "TransformInstructionMixin"
+    "TransformInstructionMixin",
+    "BattleSelectActionsHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

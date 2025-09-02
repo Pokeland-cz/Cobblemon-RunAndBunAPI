@@ -30,7 +30,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
+import com.cobblemon.mod.common.battles.ForcePassActionResponse;
 import com.cobblemon.mod.common.battles.ShowdownActionRequest;
+import com.cobblemon.mod.common.battles.ShowdownActionResponse;
+import com.cobblemon.mod.common.exception.IllegalActionChoiceException;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
@@ -53,6 +56,51 @@ public abstract class BattleActorMixin {
     @Shadow(remap = false)
     public abstract UUID getUuid();
 
+    // for debugging
+    @Inject(method = "setActionResponses", at = @At("HEAD"), remap = false, cancellable = true)
+    private void injectSetActionResponses(List<ShowdownActionResponse> responses, CallbackInfo ci) {
+        var self = (BattleActor)(Object)this;
+        var request = self.getRequest();
+
+        if(request == null) {
+            ci.cancel();
+            return;
+        }
+
+        var originalPassActions = self.getExpectingPassActions();
+        var index = 0;
+        
+        for(var response : responses) {
+            if(self.getActivePokemon().size() <= index) {
+                break;
+            }
+
+            var activeBattlePokemon = self.getActivePokemon().get(index);
+            var showdownMoveSet = request.getActive() != null && index < request.getActive().size() ? request.getActive().get(index) : null;
+            var forceSwitch = index < request.getForceSwitch().size() ? request.getForceSwitch().get(index) : false;
+
+            if (!response.isValid(activeBattlePokemon, showdownMoveSet, forceSwitch)) {
+                self.getExpectingPassActions().clear();
+                self.getExpectingPassActions().addAll(originalPassActions);
+                throw new IllegalActionChoiceException(self, "Invalid action choice for ${activeBattlePokemon.battlePokemon!!.getName().string}: $response");
+            } else if (response instanceof ForcePassActionResponse) {
+                self.getResponses().add(self.getExpectingPassActions().removeFirst());
+            } else {
+                self.getResponses().add(response);
+            }
+
+            index++;
+        }
+
+        if(self.getExpectingPassActions().size() > 0) {
+            throw new IllegalActionChoiceException(self, "Invalid action choice: a capture was expected. Are you hacking me?");
+        }
+
+        self.setMustChoose(false);
+        self.getBattle().checkForInputDispatch();
+        ci.cancel();
+    }
+
     // Updates active pokemon turns.
     @Inject(method = "turn", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectTurn(CallbackInfo ci) {
@@ -63,6 +111,19 @@ public abstract class BattleActorMixin {
                 .forEach(pkmn  -> bs.getPokemonState(pkmn.getBattlePokemon()).nextTurn());
         }
     }
+
+    // Handle incomping requests that happened to arrive too early.
+    // @Inject(method = "upkeep", at = @At("TAIL"), remap = false, cancellable = true)
+    // private void injectUpkeep(CallbackInfo ci) {
+    //     if(BattleState.findFirst(this.getBattle()) != null) {
+    //         var handlers = BattleStates.get(this.getBattle()).getActorState((BattleActor)(Object)this).getPostUpkeepHandlers();
+
+    //         while(!handlers.isEmpty()) {
+    //             ModCommon.LOG.info("RUNNING POST UPKEEP HANDLER");
+    //             handlers.poll().run();
+    //         }
+    //     }
+    // }
 
     // This is the only place I could figure to prevent the usage of items for any
     // battle actors. By the looks of it it shouldn't have any other than the desired

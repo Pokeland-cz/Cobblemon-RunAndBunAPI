@@ -17,19 +17,29 @@
  */
 package com.gitlab.srcmc.rctapi.api.ai.utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+
+import org.apache.commons.lang3.stream.Streams;
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
+import com.cobblemon.mod.common.battles.ShowdownActionRequest;
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.gitlab.srcmc.rctapi.ModCommon;
 
 /**
  * Utility class to keep track of information throughout a battle.
@@ -39,6 +49,7 @@ public final class BattleStates {
         private final Map<ActiveBattlePokemon, ShowdownActionResponse> responses = new HashMap<>();
         private final Set<BattlePokemon> switchChoices = new HashSet<>();
         private final Set<String> gimmicks = new HashSet<>();
+        private final Queue<Runnable> postUpkeepHandlers = new LinkedList<>();
 
         public void addGimmick(String showdownId) {
             this.gimmicks.add(showdownId);
@@ -83,6 +94,10 @@ public final class BattleStates {
         public void nextRequest() {
             this.switchChoices.clear();
             this.responses.clear();
+        }
+
+        public Queue<Runnable> getPostUpkeepHandlers() {
+            return this.postUpkeepHandlers;
         }
     }
 
@@ -172,7 +187,80 @@ public final class BattleStates {
         private Map<BattlePokemon, PokemonState> pokemonStates = new HashMap<>();
         private Map<BattleActor, ActorState> actorStates = new HashMap<>();
 
+        private List<ActorResponseState> responseStates = new ArrayList<>();
+        private int stuckCount, maxStuckCount, ticks;
+
+        class ActorResponseState {
+            public final int responseCount;
+            public final boolean hasRequest;
+            public final boolean mustChoose;
+
+            public ActorResponseState(BattleActor actor) {
+                this.responseCount = actor.getResponses().size();
+                this.hasRequest = actor.getRequest() != null;
+                this.mustChoose = actor.getMustChoose();
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(this.responseCount, this.hasRequest, this.mustChoose);
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                return o instanceof ActorResponseState s
+                    && this.responseCount == s.responseCount
+                    && this.hasRequest == s.hasRequest
+                    && this.mustChoose == s.mustChoose;
+            }
+        }
+
         private BattleState() {
+        }
+
+        public void tick() {
+            this.ticks++;
+        }
+
+        public int ticks() {
+            return this.ticks;
+        }
+
+        public void wasStuck() {
+            this.stuckCount++;
+        }
+
+        public int getStuckCount() {
+            return this.stuckCount;
+        }
+
+        public int getMaxStuckCount() {
+            return this.maxStuckCount;
+        }
+
+        public void setMaxStuckCount(int maxStuckCount) {
+            this.maxStuckCount = maxStuckCount;
+        }
+
+        public void unstuck() {
+            this.stuckCount = 0;
+        }
+
+        public boolean updateResponseStates(Iterable<BattleActor> actors) {
+            var newStates = Streams.of(actors).map(ActorResponseState::new).toList();
+
+            // ModCommon.LOG.info("OLD STATES:");
+            // this.responseStates.forEach(s -> ModCommon.LOG.info(String.format("- %d, %b, %b", s.responseCount, s.hasRequest, s.mustChoose)));
+            // ModCommon.LOG.info("NEW STATES:");
+            // this.responseStates.forEach(s -> ModCommon.LOG.info(String.format("- %d, %b, %b", s.responseCount, s.hasRequest, s.mustChoose)));
+            // ModCommon.LOG.info("EQUAL STATES: " + newStates.equals(this.responseStates) + ", " + Arrays.equals(newStates.toArray(), this.responseStates.toArray()));
+
+            if(!newStates.equals(this.responseStates)) {
+                this.responseStates = newStates;
+                return true;
+            }
+
+            return false;
         }
 
         public PokemonState getPokemonState(BattlePokemon pkmn) {

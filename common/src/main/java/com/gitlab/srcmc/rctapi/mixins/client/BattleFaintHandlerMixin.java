@@ -25,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.net.battle.BattleFaintHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleFaintPacket;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
 import net.minecraft.client.Minecraft;
@@ -45,11 +46,14 @@ public abstract class BattleFaintHandlerMixin {
 
         if(battle != null) {
             var actorAndPkmn = battle.getPokemonFromPNX(packet.getPnx());
-            var player = Minecraft.getInstance().player;
+            ModCommon.LOG.info("++ FAINTED: " + actorAndPkmn.getFirst().getDisplayName().getString() + ", " + actorAndPkmn.getSecond().getBattlePokemon().getSpecies().getName());
+            // var player = Minecraft.getInstance().player;
 
-            if(battle.getParticipatingActor(player.getUUID()) == actorAndPkmn.component1()) {
-                ModClient.BATTLE_STATE.lock();
-            }
+            // if(battle.getParticipatingActor(player.getUUID()) == actorAndPkmn.component1()) {
+            //     ModClient.BATTLE_STATE.lock();
+            // }
+
+            ModClient.BATTLE_STATE.lock(battle.getPokemonFromPNX(packet.getPnx()).component1().getSide());
         }
     }
 }

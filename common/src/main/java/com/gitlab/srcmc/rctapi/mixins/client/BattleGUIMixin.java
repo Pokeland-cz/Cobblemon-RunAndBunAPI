@@ -17,6 +17,8 @@
  */
 package com.gitlab.srcmc.rctapi.mixins.client;
 
+import java.util.Objects;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,21 +26,41 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
 import com.cobblemon.mod.common.battles.ShowdownActionResponse;
 import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.battle.SingleActionRequest;
+import com.cobblemon.mod.common.client.gui.CobblemonRenderable;
 import com.cobblemon.mod.common.client.gui.battle.BattleGUI;
 import com.cobblemon.mod.common.client.gui.battle.subscreen.BattleActionSelection;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+
 @Mixin(BattleGUI.class)
-public abstract class BattleGUIMixin {
+public abstract class BattleGUIMixin implements CobblemonRenderable {
     // max delay is based of this and pokemon per side (faint softlock fix)
-    private static final long SELECT_DELAY = 5000;
+    private static final long SELECT_DELAY = 6000;
 
     @Shadow(remap = false)
     public abstract void changeActionSelection(@Nullable BattleActionSelection arg0);
+
+    // private BattleActionSelection prevSelection;
+
+    // @Inject(method = "getCurrentActionSelection", at = @At("TAIL"), remap = false)
+    // private void injectGetCurrentActionSelection(CallbackInfoReturnable<BattleActionSelection> ci) {
+    //     var currentSelection = ci.getReturnValue();
+
+    //     if(!Objects.equals(this.prevSelection, currentSelection)) {
+    //         var battle = CobblemonClient.INSTANCE.getBattle();
+    //         ModCommon.LOG.info("++ NEW ACTION SELECTION: " + (currentSelection != null ? currentSelection.getClass().getSimpleName() : "<null>") + ", mustChoose=" + battle.getMustChoose() + ", first=" + battle.getFirstUnansweredRequest());
+    //         this.prevSelection = currentSelection;
+    //     }
+    // }
 
     /**
      * End of turn faint softlock 'fix'.
@@ -61,7 +83,7 @@ public abstract class BattleGUIMixin {
                         battle.checkForFinishedChoosing();
                         ModClient.BATTLE_STATE.unlock();
                     },
-                    ModClient.BATTLE_STATE::isReady,
+                    ModClient.BATTLE_STATE::isOpen,
                     SELECT_DELAY + SELECT_DELAY * battle.getBattleFormat().getBattleType().getPokemonPerSide());
             } else {
                 // immediately (normal)

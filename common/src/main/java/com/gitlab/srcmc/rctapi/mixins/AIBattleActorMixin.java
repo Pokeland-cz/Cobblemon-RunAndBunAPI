@@ -28,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 
 /**
@@ -48,6 +49,7 @@ public abstract class AIBattleActorMixin extends BattleActor {
     private void injectOnChoiceRequested(CallbackInfo ci) {
         if(BattleState.findFirst(this.getBattle()) != null) {
             if(this.getRequest() == null) {
+                ModCommon.LOG.error("no showdown action request " + this.getName().getString());
                 ci.cancel();
             }
         }
