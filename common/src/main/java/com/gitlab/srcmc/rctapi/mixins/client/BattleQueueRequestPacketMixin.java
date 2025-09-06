@@ -50,19 +50,15 @@ public abstract class BattleQueueRequestPacketMixin {
         var battle = CobblemonClient.INSTANCE.getBattle();
 
         if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
-            // since the handling of BattleMakeChoiceRequests might
-            // be delayed these have to be queued as well.
-            ClientTasks.BATTLE_SELECTIONS.run(() -> {
-                var player = Minecraft.getInstance().player;
+            var player = Minecraft.getInstance().player;
 
-                if(player != null) {
-                    var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
-                    
-                    if(actor != null) {
-                        battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest()));
-                    }
+            if(player != null) {
+                var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
+
+                if(actor != null) {
+                    ClientTasks.BATTLE_SELECTIONS.run(() -> battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest())));
                 }
-            });
+            }
 
             // unlocks potential delay from previous turn
             ModClient.BATTLE_STATE.unlock();

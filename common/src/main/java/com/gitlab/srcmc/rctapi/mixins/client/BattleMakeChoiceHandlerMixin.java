@@ -28,6 +28,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.net.battle.BattleMakeChoiceHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleMakeChoicePacket;
+import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
 import net.minecraft.client.Minecraft;
@@ -44,7 +45,7 @@ public abstract class BattleMakeChoiceHandlerMixin {
      * @see {@link BattleGUIMixin#injectSelectAction}
      * @see {@link BattleQueueRequestPacketMixin#injectHandle}
      */
-    @Inject(method = "handle", at = @At("HEAD"), remap = false)
+    @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectHandle(BattleMakeChoicePacket packet, Minecraft client, CallbackInfo ci) {
         var battle = CobblemonClient.INSTANCE.getBattle();
         
@@ -57,6 +58,13 @@ public abstract class BattleMakeChoiceHandlerMixin {
                     ModClient.BATTLE_STATE.unlock();
                 }
             }
+
+            ClientTasks.BATTLE_SELECTIONS.run(() -> {
+                CobblemonClient.INSTANCE.getBattleOverlay().setPassedSeconds(0);
+                battle.setMustChoose(true);
+            });
+
+            ci.cancel();
         }
     }
 }

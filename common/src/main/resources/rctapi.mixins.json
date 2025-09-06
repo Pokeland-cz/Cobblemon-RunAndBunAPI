@@ -4,10 +4,10 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
-    "client.BattleFaintHandlerMixin",
     "client.BattleGUIMixin",
     "client.BattleMakeChoiceHandlerMixin",
-    "client.BattleQueueRequestPacketMixin"
+    "client.BattleQueueRequestPacketMixin",
+    "client.BattleFaintHandlerMixin"
   ],
   "mixins": [
     "AIBattleActorMixin",

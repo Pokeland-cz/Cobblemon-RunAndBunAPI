@@ -61,7 +61,10 @@ public abstract class PokemonBattleMixin {
     @Inject(method = "checkForInputDispatch", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectCheckForInputDispatch(CallbackInfo ci) {
         if(BattleState.findFirst((PokemonBattle)(Object)this) != null) {
-            if(this.checkForfeit()) return;
+            if(this.checkForfeit()) {
+                ci.cancel();
+                return;
+            }
 
             var actors = Streams.stream(this.getActors()).filter(a -> a.getPokemonList().stream().anyMatch(p -> p.getHealth() > 0)).toList();        
             var readyToInput = actors.stream().anyMatch(a -> !a.getMustChoose() && !a.getResponses().isEmpty()) && actors.stream().noneMatch(a -> a.getMustChoose());

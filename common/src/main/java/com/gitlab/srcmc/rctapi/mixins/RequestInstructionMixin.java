@@ -47,7 +47,7 @@ public abstract class RequestInstructionMixin {
 
     /**
      * Sets 'actor.mustChoose' to false in afterDispatches (after forceSwitch) if 
-     * actor request is null (also runs checkForInputDispatch in that case).
+     * actor request is null (also runs another checkForInputDispatch in that case).
      */
     @Inject(method = "invoke", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectInvoke(PokemonBattle battle, CallbackInfo ci) {
