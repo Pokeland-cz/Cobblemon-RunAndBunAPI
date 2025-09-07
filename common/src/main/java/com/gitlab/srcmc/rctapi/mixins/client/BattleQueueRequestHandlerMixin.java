@@ -32,7 +32,7 @@ import com.gitlab.srcmc.rctapi.client.ModClient;
 import net.minecraft.client.Minecraft;
 
 @Mixin(BattleQueueRequestHandler.class)
-public abstract class BattleQueueRequestPacketMixin {
+public abstract class BattleQueueRequestHandlerMixin {
     /**
      * End of turn faint softlock 'fix'.
      * 
