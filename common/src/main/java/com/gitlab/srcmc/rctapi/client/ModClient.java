@@ -17,53 +17,71 @@
  */
 package com.gitlab.srcmc.rctapi.client;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.cobblemon.mod.common.client.battle.ClientBattleSide;
+import java.util.ArrayList;
+import java.util.List;
+import com.gitlab.srcmc.rctapi.ModCommon;
+import net.minecraft.network.chat.Component;
 
 public class ModClient {
     public static final BattleState BATTLE_STATE = new BattleState();
-    private static final long MIN_LOCK_TIME_MS = 4000;
 
     public static class BattleState {
-        private Set<ClientBattleSide> locked = new HashSet<>();
-        private boolean forced;
-        private Thread unforce;
+        private boolean dispatchesComplete;
 
-        public void lock(ClientBattleSide side) {
-            this.locked.add(side);
-            
-            if(this.unforce != null) {
-                this.unforce.interrupt();
+        private List<String> recentMessages = new ArrayList<>();
+        private boolean forceSwitch;
+        private int fainted;
 
-                try {
-                    this.unforce.join();
-                } catch (InterruptedException e) {
+        public void reset() {
+            ModCommon.LOG.info(":: BATTLE_STATE RESET");
+            this.recentMessages = new ArrayList<>();
+            this.forceSwitch = false;
+            this.dispatchesComplete = false;
+            this.fainted = 0;
+        }
+
+        public void setDispatchesComplete(boolean dispatchesComplete) {
+            this.dispatchesComplete = dispatchesComplete;
+        }
+
+        public boolean getDispatchesComplete() {
+            return this.dispatchesComplete;
+        }
+
+        public Iterable<String> getMessages() {
+            return this.recentMessages;
+        }
+
+        public void setForceSwitch() {
+            this.forceSwitch = true;
+        }
+
+        public boolean getForceSwitch() {
+            return this.forceSwitch;
+        }
+
+        public void addMessages(Iterable<Component> message) {
+            for(var m : message) {
+                var s = m.toString();
+
+                if(s.contains("cobblemon.battle.turn")) {
+                    this.reset();
+                }
+                
+                this.recentMessages.add(s);
+
+                if(s.contains("cobblemon.battle.fainted")) {
+                    ModCommon.LOG.info("MESSAGE: " + s);
                 }
             }
-
-            if(this.locked.size() < 2) {
-                this.forced = true;
-                this.unforce = new Thread(() -> {
-                    try {
-                        Thread.sleep(MIN_LOCK_TIME_MS);
-                        this.forced = false;
-                    } catch(InterruptedException e) {
-                    }
-                });
-
-                this.unforce.start();
-            }
         }
 
-        public void unlock() {
-            this.locked = new HashSet<>();
-            this.forced = false;
+        public int getFainted() {
+            return this.fainted;
         }
 
-        public boolean isOpen() {
-            return !this.forced && this.locked.size() < 2;
+        public void addFainted() {
+            this.fainted++;
         }
     }
 

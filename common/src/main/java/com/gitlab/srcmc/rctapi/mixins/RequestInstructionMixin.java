@@ -29,6 +29,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.battles.ShowdownActionRequest;
+import com.cobblemon.mod.common.battles.dispatch.DispatchResult;
 import com.cobblemon.mod.common.battles.interpreter.instructions.RequestInstruction;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleMakeChoicePacket;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleQueueRequestPacket;
@@ -82,8 +83,16 @@ public abstract class RequestInstructionMixin {
 
                         if(actor.getMustChoose()) {
                             actor.sendUpdate(new BattleMakeChoicePacket());
-                        } else {
-                            battle.checkForInputDispatch();
+                        } else if(actor.getRequest() == null) {
+                            battle.dispatchToFront(() -> {
+                                battle.checkForInputDispatch();
+                                return () -> true;
+                            });
+                            // battle.checkForInputDispatch();
+                            // battle.dispatchGo(() -> {
+                            //     battle.checkForInputDispatch();
+                            //     return Unit.INSTANCE;
+                            // });
                         }
 
                         return Unit.INSTANCE;

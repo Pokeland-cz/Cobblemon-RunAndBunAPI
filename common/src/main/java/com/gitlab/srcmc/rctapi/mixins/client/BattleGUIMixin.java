@@ -34,13 +34,15 @@ import com.cobblemon.mod.common.client.battle.SingleActionRequest;
 import com.cobblemon.mod.common.client.gui.CobblemonRenderable;
 import com.cobblemon.mod.common.client.gui.battle.BattleGUI;
 import com.cobblemon.mod.common.client.gui.battle.subscreen.BattleActionSelection;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
+import com.google.common.collect.Streams;
 
 @Mixin(BattleGUI.class)
 public abstract class BattleGUIMixin implements CobblemonRenderable {
-    // max delay is based of this and pokemon per side (faint softlock fix)
-    private static final long SELECT_DELAY = 6000;
+    // max delay (should not be reached but just in case at least try to continue)
+    private static final long SELECT_DELAY = 32000;
 
     @Shadow(remap = false)
     abstract void changeActionSelection(@Nullable BattleActionSelection arg0);
@@ -64,19 +66,37 @@ public abstract class BattleGUIMixin implements CobblemonRenderable {
                 request.setResponse(response);
                 this.changeActionSelection(null);
 
-                if(request.getForceSwitch()) {
-                    // delayed (waits for BattleMakeChoiceRequest)
+                if(request.getForceSwitch() /*&& ModClient.BATTLE_STATE.getFainted() > 0*/) {
+                    // delayed (waits for 'fainted' messages)
                     ClientTasks.BATTLE_SELECTIONS.runIf(
+                        () -> battle.checkForFinishedChoosing(),
+                        // () -> !ModClient.BATTLE_STATE.getForceSwitch() || Streams.stream(ModClient.BATTLE_STATE.getMessages()).filter(m -> m.contains("cobblemon.battle.fainted")).count() >= ModClient.BATTLE_STATE.getFainted(),
                         () -> {
-                            battle.checkForFinishedChoosing();
-                            ModClient.BATTLE_STATE.unlock();
+                            ModCommon.LOG.info(":: CHECK:");
+                            Stream.of(battle.getSides()).forEach(s -> s.getActiveClientBattlePokemon().forEach(p -> ModCommon.LOG.info(String.format(
+                                ":::: %s, has: %b, pkmn: %s, fainted: %d, messages: %s, first: %s, last: %s, force: %b, open: %b",
+                                p.getActor().getDisplayName().getString(),
+                                p.hasPokemon(),
+                                p.hasPokemon() ? p.getBattlePokemon().getDisplayName().getString() : "<null>",
+                                ModClient.BATTLE_STATE.getFainted(),
+                                Streams.stream(ModClient.BATTLE_STATE.getMessages()).filter(m -> m.contains("cobblemon.battle.fainted")).count(),
+                                battle.getFirstUnansweredRequest(),
+                                battle.getLastAnsweredRequest(),
+                                ModClient.BATTLE_STATE.getForceSwitch(),
+                                ModClient.BATTLE_STATE.getDispatchesComplete()
+                                // !ModClient.BATTLE_STATE.getForceSwitch() || Streams.stream(ModClient.BATTLE_STATE.getMessages()).filter(m -> m.contains("cobblemon.battle.fainted")).count() >= ModClient.BATTLE_STATE.getFainted()
+                                // !ModClient.BATTLE_STATE.getForceSwitch() || Streams.stream(ModClient.BATTLE_STATE.getMessages()).anyMatch(m -> m.contains("cobblemon.battle.turn"))
+                            ))));
+
+                            return !ModClient.BATTLE_STATE.getForceSwitch() || ModClient.BATTLE_STATE.getDispatchesComplete();
+                            // return !ModClient.BATTLE_STATE.getForceSwitch() || Streams.stream(ModClient.BATTLE_STATE.getMessages()).anyMatch(m -> m.contains("cobblemon.battle.turn"));
                         },
-                        ModClient.BATTLE_STATE::isOpen,
                         // max delay (shouldn't happen but just in case)
-                        SELECT_DELAY + SELECT_DELAY * battle.getBattleFormat().getBattleType().getPokemonPerSide());
+                        // SELECT_DELAY * ModClient.BATTLE_STATE.getFainted());
+                        SELECT_DELAY);
                 } else {
                     // immediately (normal)
-                    ClientTasks.BATTLE_SELECTIONS.run(battle::checkForFinishedChoosing);
+                    battle.checkForFinishedChoosing();
                 }
             }
 

@@ -45,26 +45,26 @@ public abstract class BattleMakeChoiceHandlerMixin {
      * @see {@link BattleGUIMixin#injectSelectAction}
      * @see {@link BattleQueueRequestPacketMixin#injectHandle}
      */
-    @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
-    private void injectHandle(BattleMakeChoicePacket packet, Minecraft client, CallbackInfo ci) {
-        var battle = CobblemonClient.INSTANCE.getBattle();
+    // @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
+    // private void injectHandle(BattleMakeChoicePacket packet, Minecraft client, CallbackInfo ci) {
+    //     var battle = CobblemonClient.INSTANCE.getBattle();
         
-        if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
-            var request = battle.getFirstUnansweredRequest();
+    //     if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
+    //         var request = battle.getFirstUnansweredRequest();
 
-            if((battle.getMustChoose() && (request == null || request.getForceSwitch()))
-            || (!battle.getMustChoose() && (request == null || !request.getForceSwitch()))) {
-                if(!ModClient.BATTLE_STATE.isOpen()) {
-                    ModClient.BATTLE_STATE.unlock();
-                }
-            }
+    //         if((battle.getMustChoose() && (request == null || request.getForceSwitch()))
+    //         || (!battle.getMustChoose() && (request == null || !request.getForceSwitch()))) {
+    //             if(!ModClient.BATTLE_STATE.isOpen()) {
+    //                 ModClient.BATTLE_STATE.unlock();
+    //             }
+    //         }
 
-            ClientTasks.BATTLE_SELECTIONS.run(() -> {
-                CobblemonClient.INSTANCE.getBattleOverlay().setPassedSeconds(0);
-                battle.setMustChoose(true);
-            });
+    //         ClientTasks.BATTLE_SELECTIONS.run(() -> {
+    //             CobblemonClient.INSTANCE.getBattleOverlay().setPassedSeconds(0);
+    //             battle.setMustChoose(true);
+    //         });
 
-            ci.cancel();
-        }
-    }
+    //         ci.cancel();
+    //     }
+    // }
 }

@@ -26,34 +26,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
-import com.cobblemon.mod.common.client.net.battle.BattleFaintHandler;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleFaintPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
+import com.cobblemon.mod.common.client.net.battle.BattleMessageHandler;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleMessagePacket;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 
 import net.minecraft.client.Minecraft;
 
-@Mixin(BattleFaintHandler.class)
-public abstract class BattleFaintHandlerMixin {
-    /**
-     * End of turn faint softlock 'fix'.
-     * 
-     * Triggered by pokemon fainting at the end of turn on both sides and the player
-     * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
-     * 
-     * @see {@link BattleGUIMixin#injectSelectAction}
-     * @see {@link BattleMakeChoiceHandlerMixin#injectHandle}
-     * @see {@link BattleQueueRequestPacketMixin#injectHandle}
-     */
+@Mixin(BattleMessageHandler.class)
+public abstract class BattleMessageHandlerMixin {
     @Inject(method = "handle", at = @At("HEAD"), remap = false)
-    private void injectHandle(BattleFaintPacket packet, Minecraft client, CallbackInfo ci) {
-        // Idea: Delay SwitchResponse until all expected 'fainted' messages arrived.
+    private void injectHandle(BattleMessagePacket packet, Minecraft client, CallbackInfo ci) {
         var battle = CobblemonClient.INSTANCE.getBattle();
 
         if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
-            var actorAndPkmn = battle.getPokemonFromPNX(packet.getPnx());
-            ModCommon.LOG.info("FAINTED: " + packet.getPnx() + ", " + actorAndPkmn.getFirst().getDisplayName().getString() + ", " + (actorAndPkmn.getSecond().hasPokemon() ? actorAndPkmn.getSecond().getBattlePokemon().getDisplayName().toString() : "<null>"));
-            ModClient.BATTLE_STATE.addFainted();
+            ModClient.BATTLE_STATE.addMessages(packet.getMessages());
         }
     }
 }

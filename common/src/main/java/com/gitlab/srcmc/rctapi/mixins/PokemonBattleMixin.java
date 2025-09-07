@@ -25,6 +25,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.cobblemon.mod.common.CobblemonNetwork;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.net.NetworkPacket;
@@ -32,7 +34,9 @@ import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BattleCaptureAction;
 import com.cobblemon.mod.common.battles.BattleFormat;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleSwapPokemonPacket;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
+import com.gitlab.srcmc.rctapi.client.network.packet.BattleDispatchesCompletePacket;
 import com.google.common.collect.Streams;
 
 import kotlin.Pair;
@@ -53,6 +57,35 @@ public abstract class PokemonBattleMixin {
 
     @Shadow(remap = false)
     abstract boolean checkForfeit();
+
+    private boolean dispatchesComplete;
+    private int _ticks;
+
+    @Inject(method = "tick", at = @At("TAIL"), remap = false)
+    private void injectTick(CallbackInfo ci) {
+        var self = (PokemonBattle)(Object)this;
+
+        if(self.getStarted()) {
+            if(self.getDispatches().isEmpty() && self.getAfterDispatches().isEmpty() && self.getDispatchResult().canProceed()) {
+                if(!this.dispatchesComplete) {
+                    CobblemonNetwork.INSTANCE.sendPacketToPlayers(self.getPlayers(), new BattleDispatchesCompletePacket());
+                    this.dispatchesComplete = true;
+                }
+            } else {
+                this.dispatchesComplete = false;
+            }
+
+            // if((this._ticks++) % 20 == 0) {
+            //     ModCommon.LOG.info(String.format(
+            //         ":: BATTLE: dispatches: %d, after: %d, canProceed: %b, complete: %b",
+            //         self.getDispatches().size(),
+            //         self.getAfterDispatches().size(),
+            //         self.getDispatchResult().canProceed(),
+            //         this.dispatchesComplete
+            //     ));
+            // }
+        }
+    }
 
     /**
      * Ignores defeated actors and only sets the request to null

@@ -29,6 +29,7 @@ import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.client.battle.SingleActionRequest;
 import com.cobblemon.mod.common.client.net.battle.BattleQueueRequestHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleQueueRequestPacket;
+import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 import net.minecraft.client.Minecraft;
@@ -51,18 +52,19 @@ public abstract class BattleQueueRequestPacketMixin {
 
         if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
             var player = Minecraft.getInstance().player;
-
+            
             if(player != null) {
                 var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
-
+                
                 if(actor != null) {
-                    ClientTasks.BATTLE_SELECTIONS.run(() -> battle.setPendingActionRequests(SingleActionRequest.Companion.composeFrom(actor, packet.getRequest())));
+                    ModCommon.LOG.info("++ BATTLE QUEUE REQUEST PACKET: " + actor.getDisplayName().getString());
+                    ModClient.BATTLE_STATE.setDispatchesComplete(false);
+
+                    if(packet.getRequest().getForceSwitch().contains(true)) {
+                        ModClient.BATTLE_STATE.setForceSwitch();
+                    }
                 }
             }
-
-            // unlocks potential delay from previous turn
-            ModClient.BATTLE_STATE.unlock();
-            ci.cancel();
         }
     }
 }
