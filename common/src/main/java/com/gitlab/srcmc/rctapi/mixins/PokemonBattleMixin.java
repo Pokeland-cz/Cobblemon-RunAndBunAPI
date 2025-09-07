@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.mixins;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,13 +34,17 @@ import com.cobblemon.mod.common.api.net.NetworkPacket;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.battles.BattleCaptureAction;
 import com.cobblemon.mod.common.battles.BattleFormat;
+import com.cobblemon.mod.common.battles.dispatch.BattleDispatch;
+import com.cobblemon.mod.common.battles.dispatch.DispatchResult;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleSwapPokemonPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.battle.BattleState;
 import com.gitlab.srcmc.rctapi.client.network.packet.BattleDispatchesCompletePacket;
 import com.google.common.collect.Streams;
 
 import kotlin.Pair;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+import net.minecraft.server.level.ServerPlayer;
 
 @Mixin(PokemonBattle.class)
 public abstract class PokemonBattleMixin {
@@ -58,32 +63,37 @@ public abstract class PokemonBattleMixin {
     @Shadow(remap = false)
     abstract boolean checkForfeit();
 
-    private boolean dispatchesComplete;
-    private int _ticks;
+    @Shadow(remap = false)
+    abstract boolean getStarted();
+
+    @Shadow(remap = false)
+    abstract ConcurrentLinkedDeque<BattleDispatch> getDispatches();
+
+    @Shadow(remap = false)
+    abstract List<Function0<Unit>> getAfterDispatches();
+
+    @Shadow(remap = false)
+    abstract DispatchResult getDispatchResult();
+
+    @Shadow(remap = false)
+    abstract List<ServerPlayer> getPlayers();
+
+    private boolean $dispatchesComplete;
 
     @Inject(method = "tick", at = @At("TAIL"), remap = false)
     private void injectTick(CallbackInfo ci) {
-        var self = (PokemonBattle)(Object)this;
+        if(this.getStarted()) {
+            if(this.getDispatches().isEmpty() && this.getAfterDispatches().isEmpty() && this.getDispatchResult().canProceed()) {
+                if(!this.$dispatchesComplete) {
+                    if(BattleState.findFirst((PokemonBattle)(Object)this) != null) {
+                        CobblemonNetwork.INSTANCE.sendPacketToPlayers(this.getPlayers(), new BattleDispatchesCompletePacket());
+                    }
 
-        if(self.getStarted()) {
-            if(self.getDispatches().isEmpty() && self.getAfterDispatches().isEmpty() && self.getDispatchResult().canProceed()) {
-                if(!this.dispatchesComplete) {
-                    CobblemonNetwork.INSTANCE.sendPacketToPlayers(self.getPlayers(), new BattleDispatchesCompletePacket());
-                    this.dispatchesComplete = true;
+                    this.$dispatchesComplete = true;
                 }
             } else {
-                this.dispatchesComplete = false;
+                this.$dispatchesComplete = false;
             }
-
-            // if((this._ticks++) % 20 == 0) {
-            //     ModCommon.LOG.info(String.format(
-            //         ":: BATTLE: dispatches: %d, after: %d, canProceed: %b, complete: %b",
-            //         self.getDispatches().size(),
-            //         self.getAfterDispatches().size(),
-            //         self.getDispatchResult().canProceed(),
-            //         this.dispatchesComplete
-            //     ));
-            // }
         }
     }
 

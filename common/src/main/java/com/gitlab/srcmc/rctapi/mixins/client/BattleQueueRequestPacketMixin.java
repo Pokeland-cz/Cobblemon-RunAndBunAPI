@@ -26,11 +26,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
-import com.cobblemon.mod.common.client.battle.SingleActionRequest;
 import com.cobblemon.mod.common.client.net.battle.BattleQueueRequestHandler;
 import com.cobblemon.mod.common.net.messages.client.battle.BattleQueueRequestPacket;
-import com.gitlab.srcmc.rctapi.ModCommon;
-import com.gitlab.srcmc.rctapi.client.ClientTasks;
 import com.gitlab.srcmc.rctapi.client.ModClient;
 import net.minecraft.client.Minecraft;
 
@@ -42,9 +39,7 @@ public abstract class BattleQueueRequestPacketMixin {
      * Triggered by pokemon fainting at the end of turn on both sides and the player
      * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
      * 
-     * @see {@link BattleFaintHandlerMixin#injectHandle}
      * @see {@link BattleGUIMixin#injectSelectAction}
-     * @see {@link BattleMakeChoiceHandlerMixin#injectHandle}
      */
     @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
     private void injectHandle(BattleQueueRequestPacket packet, Minecraft client, CallbackInfo ci) {
@@ -57,7 +52,6 @@ public abstract class BattleQueueRequestPacketMixin {
                 var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
                 
                 if(actor != null) {
-                    ModCommon.LOG.info("++ BATTLE QUEUE REQUEST PACKET: " + actor.getDisplayName().getString());
                     ModClient.BATTLE_STATE.setDispatchesComplete(false);
 
                     if(packet.getRequest().getForceSwitch().contains(true)) {

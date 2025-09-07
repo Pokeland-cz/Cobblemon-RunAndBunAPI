@@ -49,7 +49,7 @@ public class ClientTasks {
                 }
 
                 if(t >= maxTimeout) {
-                    ModCommon.LOG.warn("FORCED UNLOCK");
+                    ModCommon.LOG.warn("battle got unexpectedly stuck, attempt to force continuation...");
                 }
             } catch(InterruptedException e) {}
             

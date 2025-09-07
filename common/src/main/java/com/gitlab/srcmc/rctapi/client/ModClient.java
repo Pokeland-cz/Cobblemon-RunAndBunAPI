@@ -17,27 +17,16 @@
  */
 package com.gitlab.srcmc.rctapi.client;
 
-import java.util.ArrayList;
-import java.util.List;
-import com.gitlab.srcmc.rctapi.ModCommon;
-import net.minecraft.network.chat.Component;
-
 public class ModClient {
     public static final BattleState BATTLE_STATE = new BattleState();
 
     public static class BattleState {
         private boolean dispatchesComplete;
-
-        private List<String> recentMessages = new ArrayList<>();
         private boolean forceSwitch;
-        private int fainted;
 
         public void reset() {
-            ModCommon.LOG.info(":: BATTLE_STATE RESET");
-            this.recentMessages = new ArrayList<>();
             this.forceSwitch = false;
             this.dispatchesComplete = false;
-            this.fainted = 0;
         }
 
         public void setDispatchesComplete(boolean dispatchesComplete) {
@@ -48,40 +37,12 @@ public class ModClient {
             return this.dispatchesComplete;
         }
 
-        public Iterable<String> getMessages() {
-            return this.recentMessages;
-        }
-
         public void setForceSwitch() {
             this.forceSwitch = true;
         }
 
         public boolean getForceSwitch() {
             return this.forceSwitch;
-        }
-
-        public void addMessages(Iterable<Component> message) {
-            for(var m : message) {
-                var s = m.toString();
-
-                if(s.contains("cobblemon.battle.turn")) {
-                    this.reset();
-                }
-                
-                this.recentMessages.add(s);
-
-                if(s.contains("cobblemon.battle.fainted")) {
-                    ModCommon.LOG.info("MESSAGE: " + s);
-                }
-            }
-        }
-
-        public int getFainted() {
-            return this.fainted;
-        }
-
-        public void addFainted() {
-            this.fainted++;
         }
     }
 

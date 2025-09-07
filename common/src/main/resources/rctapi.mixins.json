@@ -5,10 +5,7 @@
   "minVersion": "0.8",
   "client": [
     "client.BattleGUIMixin",
-    "client.BattleMakeChoiceHandlerMixin",
-    "client.BattleQueueRequestPacketMixin",
-    "client.BattleFaintHandlerMixin",
-    "client.BattleMessageHandlerMixin"
+    "client.BattleQueueRequestPacketMixin"
   ],
   "mixins": [
     "CobblemonNetworMixin",
