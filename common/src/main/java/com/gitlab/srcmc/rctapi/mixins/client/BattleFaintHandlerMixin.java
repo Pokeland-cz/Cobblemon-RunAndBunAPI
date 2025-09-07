@@ -26,38 +26,35 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType;
 import com.cobblemon.mod.common.client.CobblemonClient;
-import com.cobblemon.mod.common.client.net.battle.BattleQueueRequestHandler;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleQueueRequestPacket;
+import com.cobblemon.mod.common.client.net.battle.BattleFaintHandler;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleFaintPacket;
 import com.gitlab.srcmc.rctapi.client.ModClient;
+
 import net.minecraft.client.Minecraft;
 
-@Mixin(BattleQueueRequestHandler.class)
-public abstract class BattleQueueRequestHandlerMixin {
+@Mixin(BattleFaintHandler.class)
+public abstract class BattleFaintHandlerMixin {
     /**
      * End of turn faint softlock 'fix'.
      * 
      * Triggered by pokemon fainting at the end of turn on both sides and the player
      * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
      * 
-     * @see {@link BattleFaintHandlerMixin#injectHandle}
      * @see {@link BattleGUIMixin#injectSelectAction}
+     * @see {@link BattleQueueRequestHandlerMixin#injectHandle}
      */
     @Inject(method = "handle", at = @At("HEAD"), remap = false, cancellable = true)
-    private void injectHandle(BattleQueueRequestPacket packet, Minecraft client, CallbackInfo ci) {
+    private void injectHandle(BattleFaintPacket packet, Minecraft client, CallbackInfo ci) {
         var battle = CobblemonClient.INSTANCE.getBattle();
 
         if(battle != null && Stream.of(battle.getSides()).anyMatch(s -> s.getActors().stream().anyMatch(a -> a.getType().equals(ActorType.NPC)))) {
             var player = Minecraft.getInstance().player;
             
             if(player != null) {
-                var actor = battle.getSide1().getActors().stream().filter(a -> a.getUuid().equals(player.getUUID())).findFirst().orElse(null);
-                
-                if(actor != null) {
-                    ModClient.BATTLE_STATE.setDispatchesComplete(false);
+                var actorAndPmn = battle.getPokemonFromPNX(packet.getPnx());
 
-                    if(packet.getRequest().getForceSwitch().contains(true)) {
-                        ModClient.BATTLE_STATE.setForceSwitch();
-                    }
+                if(actorAndPmn.getFirst() == battle.getParticipatingActor(player.getUUID())) {
+                    ModClient.BATTLE_STATE.setFainted();
                 }
             }
         }

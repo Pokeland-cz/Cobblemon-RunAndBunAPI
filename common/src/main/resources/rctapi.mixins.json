@@ -5,6 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "client.BattleGUIMixin",
+    "client.BattleFaintHandlerMixin",
+    "client.BattleMessageHandlerMixin",
     "client.BattleQueueRequestHandlerMixin"
   ],
   "mixins": [

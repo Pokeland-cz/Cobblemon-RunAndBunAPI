@@ -50,6 +50,7 @@ public abstract class BattleGUIMixin implements CobblemonRenderable {
      * Triggered by pokemon fainting at the end of turn on both sides and the player
      * selecting a pokemon to switch in very quickly (tested with 'Perish Song').
      * 
+     * @see {@link BattleFaintHandlerMixin#injectHandle}
      * @see {@link BattleQueueRequestHandlerMixin#injectHandle}
      */
     @Inject(method = "selectAction", at = @At("HEAD"), remap = false, cancellable = true)
@@ -61,7 +62,7 @@ public abstract class BattleGUIMixin implements CobblemonRenderable {
                 request.setResponse(response);
                 this.changeActionSelection(null);
 
-                if(request.getForceSwitch()) {
+                if(request.getForceSwitch() && ModClient.BATTLE_STATE.getFainted()) {
                     // delayed (waits for 'DispatchesCompleted')
                     ClientTasks.BATTLE_SELECTIONS.runIf(
                         () -> battle.checkForFinishedChoosing(),

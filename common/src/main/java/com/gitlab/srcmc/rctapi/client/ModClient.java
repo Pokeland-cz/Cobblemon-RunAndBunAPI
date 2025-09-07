@@ -23,10 +23,12 @@ public class ModClient {
     public static class BattleState {
         private boolean dispatchesComplete;
         private boolean forceSwitch;
+        private boolean fainted;
 
         public void reset() {
-            this.forceSwitch = false;
             this.dispatchesComplete = false;
+            this.forceSwitch = false;
+            this.fainted = false;
         }
 
         public void setDispatchesComplete(boolean dispatchesComplete) {
@@ -43,6 +45,14 @@ public class ModClient {
 
         public boolean getForceSwitch() {
             return this.forceSwitch;
+        }
+
+        public void setFainted() {
+            this.fainted = true;
+        }
+
+        public boolean getFainted() {
+            return this.fainted;
         }
     }
 
