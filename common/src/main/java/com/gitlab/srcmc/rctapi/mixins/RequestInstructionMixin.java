@@ -80,13 +80,13 @@ public abstract class RequestInstructionMixin {
                     battle.doWhenClear(() -> {
                         actor.setMustChoose(actor.getRequest() != null);
 
-                        if(actor.getMustChoose()) {
-                            actor.sendUpdate(new BattleMakeChoicePacket());
-                        } else if(actor.getRequest() == null) {
+                        if(actor.getRequest() == null) {
                             battle.dispatchToFront(() -> {
                                 battle.checkForInputDispatch();
                                 return () -> true;
                             });
+                        } else if(actor.getMustChoose()) {
+                            actor.sendUpdate(new BattleMakeChoicePacket());
                         }
 
                         return Unit.INSTANCE;
