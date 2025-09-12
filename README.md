@@ -1,4 +1,4 @@
-# Radical Cobblemon Trainers - API
+# Radical Cobblemon Trainers - API + Run and Bun API
 
 Trainer management and battle API for [Cobblemon](https://cobblemon.com/en).
 
@@ -18,6 +18,16 @@ Yet it is designed as independent library to provide a subset of similar feature
 - Trainer and pokemon models (pojos) for easy parsing
   - Converters to Cobblemon types
   - Model validation (collects all errors before an exception is thrown)
+
+## Run and Bun Features
+IN THE WORKS: RUN AND BUN AI FOR COBBLEMON!!
+    -Dynamic Decision-Making: Evaluates moves and switches in real-time based on damage, type matchups, speed, and opponent potential.
+    -Damage Calcs: Prioritizes OHKOs, 2HKOs, and high-damage opportunities while accounting for abilities like Sturdy and items like Focus Sash.
+    -Intelligent Switching Logic: Scores potential party swaps, preferring faster counters, safer pivots, and even special picks like Ditto or Wobbuffet/Wynaut.
+    -Move Scoring System: Assigns smart scores to each move based on type effectiveness, status potential, hazards, stat drops, and tons of special cases, allowing the trainer to pick the potential best  move. 
+    -Hazard Awareness: Tracks Spikes, Toxic Spikes, Stealth Rock, and Sticky Web layers to avoid wasteful setup.
+    -Speed Control Mechanics: Recognizes when to set up Tailwind, Trick Room, etc.
+    -Adaptive Randomization: Adds unpredictability with weighted randomness in kill moves and hazard usage.
 
 ## Example
 
