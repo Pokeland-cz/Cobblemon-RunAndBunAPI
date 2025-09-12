@@ -32,6 +32,7 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder;
 import com.gitlab.srcmc.rctapi.api.ai.utils.TypeChart;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects.Custom;
 import com.gitlab.srcmc.rctapi.api.ai.utils.ResponseBuilder.Choice;
+import com.gitlab.srcmc.rctapi.api.battle.BattleManager;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import java.util.Random;
 import java.util.*;
@@ -83,7 +84,7 @@ public class RunBunAI implements BattleAI {
             "ivycudgel",
             "karatechop",
             "leafblade",
-            "night Slash",
+            "nightslash",
             "poisontail",
             "psychocut",
             "razorleaf",
@@ -94,13 +95,13 @@ public class RunBunAI implements BattleAI {
             "slash",
             "snipeshot",
             "spacialrend",
-            "Stoneedge",
+            "stoneedge",
             "triplearrows"));
     private static final List<String> trapMoves = new ArrayList<>(List.of(
             "bind",
-            "fire spin",
+            "firespin",
             "infestation",
-            "sand tomb",
+            "sandtomb",
             "whirlpool",
             "wrap"));
     private static final List<String> speedReductionMoves = new ArrayList<>(List.of(
@@ -302,6 +303,7 @@ public class RunBunAI implements BattleAI {
                 )
                 .filter(abp -> !abp.isAllied(activeBattlePokemon))
                 .toList();
+
         //setting up logic for double calcs. works the same for singles anyways.
         int currentBattleSlot = allNPCActiveBattlePokemon.indexOf(activeBattlePokemon);
         BattlePokemon opponent = allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
@@ -322,19 +324,82 @@ public class RunBunAI implements BattleAI {
         double activePokemonPercentHP = Math.ceil(activeBattlePokemon.getBattlePokemon().getHealth()
                 / activeBattlePokemon.getBattlePokemon().getMaxHealth() * 100); //this is rounded up
 
-        //FORCE SWITCH::(DEAD MON OR MOVE FORCING SWITCH)
+
+        //TODO: SWITCHING SCORING LOGIC STARTS HERE =======================================
+        List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
+                .filter(BattlePokemon::canBeSentOut)
+                .toList();
+        Map<BattlePokemon, Integer> switchingScores = new HashMap<>();
+        int switchScore = 0;
+        boolean isSwitchMonFaster = false;
+        boolean doesSwitchOHKO = false;
+        boolean doesOppOHKO = false;
+        for(BattlePokemon possibleSwitch : canSwitchTo){
+            switchScore = 0;
+            isSwitchMonFaster = possibleSwitch.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED);
+            doesSwitchOHKO = isOHKO(possibleSwitch.getMoveSet().getMoves(), possibleSwitch, opponent);
+            doesOppOHKO = isOHKO(oppMoves, opponent, possibleSwitch);
+            if(isSwitchMonFaster && doesSwitchOHKO){
+                switchScore += 5;
+            }
+            //we are slower, we kill opp, opp does not kill us
+            else if(!isSwitchMonFaster && !doesOppOHKO && doesSwitchOHKO){
+                switchScore += 4;
+            }
+            // we are faster, deal more damage than we take. (dmg is the percent change not raw number)
+            else if(isSwitchMonFaster && highestPercentDamageMove(possibleSwitch, opponent) > highestPercentDamageMove(opponent,possibleSwitch)){
+                switchScore += 3;
+            }
+            else if(!isSwitchMonFaster && highestPercentDamageMove(possibleSwitch, opponent) > highestPercentDamageMove(opponent,possibleSwitch)){
+                switchScore += 2;
+            }
+            else if(isSwitchMonFaster){
+                switchScore += 1;
+            }
+            else if(!isSwitchMonFaster && doesOppOHKO){
+                switchScore -=1;
+            }
+            if(possibleSwitch.getOriginalPokemon().getDisplayName().equals("ditto")){
+                switchScore += 2;
+            }
+            if(isSwitchMonFaster && !doesOppOHKO){
+                if(possibleSwitch.getOriginalPokemon().getDisplayName().equals("wynaut")
+                    || possibleSwitch.getOriginalPokemon().getDisplayName().equals("wobbuffet")) {
+                    switchScore += 2;
+                }
+            }
+            switchingScores.put(possibleSwitch, switchScore);
+        }
+        //filter who has the best switch score
+        int maxSwitchingScore = switchingScores.values()
+                .stream()
+                .max(Integer::compareTo)
+                .orElse(Integer.MIN_VALUE);
+        List<BattlePokemon> bestSwitches = switchingScores.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == maxSwitchingScore)
+                .map(Map.Entry::getKey)
+                .toList();
+        BattlePokemon nextPokemon = null;
+        if (!bestSwitches.isEmpty()) {
+            if(bestSwitches.size() > 1){
+                 nextPokemon = bestSwitches.get(RANDOM.nextInt(bestSwitches.size()));
+            }
+            else{
+                 nextPokemon = bestSwitches.getFirst();
+            }
+        }
         if (forceSwitch || activeBattlePokemon.isGone()) {
-            List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
-                    .filter(BattlePokemon::canBeSentOut)
-                    .toList();
             if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
             if (opponentActiveBattlePokemon.isEmpty() || opponentActiveBattlePokemon.get().getBattlePokemon() == null) {
-                var nextPokemon = canSwitchTo.get(RANDOM.nextInt(canSwitchTo.size()));
+                nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
                 nextPokemon.setWillBeSwitchedIn(true);
                 return new SwitchActionResponse(nextPokemon.getUuid());
             }
-            return new SwitchActionResponse(canSwitchTo.getFirst().getUuid());
+            nextPokemon.setWillBeSwitchedIn(true);
+            return new SwitchActionResponse(nextPokemon.getUuid());
         }
+
 
         if (moveset == null) return PassActionResponse.INSTANCE;
         if (moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
@@ -400,7 +465,7 @@ public class RunBunAI implements BattleAI {
             for (Map.Entry<InBattleMove, Integer> entry : moveDamages.entrySet()) {
                 if (entry.getValue() == maxDamage) {
                     nonKillingPossibleMoves.add(entry.getKey());
-                } else if (trapMoves.contains(entry.getValue())
+                } else if (trapMoves.contains(entry.getKey().getId())
                         || physicalAttackReductionMoves.contains(entry.getValue())
                         || specialAttackReductionMoves.contains(entry.getKey())
                         || speedReductionMoves.contains(entry.getValue())) {
@@ -408,12 +473,11 @@ public class RunBunAI implements BattleAI {
                 }
             }
         }
-
+        //TODO: START OF THE MOVE DAMAGE SCORING CALCULATIONS
         for (var move : moveDamages.entrySet()) {
             InBattleMove currentMove = move.getKey();
-            double damageAmount = move.getValue();
             int score = 0;
-            int dmg = PokeMathMax.damage(activeBattlePokemon.getBattlePokemon(), opponent, currentMove);
+            //int dmg = PokeMathMax.damage(activeBattlePokemon.getBattlePokemon(), opponent, currentMove);
             double typeEffectiveness1 = typeEffectiveness(TypeChart.getMove(currentMove).getType(),
                     opponent.getEffectedPokemon().getPrimaryType(), opponent.getEffectedPokemon().getAbility());
             double typeEffectiveness2 = typeEffectiveness(TypeChart.getMove(currentMove).getType(),
@@ -433,10 +497,7 @@ public class RunBunAI implements BattleAI {
 
                 if (isFaster) {
                     //We are faster or speed tied and we see a kill with this move. (+12 (80%), +14 (20%))
-                    roll = RANDOM.nextDouble();
                     score += 6;
-                    //add the score to the possible moveScores Map
-                    //moveScores.put(m,score);
                 }
                 //if we are slower than the opponent and we see a kill with priority. (+6)
                 else {
@@ -472,7 +533,7 @@ public class RunBunAI implements BattleAI {
                         //the ai is not faster and the enemy mon can be reduced.
                         else {
                             score += !ignoreStatDropAbilities.contains(opponentAbility) && !isFaster ?
-                                    score + 6 : score + 5;
+                                     6 : 5;
                         }
 
                     }
@@ -517,7 +578,7 @@ public class RunBunAI implements BattleAI {
                                 break;
                             case "relicsong":
                                 // If in Meloetta base form
-                                score += activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getDisplayName().equals("meloetta") ? 10 : 0;
+                                score += activeBattlePokemon.getBattlePokemon().getName().equals("meloetta") ? 10 : 0;
                                 break;
                             case "suckerpunch":
                                 //score += activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getDisplayName().equals("meloetta") ? 10 : 0;
@@ -538,9 +599,8 @@ public class RunBunAI implements BattleAI {
                                 break;
                             case "fellstinger":
                                 roll = RANDOM.nextDouble();
-                                int result1 = roll > 80 ? 23 : 21;
-                                roll = RANDOM.nextDouble();
-                                int result2 = roll > 80 ? 17 : 15;
+                                int result1 = roll > .8 ? 23 : 21;
+                                int result2 = roll > .8 ? 17 : 15;
 
                                 if(activeBattlePokemon.getBattlePokemon().getStatChanges().get(Stats.ATTACK) != 6){
                                     score += isFaster ? result1 : result2;
@@ -560,9 +620,8 @@ public class RunBunAI implements BattleAI {
                             case "spikes":
                                 //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int spikeR1 = roll > 75 ? 8 : 9;
-                                roll = RANDOM.nextDouble();
-                                int spikeR2 = roll > 75 ? 6 : 7;
+                                int spikeR1 = roll > .75 ? 8 : 9;
+                                int spikeR2 = roll > .75 ? 6 : 7;
                                 //first turn out ?
 
                                 if(spikesCount(opponent) == 3){
@@ -575,9 +634,8 @@ public class RunBunAI implements BattleAI {
                             case "toxicspikes":
                                 //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int toxicspikesR1 = roll > 75 ? 8 : 9;
-                                roll = RANDOM.nextDouble();
-                                int toxicspikesR2 = roll > 75 ? 6 : 7;
+                                int toxicspikesR1 = roll > .75 ? 8 : 9;
+                                int toxicspikesR2 = roll > .75 ? 6 : 7;
                                 //first turn out ?
                                 if(toxicSpikesCount(opponent) == 3){
                                     score -=50;
@@ -589,9 +647,8 @@ public class RunBunAI implements BattleAI {
                             case "stickyweb":
                                 //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int stickywebR1 = roll > 75 ? 9 : 12;
-                                roll = RANDOM.nextDouble();
-                                int stickywebR2 = roll > 75 ? 6 : 9;
+                                int stickywebR1 = roll > .75 ? 9 : 12;
+                                int stickywebR2 = roll > .75 ? 6 : 9;
                                 //first turn out ?
                                 if(stickyWebCount(opponent) !=0){
                                     score -=20;
@@ -628,11 +685,11 @@ public class RunBunAI implements BattleAI {
                                 }
                                 if(BattleEffects.Field.Weather.sandstorm(activeBattlePokemon.getBattlePokemon())){
                                     if(!activePrimaryType.toString().equals("ROCK")
-                                            ||!activePrimaryType.toString().equals("GROUND")
-                                            ||!activePrimaryType.toString().equals("STEEL")
-                                            ||!activeSecondaryType.toString().equals("ROCK")
-                                            ||!activeSecondaryType.toString().equals("GROUND")
-                                            ||!activeSecondaryType.toString().equals("STEEL")){
+                                            &&!activePrimaryType.toString().equals("GROUND")
+                                            &&!activePrimaryType.toString().equals("STEEL")
+                                            &&!activeSecondaryType.toString().equals("ROCK")
+                                            &&!activeSecondaryType.toString().equals("GROUND")
+                                            &&!activeSecondaryType.toString().equals("STEEL")){
                                         if(activePokemonPercentHP <= 8){
                                             score-=20;
                                         }
@@ -643,6 +700,9 @@ public class RunBunAI implements BattleAI {
                                 //todo : keep track of things that happened last turn and 2 turns ago.
                                 break;
                             case "fling":
+                                if(currentHeldItem != null){
+                                    break;
+                                }
                                 double flingEffectiveness = typeEffectiveness(TypeChart.getMove(nonKillingMove).getType(),opponent.getEffectedPokemon().getPrimaryType())
                                         * typeEffectiveness(TypeChart.getMove(nonKillingMove).getType(),opponent.getEffectedPokemon().getSecondaryType());
                                 //need to hold a salac berry and fling is not super effective.
@@ -748,7 +808,7 @@ public class RunBunAI implements BattleAI {
             moveScores.put(currentMove, score);
         }
         // END OF SCORING LOGIC::START OF SWITCH AI LOGIC
-        InBattleMove move = killingMoves.isEmpty() ?
+        /*InBattleMove move = killingMoves.isEmpty() ?
                 //todo: if no move can kill, create scoring system for non-killing moves.
                 Collections.max(moveDamages.entrySet(), Map.Entry.comparingByValue()).getKey() :
                 killingMoves.get(RANDOM.nextInt(killingMoves.size()));
@@ -757,15 +817,37 @@ public class RunBunAI implements BattleAI {
                 move.id,
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                 null
-        );
-        /*
-        if(isSwitching()){
-            double roll = RANDOM.nextDouble();
-            boolean coinFlip = (roll > .5) ? true : false;
-            if(coinFlip){
+        );*/
 
+        if(isSwitching(moveScores, aliveParty, opponent)){
+            double flip = RANDOM.nextDouble();
+            boolean result = (flip > .5);
+            if(result){
+                nextPokemon.setWillBeSwitchedIn(true);
+                return new SwitchActionResponse(nextPokemon.getUuid());
+                //start switching logic
             }
-        }*/
+        }
+        int maxScore = moveScores.values()
+                .stream()
+                .max(Integer::compareTo)
+                .orElse(Integer.MIN_VALUE);
+        List<InBattleMove> bestMoves = moveScores.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == maxScore)
+                .map(Map.Entry::getKey)
+                .toList();
+        //if there are multiple best moves
+        if(bestMoves.size() > 1){
+            int randomInt = RANDOM.nextInt(bestMoves.size());
+            var bestMove = bestMoves.get(randomInt);
+            return new MoveActionResponse(bestMove.getId(),
+                    opponentActiveBattlePokemon.get().getPNX(),
+                    null);
+        }
+        return new MoveActionResponse(bestMoves.get(0).getId(),
+                 opponentActiveBattlePokemon.get().getPNX(),
+                null);
     }
     public static int spikesCount(BattlePokemon pkmn) {
         return BattleEffects.Side.Hazard.spikes(pkmn);
@@ -795,9 +877,14 @@ public class RunBunAI implements BattleAI {
                         && defender.getEffectedPokemon().getAbility().getDisplayName().equals("sturdy")){
                     result = false;
                 }
-                if(currentHP == defender.getMaxHealth()
-                        && defender.getHeldItemManager().showdownId(defender).equals("focus_sash")){
-                    result = false;
+                if(defender.getHeldItemManager().showdownId(defender) != null){
+                    if(currentHP == defender.getMaxHealth()
+                            && defender.getHeldItemManager().showdownId(defender).equals("focus_sash")){
+                        result = false;
+                    }
+                }
+                if(result){
+                    return true;
                 }
             }
         }
@@ -833,7 +920,7 @@ public class RunBunAI implements BattleAI {
         }
         return false;
     }
-    public static boolean isSwitching(Map<InBattleMove, Integer> moveScore, List<BattlePokemon> party, ActiveBattlePokemon opponent){
+    public static boolean isSwitching(Map<InBattleMove, Integer> moveScore, List<BattlePokemon> party, BattlePokemon opponent){
         List<Integer> scores = new ArrayList<>();
         for(int val : moveScore.values()){
             scores.add(val);
@@ -847,16 +934,27 @@ public class RunBunAI implements BattleAI {
             if(Math.ceil(pokemon.getHealth()/pokemon.getMaxHealth()) * 100 <= 50){
                 continue;
             }
-            if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED)
-                && !isOHKO(opponent.getBattlePokemon().getMoveSet().getMoves(), opponent.getBattlePokemon(), pokemon)){
+            if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED)
+                && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
                 return true;
             }
-            if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED)
-                    && !is2HKO(opponent.getBattlePokemon().getMoveSet().getMoves(), opponent.getBattlePokemon(), pokemon)){
+            if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getEffectedPokemon().getStat(Stats.SPEED)
+                    && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
                 return true;
             }
         }
         return false;
+    }
+    public static double highestPercentDamageMove(BattlePokemon attacker, BattlePokemon defender){
+        List<Move> attackerMoves = attacker.getMoveSet().getMoves();
+        double highestPercent = 0;
+        double currentCalc = 0;
+        for(Move move : attackerMoves){
+            //TODO: damage delt divided by map hp.
+            currentCalc = Math.ceil(PokeMathMax.damage(attacker,defender,move) / defender.getMaxHealth());
+            highestPercent = currentCalc > highestPercent ? currentCalc : highestPercent;
+        }
+        return highestPercent;
     }
     public static void initialiseTypeChart() {
         ElementalTypes types = ElementalTypes.INSTANCE;
