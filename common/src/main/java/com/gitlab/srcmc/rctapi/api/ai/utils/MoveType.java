@@ -108,6 +108,7 @@ public enum MoveType {
         Map.<String, Evaluator>entry("stealthrock", (from, to, move) -> BattleEffects.Side.Hazard.stealthrock(to) > 0 ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("toxicspikes", (from, to, move) -> (2 - BattleEffects.Side.Hazard.toxicspikes(to))/2.0),
         Map.<String, Evaluator>entry("stickyweb", (from, to, move) -> BattleEffects.Side.Hazard.stickyweb(to) > 0 ? 0.0 : 1.0),
+        //Map.<String, Evaluator>entry("lastresort", (BattlePokemon from, BattlePokemon, to, Object move) -> )
         // Map.<String, Evaluator>entry("steelsurge", (from, to, move) -> BattleEffects.Side.Hazard.sharpsteel(to) > 0 ? 0.0 : 1.0),
         Map.<String, Evaluator>entry("protect", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),
         Map.<String, Evaluator>entry("detect", (from, to, move) -> BattleStates.get(from.actor.battle).getPokemonState(from).has(BattleEffects.Custom.PROTECT) ? 0.15 : 1.0),

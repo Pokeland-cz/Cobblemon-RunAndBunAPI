@@ -187,6 +187,7 @@ public class SelfdotGen5AI implements BattleAI {
                 return new SwitchActionResponse(nextPokemon.getUuid());
             }
             BattlePokemon opponent = opponentActiveBattlePokemon.get().getBattlePokemon();
+            //TODO: This is where we will filter who can switch in and who doesnt.
             BattlePokemon nextPokemon = canSwitchTo.stream()
                     .max(Comparator.comparingDouble(pokemon -> pokemon.getMoveSet().getMoves().stream().map(move ->
                             powerAndTypeDamage(
