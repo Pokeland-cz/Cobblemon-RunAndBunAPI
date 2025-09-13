@@ -45,8 +45,8 @@ public class PokeMathMax {
 
     private static double damage(
         int attackerLevel,
-        int attackerEffectiveAttack,
-        int defenderEffectiveDefence,
+        double attackerEffectiveAttack,
+        double defenderEffectiveDefence,
         double movePower,
         boolean physical,
         boolean multiTarget,
@@ -61,7 +61,9 @@ public class PokeMathMax {
         boolean attackerHasStatus,
         ElementalType moveType,
         BattlePokemon attacker,
-        BattlePokemon defender)
+        BattlePokemon defender,
+        Map<Stat,Integer> attackerStages,
+        Map<Stat,Integer> defenderStages)
     {
         var attackerEp = BattleStates.getTransformationOrEffected(attacker);
         var attackerPrimaryType = attackerEp.getPrimaryType();
@@ -70,7 +72,7 @@ public class PokeMathMax {
         var attackerAbility = attackerEp.getAbility();
 
         // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
-        var baseDamage = (int)(((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / (double) defenderEffectiveDefence)/50.0) + 2;
+        double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence)/50.0) + 2;
         if(multiTarget) baseDamage *= 0.75;
         if(parentalBond) baseDamage *= 0.25;
         if(glaiveRush) baseDamage *= 2;
@@ -100,16 +102,16 @@ public class PokeMathMax {
         baseDamage *= stab;
 
         // TYPE
-        baseDamage = (int)Math.ceil(baseDamage * TypeChart.getEffectiveness(moveType, defender));
+        baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
 
         return baseDamage;
     }
     
-    public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove) {
-        return damage(attacker, defender, TypeChart.getMove(inBattleMove));
+    public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
+        return damage(attacker, defender, TypeChart.getMove(inBattleMove), attackerStages, defenderStages);
     }
 
-    public static int damage(BattlePokemon attacker, BattlePokemon defender, Move move) {
+    public static int damage(BattlePokemon attacker, BattlePokemon defender, Move move, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
         var damageCategory = move.getDamageCategory().getName();
 
         if(damageCategory.equals(DamageCategories.INSTANCE.getSTATUS().getName())) {
@@ -126,18 +128,11 @@ public class PokeMathMax {
         if(statusContainer != null && !statusContainer.isExpired()) {
             isAttackerBurned = statusContainer.getStatus().equals(Statuses.INSTANCE.getBURN());
         }
-
-        /*var attack = 0;
-        attack = isPhysicalMove ? calcDamageWithStatChanges((int)move.getPower(), true, attacker)
-                : calcDamageWithStatChanges((int)move.getPower(), false, attacker);
-        var defense = 0;
-        defense = isPhysicalMove ? calcDefenseWithStatChanges(true, defender)
-                : calcDefenseWithStatChanges(false, defender);*/
         // accuracy factor is a custom modification
         return (int)Math.ceil(damage(
             attacker.getEffectedPokemon().getLevel(),
-            BattleStates.getTransformationOrEffected(defender).getStat(isPhysicalMove ? Stats.ATTACK : Stats.SPECIAL_ATTACK),
-            BattleStates.getTransformationOrEffected(defender).getStat(isPhysicalMove ? Stats.DEFENCE : Stats.SPECIAL_DEFENCE),
+            calcAttackWithStatChanges((int)move.getPower(), isPhysicalMove, attacker, attackerStages),
+            calcDefenseWithStatChanges(isPhysicalMove, defender, defenderStages),
             move.getPower(),
             isPhysicalMove,
             false, // multiTarget
@@ -152,58 +147,56 @@ public class PokeMathMax {
             status != null && !status.isEmpty(),
             move.getName().equals("hiddenpower") ? TypeChart.getHiddenPowerType(attacker) : move.getType(),
             attacker,
-            defender));
+            defender,
+            attackerStages,
+            defenderStages));
     }
-   /* public static int calcDamageWithStatChanges(int baseDamage, boolean isPhysical, BattlePokemon attacker){
-        Map<Stat, Integer> changes = new HashMap<>();
+   public static double calcAttackWithStatChanges(int baseDamage, boolean isPhysical, BattlePokemon attacker, Map<Stat, Integer> statStages){
         double multiplier = 1;
-        changes = attacker.getStatChanges();
         if(isPhysical){
-            if(changes.get(Stats.ATTACK) < 0){
-                multiplier = 2/(2-attacker.getEffectedPokemon().getStat(Stats.ATTACK));
+            if(statStages.get(Stats.ATTACK) < 0){
+                multiplier = 2/(2-statStages.get(Stats.ATTACK));
             }
-            if(changes.get(Stats.ATTACK) > 0){
-                multiplier = (2+attacker.getEffectedPokemon().getStat(Stats.ATTACK))/2;
+            if(statStages.get(Stats.ATTACK) > 0){
+                multiplier = (2+statStages.get(Stats.ATTACK))/2;
 
             }
-            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(attacker).getStat(Stats.ATTACK) * multiplier));
+            return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
         }
         if(!isPhysical){
-            if(changes.get(Stats.SPECIAL_ATTACK) < 0){
-                multiplier = 2/(2-attacker.getEffectedPokemon().getStat(Stats.SPECIAL_ATTACK));
+            if(statStages.get(Stats.SPECIAL_ATTACK) < 0){
+                multiplier = 2/(2-statStages.get(Stats.SPECIAL_ATTACK));
             }
-            if(changes.get(Stats.SPECIAL_ATTACK) > 0){
-                multiplier = (2+attacker.getEffectedPokemon().getStat(Stats.SPECIAL_ATTACK))/2;
+            if(statStages.get(Stats.SPECIAL_ATTACK) > 0){
+                multiplier = (2+statStages.get(Stats.SPECIAL_ATTACK))/2;
 
             }
-            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(attacker).getStat(Stats.SPECIAL_ATTACK) * multiplier));
+            return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
         }
         return baseDamage;
     }
-    public static int calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender){
-        Map<Stat, Integer> changes = new HashMap<>();
+    public static double calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender,Map<Stat, Integer> statStages){
         double multiplier = 1;
-        changes = defender.getStatChanges();
         if(isPhysical){
-            if(changes.get(Stats.DEFENCE) < 0){
-                multiplier = 2/(2-defender.getEffectedPokemon().getStat(Stats.DEFENCE));
+            if(statStages.get(Stats.DEFENCE) < 0){
+                multiplier = 2/(2-statStages.get(Stats.DEFENCE));
             }
-            if(changes.get(Stats.DEFENCE) > 0){
-                multiplier = (2+defender.getEffectedPokemon().getStat(Stats.DEFENCE))/2;
+            if(statStages.get(Stats.DEFENCE) > 0){
+                multiplier = (2+statStages.get(Stats.DEFENCE))/2;
 
             }
-            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(defender).getStat(Stats.DEFENCE) * multiplier));
+            return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
         }
         if(!isPhysical){
-            if(changes.get(Stats.SPECIAL_DEFENCE) < 0){
-                multiplier = 2/(2-defender.getEffectedPokemon().getStat(Stats.SPECIAL_DEFENCE));
+            if(statStages.get(Stats.SPECIAL_DEFENCE) < 0){
+                multiplier = 2/(2-statStages.get(Stats.SPECIAL_DEFENCE));
             }
-            if(changes.get(Stats.SPECIAL_DEFENCE) > 0){
-                multiplier = (2+defender.getEffectedPokemon().getStat(Stats.SPECIAL_DEFENCE))/2;
+            if(statStages.get(Stats.SPECIAL_DEFENCE) > 0){
+                multiplier = (2+statStages.get(Stats.SPECIAL_DEFENCE))/2;
 
             }
-            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(defender).getStat(Stats.SPECIAL_DEFENCE) * multiplier));
+            return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
         }
-        return -1;
-    }*/
+        return 0;
+    }
 }

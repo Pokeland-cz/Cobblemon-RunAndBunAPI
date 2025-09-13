@@ -58,6 +58,19 @@ public class RunBunAI implements BattleAI {
     private static final double SUPER_EFFECTIVE = 2;
     private static final double NOT_VERY_EFFECTIVE = 0.5;
     private static final double IMMUNE = 0;
+    private static BattlePokemon lastUniqueActivePokemon = null;
+    private static int turnsNewPokemonBeenOut = 0;
+    private static Map<Stat,Integer> npcStages = new HashMap<>();
+    private static Map<Stat,Integer> opponentStages = new HashMap<>();
+    private static final Map<String, String> statIdMap = Map.of(
+            "atk", "attack",
+            "def", "defence",
+            "spa", "special_attack",
+            "spd", "special_defence",
+            "spe", "speed",
+            "eva", "evasion",
+            "acc", "accuracy"
+    );
     private static final Map<ElementalType, Map<ElementalType, Double>> typeChart = new HashMap<>();
     private static final List<String> priorityDamageMoves = new ArrayList<>(List.of(
             "quickattack",
@@ -135,31 +148,31 @@ public class RunBunAI implements BattleAI {
             "snarl",
             "strugglebug"
     ));
-    private static final List<String> generalSetupMoves = new ArrayList<>(List.of("Power-up Punch",
-            "Swords Dance",
-            "Howl",
-            "Stuff Cheeks",
-            "Barrier",
-            "Acid Armor",
-            "Iron Defense",
-            "Cotton Guard",
-            "Charge Beam",
-            "Tail Glow",
-            "Nasty Plot",
-            "Cosmic Power",
-            "Bulk Up",
-            "Calm Mind",
-            "Dragon Dance",
-            "Coil",
-            "Hone Claws",
-            "Quiver Dance",
-            "Shift Gear",
-            "Shell Smash",
-            "Growth",
-            "Work Up",
-            "Curse",
-            "Coil",
-            "No Retreat"));
+    private static final List<String> generalSetupMoves = new ArrayList<>(List.of("poweruppunch",
+            "swordsdance",
+            "howl",
+            "stuffcheeks",
+            "barrier",
+            "acidarmor",
+            "irondefense",
+            "cottonguard",
+            "chargebeam",
+            "tailglow",
+            "nastyplot",
+            "cosmicpower",
+            "bulkup",
+            "calmmind",
+            "dragondance",
+            "coil",
+            "honeclaws",
+            "quiverdance",
+            "shiftgear",
+            "shellsmash",
+            "growth",
+            "workup",
+            "curse",
+            "coil",
+            "noretreat"));
     private static final List<String> ignoreStatDropAbilities = new ArrayList<>(List.of(
             "cobblemon.ability.contrary",
             "cobblemon.ability.clearbody",
@@ -284,6 +297,7 @@ public class RunBunAI implements BattleAI {
         double activePokemonPercentHP = 0;
         Ability currentAbility = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
+        int battleTurn = 0;
         if (battlePokemon != null) {
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
                 currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
@@ -298,14 +312,37 @@ public class RunBunAI implements BattleAI {
             activePokemonPercentHP = Math.ceil(battlePokemon.getHealth() / battlePokemon.getMaxHealth() * 100);
             currentAbility = battlePokemon.getOriginalPokemon().getAbility();
 
-            Map<Stat, Integer> stages = getStageMap(activeBattlePokemon.getBattlePokemon());
-            for (Map.Entry<Stat, Integer> entry : stages.entrySet()) {
+            battleTurn = BattleStates.get(activeBattlePokemon.getActor().getBattle())
+                    .getPokemonState(activeBattlePokemon.getBattlePokemon())
+                    .age(BattleEffects.Custom.TURN);
+            if(lastUniqueActivePokemon ==null){
+                lastUniqueActivePokemon = battlePokemon;
+                turnsNewPokemonBeenOut = 1;
+            }
+            if(!lastUniqueActivePokemon.getName().equals(activeBattlePokemon.getBattlePokemon().getName())
+                || lastUniqueActivePokemon.getGone()){
+                lastUniqueActivePokemon = battlePokemon;
+                turnsNewPokemonBeenOut = 1;
+            }
+            else{
+                turnsNewPokemonBeenOut++;
+            }
+            ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
+                    + "    Turns Since This mon has been on field: " + Integer.toString(turnsNewPokemonBeenOut));
+            npcStages = getStageMap(activeBattlePokemon.getBattlePokemon());
+            for (Map.Entry<Stat, Integer> entry : npcStages.entrySet()) {
                 Stat stat = entry.getKey();
                 int stage = entry.getValue();
-                ModCommon.LOG.info(stat.getIdentifier() + " is at stage " + stage);
+                ModCommon.LOG.info("NPC: " + stat.getIdentifier() + " is at stage " + stage);
+            }
+            for (Map.Entry<Stat, Integer> entry : opponentStages.entrySet()) {
+                Stat stat = entry.getKey();
+                int stage = entry.getValue();
+                ModCommon.LOG.info("Opp: " + stat.getIdentifier() + " is at stage " + stage);
             }
 
         }
+
 
         List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
@@ -334,6 +371,9 @@ public class RunBunAI implements BattleAI {
 
         BattlePokemon opponent = allOpponentActiveBattlePokemon.isEmpty()
                 ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
+        if(opponent != null){
+            opponentStages = getStageMap(opponent);
+        }
 
         if(bf.getBattleType().toString().equals("GEN_9_DOUBLES")){
             int partnerSlot = (currentBattleSlot == 0 ? 1 : 0);
@@ -363,8 +403,8 @@ public class RunBunAI implements BattleAI {
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
             isSwitchMonFaster = possibleSwitch.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED);
-            doesSwitchOHKO = isOHKO(possibleSwitch.getMoveSet().getMoves(), possibleSwitch, opponent);
-            doesOppOHKO = isOHKO(oppMoves, opponent, possibleSwitch);
+            doesSwitchOHKO = isOHKO(possibleSwitch.getMoveSet().getMoves(), possibleSwitch, opponent, npcStages, opponentStages);
+            doesOppOHKO = isOHKO(oppMoves, opponent, possibleSwitch, opponentStages, npcStages);
             if(isSwitchMonFaster && doesSwitchOHKO){
                 switchScore += 5;
             }
@@ -471,7 +511,8 @@ public class RunBunAI implements BattleAI {
             int dmg = PokeMathMax.damage(
                     activeBattlePokemon.getBattlePokemon(),
                     opponent,
-                    moveMap.get(inBattleMove)
+                    moveMap.get(inBattleMove),
+                    npcStages, opponentStages
             );
             moveDamages.put(inBattleMove, dmg);
             ModCommon.LOG.info(inBattleMove.getId() + "     DAMAGE = " + Integer.toString(dmg));
@@ -483,8 +524,8 @@ public class RunBunAI implements BattleAI {
         });
         Map<InBattleMove, Integer> moveScores = new HashMap<>();
         boolean isFaster = activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED);
-        boolean npcIsOHKO = isOHKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon());
-        boolean npcIs2OHKO = is2HKO(oppMoves,opponent,activeBattlePokemon.getBattlePokemon());
+        boolean npcIsOHKO = isOHKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
+        boolean npcIs2OHKO = is2HKO(oppMoves,opponent,activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
 
         //making list of highestest dmg nonkilling moves, and adding special cases.
         List<InBattleMove> nonKillingPossibleMoves = new ArrayList<>();
@@ -910,13 +951,13 @@ public class RunBunAI implements BattleAI {
     public static int getSpeedStat(ActiveBattlePokemon pkmn){
         return  pkmn.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED);
     }
-    public static boolean isOHKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender){
+    public static boolean isOHKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages){
         int enemyDamage = 0;
         int currentHP = defender.getHealth();
         boolean result = false;
         for (Move currentMove : moves) {
             //activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getPrimaryType();
-            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove);
+            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove, attackerStages, defenderStages);
             if (enemyDamage >= currentHP) {
                 result = true;
                 if(currentHP == defender.getMaxHealth()
@@ -936,12 +977,12 @@ public class RunBunAI implements BattleAI {
         }
         return result;
     }
-    public static boolean is2HKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender) {
+    public static boolean is2HKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
         int enemyDamage = 0;
         int currentHP = defender.getHealth();
         for (Move currentMove : moves) {
             //activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getPrimaryType();
-            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove);
+            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove, attackerStages, defenderStages);
             if (enemyDamage * 2 >= currentHP) {
                 return true;
             }
@@ -981,11 +1022,11 @@ public class RunBunAI implements BattleAI {
         for(BattlePokemon pokemon : party){
             //TODO: ((if mon is faster than opp, and not OHKO) || (if mon is slower and not 2OHKO)) && not below 50% hp
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED)
-                && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
+                && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
                 isSecondCondition = true;
             }
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getEffectedPokemon().getStat(Stats.SPEED)
-                    && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
+                    && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
                 isThirdCondition = true;
             }
         }
@@ -997,7 +1038,7 @@ public class RunBunAI implements BattleAI {
         double currentCalc = 0;
         for(Move move : attackerMoves){
             //TODO: damage delt divided by map hp.
-            currentCalc = Math.ceil(PokeMathMax.damage(attacker,defender,move) / defender.getMaxHealth());
+            currentCalc = Math.ceil(PokeMathMax.damage(attacker,defender,move, npcStages, opponentStages) / defender.getMaxHealth());
             highestPercent = currentCalc > highestPercent ? currentCalc : highestPercent;
         }
         return highestPercent;
@@ -1006,17 +1047,6 @@ public class RunBunAI implements BattleAI {
         Map<Stat, Integer> stageMap = new HashMap<>();
         ContextManager ctx = bp.getContextManager();
         StatProvider statProvider = Cobblemon.INSTANCE.getStatProvider();
-
-        // Map shorthand to full stat IDs
-        Map<String, String> statIdMap = Map.of(
-                "atk", "attack",
-                "def", "defence",
-                "spa", "special_attack",
-                "spd", "special_defence",
-                "spe", "speed",
-                "eva", "evasion",
-                "acc", "accuracy"
-        );
 
         Collection<BattleContext> boosts = ctx.get(BattleContext.Type.BOOST);
         if (boosts != null) {
