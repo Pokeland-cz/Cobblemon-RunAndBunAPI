@@ -19,7 +19,6 @@ package com.gitlab.srcmc.rctapi.api.ai.config;
 
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.RunBunAI;
-import com.gitlab.srcmc.rctapi.api.ai.experimental.SelfdotGen5AI;
 import com.gitlab.srcmc.rctapi.api.util.JTO;
 
 public record RunBunAIConfig() {

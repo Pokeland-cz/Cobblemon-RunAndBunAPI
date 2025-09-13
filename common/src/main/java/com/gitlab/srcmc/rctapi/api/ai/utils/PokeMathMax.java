@@ -20,6 +20,7 @@ package com.gitlab.srcmc.rctapi.api.ai.utils;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext.Type;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
+import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.pokemon.status.Statuses;
 import com.cobblemon.mod.common.api.types.ElementalType;
@@ -27,6 +28,8 @@ import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -96,7 +99,7 @@ public class PokeMathMax {
         baseDamage *= stab;
 
         // TYPE
-        baseDamage = (int)(baseDamage * TypeChart.getEffectiveness(moveType, defender));
+        baseDamage = (int)Math.ceil(baseDamage * TypeChart.getEffectiveness(moveType, defender));
 
         return baseDamage;
     }
@@ -122,11 +125,16 @@ public class PokeMathMax {
         if(statusContainer != null && !statusContainer.isExpired()) {
             isAttackerBurned = statusContainer.getStatus().equals(Statuses.INSTANCE.getBURN());
         }
-
+        /*var attack = 0;
+        attack = isPhysicalMove ? calcDamageWithStatChanges((int)move.getPower(), true, attacker)
+                : calcDamageWithStatChanges((int)move.getPower(), false, attacker);
+        var defense = 0;
+        defense = isPhysicalMove ? calcDefenseWithStatChanges(true, defender)
+                : calcDefenseWithStatChanges(false, defender);*/
         // accuracy factor is a custom modification
-        return (int)Math.ceil((acc + RANDOM.nextDouble() * (1.0 - acc)) * damage(
+        return (int)Math.ceil(damage(
             attacker.getEffectedPokemon().getLevel(),
-            BattleStates.getTransformationOrEffected(attacker).getStat(isPhysicalMove ? Stats.ATTACK : Stats.SPECIAL_ATTACK),
+            BattleStates.getTransformationOrEffected(defender).getStat(isPhysicalMove ? Stats.ATTACK : Stats.SPECIAL_ATTACK),
             BattleStates.getTransformationOrEffected(defender).getStat(isPhysicalMove ? Stats.DEFENCE : Stats.SPECIAL_DEFENCE),
             move.getPower(),
             isPhysicalMove,
@@ -144,4 +152,56 @@ public class PokeMathMax {
             attacker,
             defender));
     }
+   /* public static int calcDamageWithStatChanges(int baseDamage, boolean isPhysical, BattlePokemon attacker){
+        Map<Stat, Integer> changes = new HashMap<>();
+        double multiplier = 1;
+        changes = attacker.getStatChanges();
+        if(isPhysical){
+            if(changes.get(Stats.ATTACK) < 0){
+                multiplier = 2/(2-attacker.getEffectedPokemon().getStat(Stats.ATTACK));
+            }
+            if(changes.get(Stats.ATTACK) > 0){
+                multiplier = (2+attacker.getEffectedPokemon().getStat(Stats.ATTACK))/2;
+
+            }
+            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(attacker).getStat(Stats.ATTACK) * multiplier));
+        }
+        if(!isPhysical){
+            if(changes.get(Stats.SPECIAL_ATTACK) < 0){
+                multiplier = 2/(2-attacker.getEffectedPokemon().getStat(Stats.SPECIAL_ATTACK));
+            }
+            if(changes.get(Stats.SPECIAL_ATTACK) > 0){
+                multiplier = (2+attacker.getEffectedPokemon().getStat(Stats.SPECIAL_ATTACK))/2;
+
+            }
+            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(attacker).getStat(Stats.SPECIAL_ATTACK) * multiplier));
+        }
+        return baseDamage;
+    }
+    public static int calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender){
+        Map<Stat, Integer> changes = new HashMap<>();
+        double multiplier = 1;
+        changes = defender.getStatChanges();
+        if(isPhysical){
+            if(changes.get(Stats.DEFENCE) < 0){
+                multiplier = 2/(2-defender.getEffectedPokemon().getStat(Stats.DEFENCE));
+            }
+            if(changes.get(Stats.DEFENCE) > 0){
+                multiplier = (2+defender.getEffectedPokemon().getStat(Stats.DEFENCE))/2;
+
+            }
+            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(defender).getStat(Stats.DEFENCE) * multiplier));
+        }
+        if(!isPhysical){
+            if(changes.get(Stats.SPECIAL_DEFENCE) < 0){
+                multiplier = 2/(2-defender.getEffectedPokemon().getStat(Stats.SPECIAL_DEFENCE));
+            }
+            if(changes.get(Stats.SPECIAL_DEFENCE) > 0){
+                multiplier = (2+defender.getEffectedPokemon().getStat(Stats.SPECIAL_DEFENCE))/2;
+
+            }
+            return (int)(Math.ceil(BattleStates.getTransformationOrEffected(defender).getStat(Stats.SPECIAL_DEFENCE) * multiplier));
+        }
+        return -1;
+    }*/
 }

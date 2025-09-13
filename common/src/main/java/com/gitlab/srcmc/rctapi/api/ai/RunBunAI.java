@@ -40,7 +40,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+import net.fabricmc.loader.impl.util.log.Log;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import oshi.driver.windows.wmi.Win32Fan;
 
 public class RunBunAI implements BattleAI {
@@ -263,28 +266,33 @@ public class RunBunAI implements BattleAI {
 
         return typeEffectiveness;
     }
+    @NotNull
     @Override
-    public ShowdownActionResponse choose(ActiveBattlePokemon activeBattlePokemon, ShowdownMoveset moveset, boolean forceSwitch) {
-        Ability currentAbility = activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getAbility();
-        if (activeBattlePokemon.hasPokemon() && moveset != null) {
-            if (RCTApi.getInstances()
-                    .map(rct -> rct.getValue().getTrainerRegistry().getByOT(activeBattlePokemon.getBattlePokemon().getEffectedPokemon()))
-                    .filter(t -> t != null && t instanceof TrainerNPC).findFirst().orElse(null) instanceof TrainerNPC trainer) {
-                var battleState = BattleStates.get(activeBattlePokemon.getBattle());
-                var actorState = battleState.getActorState(activeBattlePokemon.getActor());
-                var pkmnState = battleState.getPokemonState(activeBattlePokemon.getBattlePokemon());
-                var gimmicks = trainer.getGimmicks().of(activeBattlePokemon.getBattlePokemon().getOriginalPokemon());
-
-                moveset.setCanTerastallize(gimmicks.tera() != null
-                        && !actorState.hasGimmick(Gimmick.TERASTALLIZATION.getId())
-                        && !actorState.hasGimmick(Gimmick.MEGA_EVOLUTION.getId())
-                        && !pkmnState.has(Custom.MEGA)
-                        && !pkmnState.has(Custom.ZMOVE)
-                        && !moveset.getCanUltraBurst()
-                        && !moveset.getCanMegaEvo()
-                        && moveset.getCanZMove() == null ? gimmicks.tera() : null);
+    public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
+        ModCommon.LOG.info("started showdown response.");
+        ModCommon.LOG.info(Boolean.toString(forceSwitch));
+        String currentHeldItem ="";
+        ElementalType activePrimaryType = null;
+        ElementalType activeSecondaryType = null;
+        double activePokemonPercentHP = 0;
+        Ability currentAbility = null;
+        BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
+        if (battlePokemon != null) {
+            if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
+                currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
             }
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getAttack()) + " Attack");
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialAttack()) + " SpAttack");
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpeed()) + " speed");
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialDefence()) + " spDef");
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getDefence()) + " def");
+            activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
+            activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
+            activePokemonPercentHP = Math.ceil(battlePokemon.getHealth() / battlePokemon.getMaxHealth() * 100);
+            currentAbility = battlePokemon.getOriginalPokemon().getAbility();
         }
+
+
         List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
                 .toList();
@@ -303,37 +311,41 @@ public class RunBunAI implements BattleAI {
                 )
                 .filter(abp -> !abp.isAllied(activeBattlePokemon))
                 .toList();
-
+        BattleFormat bf = new BattleFormat();
         //setting up logic for double calcs. works the same for singles anyways.
-        int currentBattleSlot = allNPCActiveBattlePokemon.indexOf(activeBattlePokemon);
-        BattlePokemon opponent = allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
-        int partnerSlot = (currentBattleSlot == 0 ? 1 : 0);
-        ActiveBattlePokemon opponentPartner = allOpponentActiveBattlePokemon.get(partnerSlot);
-        ActiveBattlePokemon NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
+
+
+        int currentBattleSlot = allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) != -1
+                ? allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) : 0;
+
+        BattlePokemon opponent = allOpponentActiveBattlePokemon.isEmpty()
+                ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
+
+        if(bf.getBattleType().toString().equals("GEN_9_DOUBLES")){
+            int partnerSlot = (currentBattleSlot == 0 ? 1 : 0);
+            ActiveBattlePokemon opponentPartner = allOpponentActiveBattlePokemon.get(partnerSlot);
+            ActiveBattlePokemon NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
+        }
         List<Move> oppMoves = new ArrayList<>();
-        oppMoves = opponent.getMoveSet().getMoves();
-        String opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
-        String currentHeldItem = activeBattlePokemon.getBattlePokemon().getHeldItemManager().showdownId(activeBattlePokemon.getBattlePokemon());
+        String opponentAbility = "";
+        double oppPercentHP = 0;
+        if(opponent != null){
+            oppMoves = opponent.getMoveSet().getMoves();
+            opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
+            oppPercentHP = Math.ceil(opponent.getHealth()/opponent.getMaxHealth() * 100);//this is rounded up
+        }
         boolean isOHKO = false;
-        boolean is2HKO = false;
-        double enemyDamage = 0;
-        double currentHP = activeBattlePokemon.getBattlePokemon().getHealth();
-        double oppPercentHP = Math.ceil(opponent.getHealth()/opponent.getMaxHealth() * 100);
-        ElementalType activePrimaryType = activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getPrimaryType();
-        ElementalType activeSecondaryType = activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getSecondaryType();
-        double activePokemonPercentHP = Math.ceil(activeBattlePokemon.getBattlePokemon().getHealth()
-                / activeBattlePokemon.getBattlePokemon().getMaxHealth() * 100); //this is rounded up
-
-
         //TODO: SWITCHING SCORING LOGIC STARTS HERE =======================================
         List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
                 .toList();
+        if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
         Map<BattlePokemon, Integer> switchingScores = new HashMap<>();
         int switchScore = 0;
         boolean isSwitchMonFaster = false;
         boolean doesSwitchOHKO = false;
         boolean doesOppOHKO = false;
+
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
             isSwitchMonFaster = possibleSwitch.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED);
@@ -369,6 +381,7 @@ public class RunBunAI implements BattleAI {
                 }
             }
             switchingScores.put(possibleSwitch, switchScore);
+            ModCommon.LOG.info(possibleSwitch.getOriginalPokemon().getDisplayName().toString() + "  " + Integer.toString(switchScore));
         }
         //filter who has the best switch score
         int maxSwitchingScore = switchingScores.values()
@@ -395,6 +408,13 @@ public class RunBunAI implements BattleAI {
                 nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
                 nextPokemon.setWillBeSwitchedIn(true);
                 return new SwitchActionResponse(nextPokemon.getUuid());
+            }
+            if (nextPokemon == null) {
+                if (!canSwitchTo.isEmpty()) {
+                    nextPokemon = canSwitchTo.get(RANDOM.nextInt(canSwitchTo.size()));
+                } else {
+                    return PassActionResponse.INSTANCE; // no Pokémon to switch to
+                }
             }
             nextPokemon.setWillBeSwitchedIn(true);
             return new SwitchActionResponse(nextPokemon.getUuid());
@@ -440,6 +460,7 @@ public class RunBunAI implements BattleAI {
                     moveMap.get(inBattleMove)
             );
             moveDamages.put(inBattleMove, dmg);
+            ModCommon.LOG.info(inBattleMove.getId() + "     DAMAGE = " + Integer.toString(dmg));
         });
 
         List<InBattleMove> killingMoves = new ArrayList<>();
@@ -461,16 +482,21 @@ public class RunBunAI implements BattleAI {
                 */
             for (int dmg : moveDamages.values()) {
                 maxDamage = maxDamage >= dmg ? maxDamage : dmg;
+
             }
+            ModCommon.LOG.info("This is the max damage potential    "+ Integer.toString(maxDamage));
             for (Map.Entry<InBattleMove, Integer> entry : moveDamages.entrySet()) {
                 if (entry.getValue() == maxDamage) {
+                    ModCommon.LOG.info("NonPossibleKill Max Damage Move     " + entry.getKey().getId());
                     nonKillingPossibleMoves.add(entry.getKey());
                 } else if (trapMoves.contains(entry.getKey().getId())
                         || physicalAttackReductionMoves.contains(entry.getValue())
                         || specialAttackReductionMoves.contains(entry.getKey())
                         || speedReductionMoves.contains(entry.getValue())) {
+                    ModCommon.LOG.info("NonPossibleKill Max Damage Move (Special Case)    " + entry.getKey().getId());
                     nonKillingPossibleMoves.add(entry.getKey());
                 }
+
             }
         }
         //TODO: START OF THE MOVE DAMAGE SCORING CALCULATIONS
@@ -805,28 +831,28 @@ public class RunBunAI implements BattleAI {
                 score += 6;
             }
             //This puts the final score into the map with its move key.
+            if(nonKillingPossibleMoves.contains(move.getKey())){
+                double roll = RANDOM.nextDouble();
+                score += roll > .2 ? 6:8;
+                ModCommon.LOG.info("NONKILLING MOVE " + move.getKey().getId() + "  " + Integer.toString(score));
+            }
             moveScores.put(currentMove, score);
+            ModCommon.LOG.info(currentMove.getId() + "  " + Integer.toString(score));
         }
         // END OF SCORING LOGIC::START OF SWITCH AI LOGIC
-        /*InBattleMove move = killingMoves.isEmpty() ?
-                //todo: if no move can kill, create scoring system for non-killing moves.
-                Collections.max(moveDamages.entrySet(), Map.Entry.comparingByValue()).getKey() :
-                killingMoves.get(RANDOM.nextInt(killingMoves.size()));
-        List<Targetable> targets = move.mustBeUsed() ? null : move.getTarget().getTargetList().invoke(activeBattlePokemon);
-        return new MoveActionResponse(
-                move.id,
-                targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
-                null
-        );*/
-
-        if(isSwitching(moveScores, aliveParty, opponent)){
+        if(isSwitching(moveScores, aliveParty, activeBattlePokemon.getBattlePokemon(), opponent)){
             double flip = RANDOM.nextDouble();
             boolean result = (flip > .5);
+            ModCommon.LOG.info(Boolean.toString(result) + "    coin toss result");
             if(result){
                 nextPokemon.setWillBeSwitchedIn(true);
+                ModCommon.LOG.info("SWITCHING INTO NEXT MON");
                 return new SwitchActionResponse(nextPokemon.getUuid());
                 //start switching logic
             }
+        }
+        else{
+            ModCommon.LOG.info("NO REASON TO SWITCH THIS MON");
         }
         int maxScore = moveScores.values()
                 .stream()
@@ -837,16 +863,22 @@ public class RunBunAI implements BattleAI {
                 .filter(entry -> entry.getValue() == maxScore)
                 .map(Map.Entry::getKey)
                 .toList();
+
+
         //if there are multiple best moves
         if(bestMoves.size() > 1){
             int randomInt = RANDOM.nextInt(bestMoves.size());
             var bestMove = bestMoves.get(randomInt);
+            ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
+            List<Targetable> targets = bestMove.mustBeUsed() ? null : bestMove.getTarget().getTargetList().invoke(activeBattlePokemon);
             return new MoveActionResponse(bestMove.getId(),
-                    opponentActiveBattlePokemon.get().getPNX(),
+                    targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                     null);
         }
+        List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
+        ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
         return new MoveActionResponse(bestMoves.get(0).getId(),
-                 opponentActiveBattlePokemon.get().getPNX(),
+                targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                 null);
     }
     public static int spikesCount(BattlePokemon pkmn) {
@@ -920,30 +952,30 @@ public class RunBunAI implements BattleAI {
         }
         return false;
     }
-    public static boolean isSwitching(Map<InBattleMove, Integer> moveScore, List<BattlePokemon> party, BattlePokemon opponent){
+    public static boolean isSwitching(Map<InBattleMove, Integer> moveScore, List<BattlePokemon> party,BattlePokemon self, BattlePokemon opponent){
         List<Integer> scores = new ArrayList<>();
+        boolean isSecondCondition = false;
+        boolean isThirdCondition = false;
         for(int val : moveScore.values()){
             scores.add(val);
         }
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
-        if(hasLowScore){
+        ModCommon.LOG.info(Boolean.toString(hasLowScore));
+        if(Math.ceil(self.getHealth()/self.getMaxHealth()) * 100 <= 50){
             return false;
         }
         for(BattlePokemon pokemon : party){
             //TODO: ((if mon is faster than opp, and not OHKO) || (if mon is slower and not 2OHKO)) && not below 50% hp
-            if(Math.ceil(pokemon.getHealth()/pokemon.getMaxHealth()) * 100 <= 50){
-                continue;
-            }
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED)
                 && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
-                return true;
+                isSecondCondition = true;
             }
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getEffectedPokemon().getStat(Stats.SPEED)
                     && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon)){
-                return true;
+                isThirdCondition = true;
             }
         }
-        return false;
+        return isSecondCondition && isThirdCondition && hasLowScore;
     }
     public static double highestPercentDamageMove(BattlePokemon attacker, BattlePokemon defender){
         List<Move> attackerMoves = attacker.getMoveSet().getMoves();

@@ -17,6 +17,7 @@
  */
 package com.gitlab.srcmc.rctapi;
 
+import com.gitlab.srcmc.rctapi.api.ai.config.RunBunAIConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ public class ModCommon {
         RCTBattleAIConfig.register();
         StrongBattleAIConfig.register();
         SelfdotGen5AIConfig.register();
+        RunBunAIConfig.register();
 
         TickEvent.SERVER_POST.register(ModCommon::handleServerTick);
         CobblemonEvents.POKEMON_ENTITY_SAVE_TO_WORLD.subscribe(Priority.HIGH, ModCommon::handlePokemonEntitySaveToWorld);
