@@ -396,7 +396,7 @@ public class RunBunAI implements BattleAI {
         BattlePokemon nextPokemon = null;
         if (!bestSwitches.isEmpty()) {
             if(bestSwitches.size() > 1){
-                 nextPokemon = bestSwitches.get(RANDOM.nextInt(bestSwitches.size()));
+                 nextPokemon = bestSwitches.getFirst();
             }
             else{
                  nextPokemon = bestSwitches.getFirst();
