@@ -19,6 +19,7 @@ package com.gitlab.srcmc.rctapi.api.ai.utils;
 
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext.Type;
 import com.cobblemon.mod.common.api.moves.Move;
+import com.cobblemon.mod.common.api.moves.animations.ActionEffects;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
@@ -125,6 +126,7 @@ public class PokeMathMax {
         if(statusContainer != null && !statusContainer.isExpired()) {
             isAttackerBurned = statusContainer.getStatus().equals(Statuses.INSTANCE.getBURN());
         }
+
         /*var attack = 0;
         attack = isPhysicalMove ? calcDamageWithStatChanges((int)move.getPower(), true, attacker)
                 : calcDamageWithStatChanges((int)move.getPower(), false, attacker);

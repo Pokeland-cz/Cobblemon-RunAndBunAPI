@@ -1,12 +1,17 @@
 package com.gitlab.srcmc.rctapi.api.ai;
 
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.abilities.Ability;
+import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
+import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.cobblemon.mod.common.api.events.battles.BattleEvent;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
 import com.cobblemon.mod.common.api.pokemon.stats.Stat;
+import com.cobblemon.mod.common.api.pokemon.stats.StatProvider;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.pokemon.status.Status;
 import com.cobblemon.mod.common.api.pokemon.status.Statuses;
@@ -14,6 +19,7 @@ import com.cobblemon.mod.common.api.types.ElementalType;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.ShowdownMoveset.Gimmick;
+import com.cobblemon.mod.common.battles.interpreter.ContextManager;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.item.battle.BagItem;
 import com.cobblemon.mod.common.item.interactive.PotionType;
@@ -41,6 +47,7 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import net.fabricmc.loader.impl.util.log.Log;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -290,8 +297,15 @@ public class RunBunAI implements BattleAI {
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = Math.ceil(battlePokemon.getHealth() / battlePokemon.getMaxHealth() * 100);
             currentAbility = battlePokemon.getOriginalPokemon().getAbility();
-        }
 
+            Map<Stat, Integer> stages = getStageMap(activeBattlePokemon.getBattlePokemon());
+            for (Map.Entry<Stat, Integer> entry : stages.entrySet()) {
+                Stat stat = entry.getKey();
+                int stage = entry.getValue();
+                ModCommon.LOG.info(stat.getIdentifier() + " is at stage " + stage);
+            }
+
+        }
 
         List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
@@ -988,6 +1002,55 @@ public class RunBunAI implements BattleAI {
         }
         return highestPercent;
     }
+    public static Map<Stat, Integer> getStageMap(BattlePokemon bp) {
+        Map<Stat, Integer> stageMap = new HashMap<>();
+        ContextManager ctx = bp.getContextManager();
+        StatProvider statProvider = Cobblemon.INSTANCE.getStatProvider();
+
+        // Map shorthand to full stat IDs
+        Map<String, String> statIdMap = Map.of(
+                "atk", "attack",
+                "def", "defence",
+                "spa", "special_attack",
+                "spd", "special_defence",
+                "spe", "speed",
+                "eva", "evasion",
+                "acc", "accuracy"
+        );
+
+        Collection<BattleContext> boosts = ctx.get(BattleContext.Type.BOOST);
+        if (boosts != null) {
+            for (BattleContext c : boosts) {
+                String statId = statIdMap.getOrDefault(c.getId(), c.getId());
+                ModCommon.LOG.info(c.getId() + "     " + statId);
+                ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("cobblemon", statId);
+                try {
+                    Stat stat = statProvider.fromIdentifierOrThrow(rl);
+                    stageMap.put(stat, stageMap.getOrDefault(stat, 0) + 1);
+                } catch (IllegalArgumentException e) {
+                    ModCommon.LOG.warn("Unknown stat for id: " + c.getId());
+                }
+            }
+        }
+
+        Collection<BattleContext> unboosts = ctx.get(BattleContext.Type.UNBOOST);
+        if (unboosts != null) {
+            for (BattleContext c : unboosts) {
+                String statId = statIdMap.getOrDefault(c.getId(), c.getId());
+                ModCommon.LOG.info(c.getId() + "     " + statId);
+                ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("cobblemon", statId);
+                try {
+                    Stat stat = statProvider.fromIdentifierOrThrow(rl);
+                    stageMap.put(stat, stageMap.getOrDefault(stat, 0) - 1); // subtract for unboost
+                } catch (IllegalArgumentException e) {
+                    ModCommon.LOG.warn("Unknown stat for id: " + c.getId());
+                }
+            }
+        }
+
+        return stageMap;
+    }
+
     public static void initialiseTypeChart() {
         ElementalTypes types = ElementalTypes.INSTANCE;
         ElementalType NORMAL = types.getNORMAL();
