@@ -28,6 +28,7 @@ import com.cobblemon.mod.common.api.types.ElementalType;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.gitlab.srcmc.rctapi.ModCommon;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,8 +71,7 @@ public class PokeMathMax {
         var attackerSecondaryType = attackerEp.getSecondaryType();
         var attackerTeraType = attacker.getEffectedPokemon().getTeraType();
         var attackerAbility = attackerEp.getAbility();
-
-        // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
+               // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
         double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence)/50.0) + 2;
         if(multiTarget) baseDamage *= 0.75;
         if(parentalBond) baseDamage *= 0.25;
@@ -103,7 +103,6 @@ public class PokeMathMax {
 
         // TYPE
         baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
-
         return baseDamage;
     }
     
@@ -131,7 +130,7 @@ public class PokeMathMax {
         // accuracy factor is a custom modification
         return (int)Math.ceil(damage(
             attacker.getEffectedPokemon().getLevel(),
-            calcAttackWithStatChanges((int)move.getPower(), isPhysicalMove, attacker, attackerStages),
+            calcAttackWithStatChanges(isPhysicalMove, attacker, attackerStages),
             calcDefenseWithStatChanges(isPhysicalMove, defender, defenderStages),
             move.getPower(),
             isPhysicalMove,
@@ -151,52 +150,64 @@ public class PokeMathMax {
             attackerStages,
             defenderStages));
     }
-   public static double calcAttackWithStatChanges(int baseDamage, boolean isPhysical, BattlePokemon attacker, Map<Stat, Integer> statStages){
+   public static double calcAttackWithStatChanges(boolean isPhysical, BattlePokemon attacker, Map<Stat, Integer> statStages){
         double multiplier = 1;
         if(isPhysical){
-            if(statStages.get(Stats.ATTACK) < 0){
-                multiplier = 2/(2-statStages.get(Stats.ATTACK));
+            if(statStages.getOrDefault(Stats.ATTACK,0) < 0){
+                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
+                multiplier = 2/(2-(statChange));
+                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
             }
-            if(statStages.get(Stats.ATTACK) > 0){
-                multiplier = (2+statStages.get(Stats.ATTACK))/2;
-
+            else if(statStages.getOrDefault(Stats.ATTACK,0) > 0){
+                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
+                multiplier = (2+(statChange))/2;
+                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
             }
-            return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
+                return BattleStates.getTransformationOrEffected(attacker).getAttack();
         }
-        if(!isPhysical){
-            if(statStages.get(Stats.SPECIAL_ATTACK) < 0){
-                multiplier = 2/(2-statStages.get(Stats.SPECIAL_ATTACK));
-            }
-            if(statStages.get(Stats.SPECIAL_ATTACK) > 0){
-                multiplier = (2+statStages.get(Stats.SPECIAL_ATTACK))/2;
-
-            }
-            return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
-        }
-        return baseDamage;
+       if(!isPhysical){
+           if(statStages.getOrDefault(Stats.SPECIAL_ATTACK,0) < 0){
+               double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
+               multiplier = 2/(2-statChange);
+               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
+           }
+           else if(statStages.getOrDefault(Stats.SPECIAL_ATTACK,0) > 0){
+               double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
+               multiplier = ((2+statChange)/2);
+               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
+           }
+               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack();
+       }
+        return -1;
     }
-    public static double calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender,Map<Stat, Integer> statStages){
+    public static double calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender,Map<Stat, Integer> statStages) {
         double multiplier = 1;
-        if(isPhysical){
-            if(statStages.get(Stats.DEFENCE) < 0){
-                multiplier = 2/(2-statStages.get(Stats.DEFENCE));
+        if (isPhysical) {
+            if (statStages.getOrDefault(Stats.DEFENCE, 0) < 0) {
+                double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
+                multiplier = 2 / (2 - statChange);
             }
-            if(statStages.get(Stats.DEFENCE) > 0){
-                multiplier = (2+statStages.get(Stats.DEFENCE))/2;
-
+            else if (statStages.getOrDefault(Stats.DEFENCE, 0) > 0) {
+                double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
+                multiplier = (2 + statChange) / 2;
+            } else {
+                return BattleStates.getTransformationOrEffected(defender).getDefence();
             }
             return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
         }
-        if(!isPhysical){
-            if(statStages.get(Stats.SPECIAL_DEFENCE) < 0){
-                multiplier = 2/(2-statStages.get(Stats.SPECIAL_DEFENCE));
+        if (!isPhysical) {
+            if (statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 0) {
+                double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
+                multiplier = 2 / (2 - statChange);
             }
-            if(statStages.get(Stats.SPECIAL_DEFENCE) > 0){
-                multiplier = (2+statStages.get(Stats.SPECIAL_DEFENCE))/2;
-
+            else if (statStages.getOrDefault(Stats.ATTACK, 0) > 0) {
+                double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
+                multiplier = (2 + statChange) / 2;
+            } else {
+                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence();
             }
             return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
         }
-        return 0;
+        return -1;
     }
 }

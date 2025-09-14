@@ -290,7 +290,6 @@ public class RunBunAI implements BattleAI {
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
         ModCommon.LOG.info("started showdown response.");
-        ModCommon.LOG.info(Boolean.toString(forceSwitch));
         String currentHeldItem ="";
         ElementalType activePrimaryType = null;
         ElementalType activeSecondaryType = null;
@@ -312,6 +311,7 @@ public class RunBunAI implements BattleAI {
             activePokemonPercentHP = Math.ceil(battlePokemon.getHealth() / battlePokemon.getMaxHealth() * 100);
             currentAbility = battlePokemon.getOriginalPokemon().getAbility();
 
+            //TODO: I think we need to switch the battle turn with the turnsNewPokemonBeenOut and track our own turns
             battleTurn = BattleStates.get(activeBattlePokemon.getActor().getBattle())
                     .getPokemonState(activeBattlePokemon.getBattlePokemon())
                     .age(BattleEffects.Custom.TURN);
@@ -324,21 +324,18 @@ public class RunBunAI implements BattleAI {
                 lastUniqueActivePokemon = battlePokemon;
                 turnsNewPokemonBeenOut = 1;
             }
-            else{
-                turnsNewPokemonBeenOut++;
-            }
             ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
                     + "    Turns Since This mon has been on field: " + Integer.toString(turnsNewPokemonBeenOut));
             npcStages = getStageMap(activeBattlePokemon.getBattlePokemon());
             for (Map.Entry<Stat, Integer> entry : npcStages.entrySet()) {
                 Stat stat = entry.getKey();
                 int stage = entry.getValue();
-                ModCommon.LOG.info("NPC: " + stat.getIdentifier() + " is at stage " + stage);
+                ModCommon.LOG.info("NPC: " + stat + " is at stage " + stage);
             }
             for (Map.Entry<Stat, Integer> entry : opponentStages.entrySet()) {
                 Stat stat = entry.getKey();
                 int stage = entry.getValue();
-                ModCommon.LOG.info("Opp: " + stat.getIdentifier() + " is at stage " + stage);
+                ModCommon.LOG.info("Opp: " + stat + " is at stage " + stage);
             }
 
         }
@@ -388,7 +385,6 @@ public class RunBunAI implements BattleAI {
             opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
             oppPercentHP = Math.ceil(opponent.getHealth()/opponent.getMaxHealth() * 100);//this is rounded up
         }
-        boolean isOHKO = false;
         //TODO: SWITCHING SCORING LOGIC STARTS HERE =======================================
         List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
@@ -655,7 +651,7 @@ public class RunBunAI implements BattleAI {
                         switch (nonKillingMove.getId()){
                             case "futuresight":
                                 // If AI is faster than target and is KO’d by target
-                                score += isFaster && isOHKO ? 8 : 6;
+                                score += isFaster && npcIsOHKO ? 8 : 6;
                                 break;
                             case "relicsong":
                                 // If in Meloetta base form
@@ -869,7 +865,7 @@ public class RunBunAI implements BattleAI {
                 }
             }
             //list of all opponents moves and their OHKO potential.
-            if (priorityDamageMoves.contains(move) && !isFaster && isOHKO) {
+            if (priorityDamageMoves.contains(move) && !isFaster && npcIsOHKO) {
                 score = 11;
             }
             //if our pokemon has a special ability give its score +1
@@ -926,12 +922,14 @@ public class RunBunAI implements BattleAI {
             var bestMove = bestMoves.get(randomInt);
             ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
             List<Targetable> targets = bestMove.mustBeUsed() ? null : bestMove.getTarget().getTargetList().invoke(activeBattlePokemon);
+            turnsNewPokemonBeenOut++;
             return new MoveActionResponse(bestMove.getId(),
                     targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                     null);
         }
         List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
         ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
+        turnsNewPokemonBeenOut++;
         return new MoveActionResponse(bestMoves.get(0).getId(),
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                 null);
