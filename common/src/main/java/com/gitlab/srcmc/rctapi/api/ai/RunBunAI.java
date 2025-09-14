@@ -231,7 +231,79 @@ public class RunBunAI implements BattleAI {
             "dreameater",
             "nightmare",
             "snore",
-            "sleeptalk"));
+            "sleeptalk",
+            "hypnosis",
+            "lovelykiss",
+            "sleeppowder",
+            "spore"));
+
+    private static final List<String> soundMoves = new ArrayList<>(List.of ("alluringvoice",
+            "boomburst",
+            "bugbuzz",
+            "chatter",
+            "clangingscales",
+            "clangoroussoul",
+            "clangoroussoulblaze",
+            "confide",
+            "disarmingvoice",
+            "echoedvoice",
+            "eeriespell",
+            "grasswhistle",
+            "growl",
+            "healbell",
+            "howl",
+            "hypervoice",
+            "metalsound",
+            "nobleroar",
+            "overdrive",
+            "partingshot",
+            "perishsong",
+            "psychicnoise",
+            "relicsong",
+            "roar",
+            "round",
+            "screech",
+            "shadowpanic",
+            "sing",
+            "snarl",
+            "snore",
+            "sparklingaria",
+            "supersonic",
+            "torchsong",
+            "uproar"
+            ));
+
+    private static final List<String> flinchMoves = new ArrayList<>(List.of ("airslash",
+            "astonish",
+            "bite",
+            "boneclub",
+            "darkpulse",
+            "doubleironbash",
+            "dragonrush",
+            "extrasensory",
+            "fierywrath",
+            "firefang",
+            "floatyfall",
+            "headbutt",
+            "heartstamp",
+            "hyperfang",
+            "icefang",
+            "iciclecrash",
+            "ironhead",
+            "mountaingale",
+            "needlearm",
+            "rockslide",
+            "rollingkick",
+            "skyattack",
+            "steamroller",
+            "stomp",
+            "thunderfang",
+            "triplearrows",
+            "twister",
+            "waterfall",
+            "zenheadbutt",
+            "zingzap"
+    ));
 
     private static double typeEffectiveness(ElementalType attacker, ElementalType defender) {
         if (!typeChart.containsKey(defender)) return 1;
@@ -858,8 +930,154 @@ public class RunBunAI implements BattleAI {
                                 }
                                 break;
                             case "finalgambit":
+                                if(isFaster && activeBattlePokemon.getBattlePokemon().getHealth() >= opponent.getHealth()){
+                                    score += 8;
+                                } 
+                                else if(isFaster && npcIsOHKO){
+                                    score += 7;
+                                }
+                                else{
+                                    score += 6;
+                                }
+                                break;
+                            case "electricterrain":
+                                if (!BattleEffects.Field.Terrain.electricterrain(activeBattlePokemon.getBattlePokemon())) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("terrainextender")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+                            case "psychicterrain":
+                                if (!BattleEffects.Field.Terrain.psychicterrain(activeBattlePokemon.getBattlePokemon())) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("terrainextender")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+                            case "grassyterrain":
+                                if (!BattleEffects.Field.Terrain.grassyterrain(activeBattlePokemon.getBattlePokemon())) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("terrainextender")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+                            case "mistyterrain":
+                                if (!BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon())) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("terrainextender")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+
+                            case "substitute":
+                                roll = RANDOM.nextDouble();
+                                score +=6;
+                                if(BattleEffects.Pokemon.Status.slp(opponent)){
+                                    score += 2;
+                                }
+                                if(BattleEffects.Pokemon.Volatile.leech(opponent)){
+                                    score += 2;
+                                }
+                                if (oppMoves.contains(soundMoves)) {
+                                    score -= 8;
+                                }
+                                if(activePokemonPercentHP > 50 || opponentAbility.equals("infiltrator")){
+                                    score = -20;
+                                }
+                                score -= roll > .5 ? 1: 0;
+                                break;
+                            case "explosion", "selfdestruct", "mistyexplosion":
+                                roll = RANDOM.nextDouble();
+                                int explosionResult1 = roll > .3 ? 8 : 0;
+                                int explosionResult2 = roll > .5 ? 7 : 0;
+                                int explosionResult3 = roll > .05 ? 7 : 0;
+                                if(!aliveParty.isEmpty() || (allOpponentActiveBattlePokemon.isEmpty() && aliveParty.isEmpty())){    
+                                    if(activePokemonPercentHP < 10){
+                                        score += 10;
+                                    }
+                                    else if(activePokemonPercentHP < 33) {
+                                        score += explosionResult1;
+                                    }
+                                    else if(activePokemonPercentHP < 66){
+                                        score += explosionResult2;
+                                    }
+                                    else{
+                                        score += explosionResult3;
+                                    }
+                                    if (aliveParty.isEmpty()){
+                                        score -= 1;
+                                    }
+                                }
+                                break;
+
+                            case "memento":
+                                if(!aliveParty.isEmpty()){
+                                    roll = RANDOM.nextDouble();
+                                    int mementoRoll1 = roll > .3 ? 14 : 6;
+                                    int mementoRoll2 = roll > .5 ? 13 : 6;
+                                    int mementoRoll3 = roll > .05 ? 13 : 6;
+                                    if(activePokemonPercentHP < 10){
+                                        score += 16;
+                                    }
+                                    else if(activePokemonPercentHP < 33){
+                                        score += mementoRoll1;
+                                    }
+                                    else if(activePokemonPercentHP < 66){
+                                        score += mementoRoll2;
+                                    }
+                                    else{
+                                        score += mementoRoll3;
+                                    }
+                                }
+                                break;
+
+                            case "thunderwave", "stunspore", "glare", "nuzzle", "zapcannon":
+                                roll = RANDOM.nextDouble();
+                                int paraRoll = roll > .5 ? -1: 0;
+                                boolean fasterIfPara = false;
+                                boolean hasFlinchMove = flinchMoves.stream()
+                                        .anyMatch(moveDamages::containsKey);
+                                if(opponent.getEffectedPokemon().getStat(Stats.SPEED)/4 < activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED)){
+                                    fasterIfPara = true;
+                                }
+                                if((!isFaster && fasterIfPara) 
+                                    ||  moveDamages.containsKey("hex") 
+                                    || hasFlinchMove 
+                                    || BattleEffects.Pokemon.Volatile.attract(opponent) 
+                                    || BattleEffects.Pokemon.Volatile.confusion(opponent)){
+                                    score += 8;
+                                }
+                                else{
+                                    score += 7;
+                                }
+                                score += paraRoll;
 
                                 break;
+
+                            case "willowisp":
+                                
+                                break;
+
+                            case "trick", "switcheroo":
+
+                                break;
+
+                            case "yawn", "darkvoid", "sleeppowder", "hypnosis", "lovelykiss", "sing", "spore":
+                                
+                                break;
+
                         }
                     }
                 }
