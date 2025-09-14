@@ -633,6 +633,20 @@ public class RunBunAI implements BattleAI {
                     opponent.getEffectedPokemon().getSecondaryType(), opponent.getEffectedPokemon().getAbility());
             double typeEffectivenessResult = typeEffectiveness1 * typeEffectiveness2;
 
+            boolean hasSpecialMove = false;
+            boolean hasPhysicalMove = false;
+            String damageCategory ="";
+            //String currentMoveCategory = "";
+            for(Move opponentMove : oppMoves){
+                damageCategory = opponentMove.getDamageCategory().getName();
+                if(damageCategory.equals(DamageCategories.INSTANCE.getPHYSICAL().getName())){
+                    hasPhysicalMove = true;
+                }
+                if(damageCategory.equals(DamageCategories.INSTANCE.getSPECIAL().getName())){
+                    hasSpecialMove = true;
+                }
+            }
+
             //useless move because of abilities
             if (typeEffectivenessResult == 0) {
                 moveScores.put(currentMove, -20);
@@ -688,7 +702,7 @@ public class RunBunAI implements BattleAI {
                     }
 
                     if (physicalAttackReductionMoves.contains(nonKillingMove) || specialAttackReductionMoves.contains(nonKillingMove)) {
-                        boolean hasSpecialMove = false;
+                        /*boolean hasSpecialMove = false;
                         boolean hasPhysicalMove = false;
                         String damageCategory ="";
                         //String currentMoveCategory = "";
@@ -700,7 +714,7 @@ public class RunBunAI implements BattleAI {
                             if(damageCategory.equals(DamageCategories.INSTANCE.getSPECIAL().getName())){
                                 hasSpecialMove = true;
                             }
-                        }
+                        }*/
                         //currentMoveCategory = TypeChart.getMove(nonKillingMove).getDamageCategory().getName();
                         if (moveScores.get(nonKillingMove) == maxDamage) {
                             roll = RANDOM.nextDouble();
@@ -978,6 +992,28 @@ public class RunBunAI implements BattleAI {
                                     else{
                                         score+=8;
                                     }
+                                }
+                                break;
+
+                            case "lightscreen":
+                                roll = RANDOM.nextDouble();
+                                score += 6;
+                                if(hasSpecialMove){
+                                    if(currentHeldItem.equals("lightclay")){
+                                        score += 1;
+                                    }
+                                    score += roll > .5 ? 1: 0;
+                                }
+                                break;
+
+                            case "reflect":
+                                roll = RANDOM.nextDouble();
+                                score += 6;
+                                if(hasPhysicalMove){
+                                    if(currentHeldItem.equals("lightclay")){
+                                        score += 1;
+                                    }
+                                    score += roll > .5 ? 1: 0;
                                 }
                                 break;
 
