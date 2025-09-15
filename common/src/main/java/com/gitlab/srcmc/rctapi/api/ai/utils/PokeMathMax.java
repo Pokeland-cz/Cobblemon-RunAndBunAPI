@@ -28,6 +28,7 @@ import com.cobblemon.mod.common.api.types.ElementalType;
 import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.cobblemon.mod.common.pokemon.FormData;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import java.util.*;
 
@@ -40,139 +41,116 @@ public class PokeMathMax {
     private static final Random RANDOM = new Random();
     private static final String WEATHER_SUN = "sunny";
     private static final String WEATHER_RAIN = "raining";
-    private static final List<String> ITEMS = new ArrayList<>(List.of("assault_vest",
-            "choice_band",
-            "choice_specs",
-            "eviolite",
-            "life_orb",
-            "muscle_band",
-            "wide_glasses",
-            "black_belt",
-            "black_glasses",
-            "charcoal_stick",
-            "dragon_fang",
-            "hard_stone",
-            "magnet",
-            "metal_coat",
-            "miracle_seed",
-            "mystic_water",
-            "never_melt_ice",
-            "poison_barb",
-            "sharp_beak",
-            "silk_scarf",
-            "silver_powder",
-            "soft_sand",
-            "spell_tag",
-            "twisted_spoon"
-            ));
 
     private static double damage(
-        int attackerLevel,
-        double attackerEffectiveAttack,
-        double defenderEffectiveDefence,
-        double movePower,
-        boolean physical,
-        boolean multiTarget,
-        boolean rain,
-        boolean sun,
-        boolean parentalBond,
-        boolean glaiveRush,
-        boolean burn,
-        boolean zmove,
-        boolean reflect,
-        boolean lightscreen,
-        boolean attackerHasStatus,
-        ElementalType moveType,
-        BattlePokemon attacker,
-        BattlePokemon defender,
-        Map<Stat,Integer> attackerStages,
-        Map<Stat,Integer> defenderStages)
-    {
+            int attackerLevel,
+            double attackerEffectiveAttack,
+            double defenderEffectiveDefence,
+            double movePower,
+            boolean physical,
+            boolean multiTarget,
+            boolean rain,
+            boolean sun,
+            boolean parentalBond,
+            boolean glaiveRush,
+            boolean burn,
+            boolean zmove,
+            boolean reflect,
+            boolean lightscreen,
+            boolean attackerHasStatus,
+            ElementalType moveType,
+            BattlePokemon attacker,
+            BattlePokemon defender,
+            Map<Stat, Integer> attackerStages,
+            Map<Stat, Integer> defenderStages) {
         var attackerEp = BattleStates.getTransformationOrEffected(attacker);
         var attackerPrimaryType = attackerEp.getPrimaryType();
         var attackerSecondaryType = attackerEp.getSecondaryType();
         var attackerTeraType = attacker.getEffectedPokemon().getTeraType();
         var attackerAbility = attackerEp.getAbility();
-        String attackerHeldItem = attacker.getHeldItemManager().showdownId(attacker);
-               // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
-        double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence)/50.0) + 2;
-        if(multiTarget) baseDamage *= 0.75;
-        if(parentalBond) baseDamage *= 0.25;
-        if(glaiveRush) baseDamage *= 2;
-        if(burn && physical && !attackerAbility.getName().equals("guts")) baseDamage *= 0.5;
-        if(attackerHasStatus && attackerAbility.getName().equals("guts")) baseDamage *= 1.5;
-        if(sun && moveType.equals(ElementalTypes.INSTANCE.getFIRE()) || rain && moveType.equals(ElementalTypes.INSTANCE.getWATER())) baseDamage *= 1.5;
-        if(sun && moveType.equals(ElementalTypes.INSTANCE.getWATER()) || rain && moveType.equals(ElementalTypes.INSTANCE.getFIRE())) baseDamage *= 0.5;
+        String attackerHeldItem = attacker.getHeldItemManager().showdownId(attacker)!=null ? attacker.getHeldItemManager().showdownId(attacker): "";
+        // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
+        double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence) / 50.0) + 2;
+        if (multiTarget) baseDamage *= 0.75;
+        if (parentalBond) baseDamage *= 0.25;
+        if (glaiveRush) baseDamage *= 2;
+        if (burn && physical && !attackerAbility.getName().equals("guts")) baseDamage *= 0.5;
+        if (attackerHasStatus && attackerAbility.getName().equals("guts")) baseDamage *= 1.5;
+        if (sun && moveType.equals(ElementalTypes.INSTANCE.getFIRE()) || rain && moveType.equals(ElementalTypes.INSTANCE.getWATER()))
+            baseDamage *= 1.5;
+        if (sun && moveType.equals(ElementalTypes.INSTANCE.getWATER()) || rain && moveType.equals(ElementalTypes.INSTANCE.getFIRE()))
+            baseDamage *= 0.5;
 
         // STAB
         double stab = 1.0;
         var terastal = BattleStates.get(attacker.actor.battle).getPokemonState(attacker).has(BattleEffects.Custom.TERA);
         var adapt = attackerAbility.getName().equals("adaptability");
 
-        if(terastal && attackerTeraType != null) {
-            if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType) || moveType.getName().equals(attackerTeraType.showdownId())) {
+        if (terastal && attackerTeraType != null) {
+            if (moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType) || moveType.getName().equals(attackerTeraType.showdownId())) {
                 var teraSame = attackerTeraType.showdownId().equals(attackerPrimaryType.getName())
-                    || (attackerSecondaryType != null && attackerTeraType.showdownId().equals(attackerSecondaryType.getName()));
-                    
+                        || (attackerSecondaryType != null && attackerTeraType.showdownId().equals(attackerSecondaryType.getName()));
+
                 stab = (teraSame && !adapt) ? 2.0
-                    : (teraSame && adapt) ? 2.25
-                    : 1.5; // (!teraSame && !adapt) || (!teraSame && adapt)
+                        : (teraSame && adapt) ? 2.25
+                        : 1.5; // (!teraSame && !adapt) || (!teraSame && adapt)
             }
-        } else if(moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) {
+        } else if (moveType.equals(attackerPrimaryType) || moveType.equals(attackerSecondaryType)) {
             stab = adapt ? 2.0 : 1.5;
         }
 
         baseDamage *= stab;
+        //ModCommon.LOG.info(attackerHeldItem + " IS THE HELD ITEM");
         switch (attackerHeldItem) {
-            case "choice_band":
+            case "choiceband":
                 if (physical) {
                     baseDamage *= 1.5;
                 }
                 break;
 
-            case "choice_specs":
+            case "choicespecs":
                 if (!physical) {
                     baseDamage *= 1.5;
                 }
                 break;
 
-            case "muscle_band":
+            case "muscleband":
                 if (physical) {
                     baseDamage *= 1.1;
                 }
                 break;
 
-            case "wise_glasses":
+            case "wiseglasses":
                 if (!physical) {
                     baseDamage *= 1.1;
                 }
                 break;
 
-            case "black_belt":
+            case "blackbelt":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFIGHTING())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "black_glasses":
+            case "blackglasses":
                 if (moveType.equals(ElementalTypes.INSTANCE.getDARK())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "charcoal_stick":
+            case "charcoalstick":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFIRE())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "dragon_fang":
+            case "dragonfang":
                 if (moveType.equals(ElementalTypes.INSTANCE.getDRAGON())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "hard_stone":
+            case "hardstone":
                 if (moveType.equals(ElementalTypes.INSTANCE.getROCK())) {
                     baseDamage *= 1.2;
                 }
@@ -184,73 +162,73 @@ public class PokeMathMax {
                 }
                 break;
 
-            case "metal_coat":
+            case "metalcoat":
                 if (moveType.equals(ElementalTypes.INSTANCE.getSTEEL())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "miracle_seed":
+            case "miracleseed":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGRASS())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "mystic_water":
+            case "mysticwater":
                 if (moveType.equals(ElementalTypes.INSTANCE.getWATER())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "never_melt_ice":
+            case "nevermeltice":
                 if (moveType.equals(ElementalTypes.INSTANCE.getICE())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "poison_barb":
+            case "poisonbarb":
                 if (moveType.equals(ElementalTypes.INSTANCE.getPOISON())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "sharp_beak":
+            case "sharpbeak":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFLYING())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "silk_scarf":
+            case "silkscarf":
                 if (moveType.equals(ElementalTypes.INSTANCE.getNORMAL())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "silver_powder":
+            case "silverpowder":
                 if (moveType.equals(ElementalTypes.INSTANCE.getBUG())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "soft_sand":
+            case "softsand":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGROUND())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "spell_tag":
+            case "spelltag":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGHOST())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "twisted_spoon":
+            case "twistedspoon":
                 if (moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "life_orb":
+            case "lifeorb":
                 baseDamage *= 1.3;
                 break;
         }
@@ -261,15 +239,15 @@ public class PokeMathMax {
         baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
         return baseDamage;
     }
-    
-    public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
+
+    public static int damage(BattlePokemon attacker, BattlePokemon defender, InBattleMove inBattleMove, Map<Stat, Integer> attackerStages, Map<Stat, Integer> defenderStages) {
         return damage(attacker, defender, TypeChart.getMove(inBattleMove), attackerStages, defenderStages);
     }
 
-    public static int damage(BattlePokemon attacker, BattlePokemon defender, Move move, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
+    public static int damage(BattlePokemon attacker, BattlePokemon defender, Move move, Map<Stat, Integer> attackerStages, Map<Stat, Integer> defenderStages) {
         var damageCategory = move.getDamageCategory().getName();
 
-        if(damageCategory.equals(DamageCategories.INSTANCE.getSTATUS().getName())) {
+        if (damageCategory.equals(DamageCategories.INSTANCE.getSTATUS().getName())) {
             return 0;
         }
 
@@ -278,91 +256,104 @@ public class PokeMathMax {
         var statusContainer = attacker.getEffectedPokemon().getStatus();
         var weather = attacker.getContextManager().get(Type.WEATHER);
         var status = attacker.getContextManager().get(Type.STATUS);
-        var acc = move.getAccuracy()/100;
+        var acc = move.getAccuracy() / 100;
 
-        if(statusContainer != null && !statusContainer.isExpired()) {
+        if (statusContainer != null && !statusContainer.isExpired()) {
             isAttackerBurned = statusContainer.getStatus().equals(Statuses.INSTANCE.getBURN());
         }
         // accuracy factor is a custom modification
-        return (int)Math.ceil(damage(
-            attacker.getEffectedPokemon().getLevel(),
-            calcAttackWithStatChanges(isPhysicalMove, attacker, attackerStages),
-            calcDefenseWithStatChanges(isPhysicalMove, defender, defenderStages),
-            move.getPower(),
-            isPhysicalMove,
-            false, // multiTarget
-            weather != null && weather.stream().anyMatch(c -> c.getId().equals(WEATHER_RAIN)),
-            weather != null && weather.stream().anyMatch(c -> c.getId().equals(WEATHER_SUN)),
-            false, // parentalBond
-            false, // glaiveRush
-            isAttackerBurned,
-            false, // zmove
-            false, // reflect
-            false, // lightscreen
-            status != null && !status.isEmpty(),
-            move.getName().equals("hiddenpower") ? TypeChart.getHiddenPowerType(attacker) : move.getType(),
-            attacker,
-            defender,
-            attackerStages,
-            defenderStages));
+        return (int) Math.ceil(damage(
+                attacker.getEffectedPokemon().getLevel(),
+                calcAttackWithStatChanges(isPhysicalMove, attacker, attackerStages),
+                calcDefenseWithStatChanges(isPhysicalMove, defender, defenderStages),
+                move.getPower(),
+                isPhysicalMove,
+                false, // multiTarget
+                weather != null && weather.stream().anyMatch(c -> c.getId().equals(WEATHER_RAIN)),
+                weather != null && weather.stream().anyMatch(c -> c.getId().equals(WEATHER_SUN)),
+                false, // parentalBond
+                false, // glaiveRush
+                isAttackerBurned,
+                false, // zmove
+                false, // reflect
+                false, // lightscreen
+                status != null && !status.isEmpty(),
+                move.getName().equals("hiddenpower") ? TypeChart.getHiddenPowerType(attacker) : move.getType(),
+                attacker,
+                defender,
+                attackerStages,
+                defenderStages));
     }
-   public static double calcAttackWithStatChanges(boolean isPhysical, BattlePokemon attacker, Map<Stat, Integer> statStages){
-        double multiplier = 1;
-        if(isPhysical){
-            if(statStages.getOrDefault(Stats.ATTACK,0) < 0){
-                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
-                multiplier = 2/(2-(statChange));
-                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
-            }
-            else if(statStages.getOrDefault(Stats.ATTACK,0) > 0){
-                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
-                multiplier = (2+(statChange))/2;
-                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
-            }
-                return BattleStates.getTransformationOrEffected(attacker).getAttack();
-        }
-       if(!isPhysical){
-           if(statStages.getOrDefault(Stats.SPECIAL_ATTACK,0) < 0){
-               double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
-               multiplier = 2/(2-statChange);
-               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
-           }
-           else if(statStages.getOrDefault(Stats.SPECIAL_ATTACK,0) > 0){
-               double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
-               multiplier = ((2+statChange)/2);
-               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
-           }
-               return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack();
-       }
-        return -1;
-    }
-    public static double calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender,Map<Stat, Integer> statStages) {
+
+    public static double calcAttackWithStatChanges(boolean isPhysical, BattlePokemon attacker, Map<Stat, Integer> statStages) {
         double multiplier = 1;
         if (isPhysical) {
+            if (statStages.getOrDefault(Stats.ATTACK, 0) < 0) {
+                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
+                multiplier = 2 / (2 - (statChange));
+                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
+            } else if (statStages.getOrDefault(Stats.ATTACK, 0) > 0) {
+                double statChange = statStages.getOrDefault(Stats.ATTACK, 0);
+                multiplier = (2 + (statChange)) / 2;
+                return BattleStates.getTransformationOrEffected(attacker).getAttack() * multiplier;
+            }
+            return BattleStates.getTransformationOrEffected(attacker).getAttack();
+        }
+        if (!isPhysical) {
+            if (statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) < 0) {
+                double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
+                multiplier = 2 / (2 - statChange);
+                return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
+            } else if (statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) > 0) {
+                double statChange = statStages.getOrDefault(Stats.SPECIAL_ATTACK, 0);
+                multiplier = ((2 + statChange) / 2);
+                return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack() * multiplier;
+            }
+            return BattleStates.getTransformationOrEffected(attacker).getSpecialAttack();
+        }
+        return -1;
+    }
+
+    public static double calcDefenseWithStatChanges(boolean isPhysical, BattlePokemon defender, Map<Stat, Integer> statStages) {
+        FormData data = defender.getEffectedPokemon().getForm();
+        boolean hasEvolution = !data.getEvolutions().isEmpty();
+        double multiplier = 1;
+        double itemMultiplier = 1.5;
+        boolean hasItem = false;
+        double specialDefenseStat = BattleStates.getTransformationOrEffected(defender).getSpecialDefence();
+        if (isPhysical) {
+            if(defender.getHeldItemManager().showdownId(defender)!=null){
+                if(defender.getHeldItemManager().showdownId(defender).equals("eviolite") && hasEvolution){
+                    hasItem = true;
+                }
+            }
             if (statStages.getOrDefault(Stats.DEFENCE, 0) < 0) {
                 double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
                 multiplier = 2 / (2 - statChange);
-                return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
-            }
-            else if (statStages.getOrDefault(Stats.DEFENCE, 0) > 0) {
+            } else if (statStages.getOrDefault(Stats.DEFENCE, 0) > 0) {
                 double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
                 multiplier = (2 + statChange) / 2;
-                return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
             }
-            return BattleStates.getTransformationOrEffected(defender).getDefence();
+            return hasItem == true ? specialDefenseStat * multiplier * itemMultiplier
+                    : specialDefenseStat * multiplier;
         }
         if (!isPhysical) {
+            if(defender.getHeldItemManager().showdownId(defender)!=null){
+                if(defender.getHeldItemManager().showdownId(defender).equals("assaultvest")
+                    || (defender.getHeldItemManager().showdownId(defender).equals("eviolite") && hasEvolution)){
+                    hasItem = true;
+                }
+            }
             if (statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 0) {
                 double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
                 multiplier = 2 / (2 - statChange);
-                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
-            }
-            else if (statStages.getOrDefault(Stats.ATTACK, 0) > 0) {
+            } else if (statStages.getOrDefault(Stats.ATTACK, 0) > 0) {
                 double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
                 multiplier = (2 + statChange) / 2;
-                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
             }
-            return BattleStates.getTransformationOrEffected(defender).getSpecialDefence();
+            return hasItem == true ? specialDefenseStat * multiplier * itemMultiplier
+                    : specialDefenseStat * multiplier;
         }
         return -1;
     }
+}

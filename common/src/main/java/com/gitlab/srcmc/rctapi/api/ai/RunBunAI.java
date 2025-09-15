@@ -1092,20 +1092,20 @@ public class RunBunAI implements BattleAI {
                 }
             }
             //list of all opponents moves and their OHKO potential.
-            if (priorityDamageMoves.contains(move) && !isFaster && npcIsOHKO) {
-                score = 11;
+            if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
+                score += 11;
             }
             //if our pokemon has a special ability give its score +1
-            if (abilityStatBooster.contains(activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getAbility())) {
+            if (abilityStatBooster.contains(activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getAbility().getName())) {
                 score++;
             }
             //if a damaging move has a high crit chance and is Super Effective on the target
             // (50% of the time the score gets increased by 1)
-            if (highCriticalMoves.contains(currentMove) && (typeEffectivenessResult == 2 || typeEffectivenessResult == 4)) {
+            if (highCriticalMoves.contains(currentMove.getId()) && (typeEffectivenessResult == 2 || typeEffectivenessResult == 4)) {
                 double roll = RANDOM.nextDouble();
                 score = (roll < .5) ? score + 1 : score;
             }
-            if (moveDamages.containsKey("acidspray")) {
+            if (currentMove.getId().equals("acidspray")) {
                 score += 6;
             }
             //This puts the final score into the map with its move key.
@@ -1194,7 +1194,7 @@ public class RunBunAI implements BattleAI {
                 }
                 if(defender.getHeldItemManager().showdownId(defender) != null){
                     if(currentHP == defender.getMaxHealth()
-                            && defender.getHeldItemManager().showdownId(defender).equals("focus_sash")){
+                            && defender.getHeldItemManager().showdownId(defender).equals("focussash")){
                         result = false;
                     }
                 }
