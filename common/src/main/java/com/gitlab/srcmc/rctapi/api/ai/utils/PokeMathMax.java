@@ -29,7 +29,6 @@ import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.gitlab.srcmc.rctapi.ModCommon;
-
 import java.util.*;
 
 /**
@@ -94,6 +93,7 @@ public class PokeMathMax {
         var attackerSecondaryType = attackerEp.getSecondaryType();
         var attackerTeraType = attacker.getEffectedPokemon().getTeraType();
         var attackerAbility = attackerEp.getAbility();
+        String attackerHeldItem = attacker.getHeldItemManager().showdownId(attacker);
                // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
         double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence)/50.0) + 2;
         if(multiTarget) baseDamage *= 0.75;
@@ -123,6 +123,137 @@ public class PokeMathMax {
         }
 
         baseDamage *= stab;
+        switch (attackerHeldItem) {
+            case "choice_band":
+                if (physical) {
+                    baseDamage *= 1.5;
+                }
+                break;
+
+            case "choice_specs":
+                if (!physical) {
+                    baseDamage *= 1.5;
+                }
+                break;
+
+            case "muscle_band":
+                if (physical) {
+                    baseDamage *= 1.1;
+                }
+                break;
+
+            case "wise_glasses":
+                if (!physical) {
+                    baseDamage *= 1.1;
+                }
+                break;
+
+            case "black_belt":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFIGHTING())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "black_glasses":
+                if (moveType.equals(ElementalTypes.INSTANCE.getDARK())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "charcoal_stick":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFIRE())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "dragon_fang":
+                if (moveType.equals(ElementalTypes.INSTANCE.getDRAGON())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "hard_stone":
+                if (moveType.equals(ElementalTypes.INSTANCE.getROCK())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "magnet":
+                if (moveType.equals(ElementalTypes.INSTANCE.getELECTRIC())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "metal_coat":
+                if (moveType.equals(ElementalTypes.INSTANCE.getSTEEL())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "miracle_seed":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGRASS())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "mystic_water":
+                if (moveType.equals(ElementalTypes.INSTANCE.getWATER())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "never_melt_ice":
+                if (moveType.equals(ElementalTypes.INSTANCE.getICE())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "poison_barb":
+                if (moveType.equals(ElementalTypes.INSTANCE.getPOISON())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "sharp_beak":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFLYING())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "silk_scarf":
+                if (moveType.equals(ElementalTypes.INSTANCE.getNORMAL())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "silver_powder":
+                if (moveType.equals(ElementalTypes.INSTANCE.getBUG())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "soft_sand":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGROUND())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "spell_tag":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGHOST())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "twisted_spoon":
+                if (moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC())) {
+                    baseDamage *= 1.2;
+                }
+                break;
+
+            case "life_orb":
+                baseDamage *= 1.3;
+                break;
+        }
         //if(isevio or is assaultvest) -> do stuff
         //else { baseDamage *= new function;
         //TODO: Create a function that handles move multiplier and returns it here.
@@ -235,4 +366,3 @@ public class PokeMathMax {
         }
         return -1;
     }
-}
