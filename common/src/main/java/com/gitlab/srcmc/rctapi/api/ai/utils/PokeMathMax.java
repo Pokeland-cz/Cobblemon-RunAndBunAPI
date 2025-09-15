@@ -211,27 +211,27 @@ public class PokeMathMax {
             if (statStages.getOrDefault(Stats.DEFENCE, 0) < 0) {
                 double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
                 multiplier = 2 / (2 - statChange);
+                return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
             }
             else if (statStages.getOrDefault(Stats.DEFENCE, 0) > 0) {
                 double statChange = statStages.getOrDefault(Stats.DEFENCE, 0);
                 multiplier = (2 + statChange) / 2;
-            } else {
-                return BattleStates.getTransformationOrEffected(defender).getDefence();
+                return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
             }
-            return BattleStates.getTransformationOrEffected(defender).getDefence() * multiplier;
+            return BattleStates.getTransformationOrEffected(defender).getDefence();
         }
         if (!isPhysical) {
             if (statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 0) {
                 double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
                 multiplier = 2 / (2 - statChange);
+                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
             }
             else if (statStages.getOrDefault(Stats.ATTACK, 0) > 0) {
                 double statChange = statStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0);
                 multiplier = (2 + statChange) / 2;
-            } else {
-                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence();
+                return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
             }
-            return BattleStates.getTransformationOrEffected(defender).getSpecialDefence() * multiplier;
+            return BattleStates.getTransformationOrEffected(defender).getSpecialDefence();
         }
         return -1;
     }
