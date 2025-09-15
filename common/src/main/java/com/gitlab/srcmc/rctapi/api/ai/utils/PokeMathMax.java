@@ -30,9 +30,7 @@ import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.gitlab.srcmc.rctapi.ModCommon;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Pokemon math utilities derived from davo899s implementation of a 'Pokemon Gen5
@@ -43,6 +41,31 @@ public class PokeMathMax {
     private static final Random RANDOM = new Random();
     private static final String WEATHER_SUN = "sunny";
     private static final String WEATHER_RAIN = "raining";
+    private static final List<String> ITEMS = new ArrayList<>(List.of("assault_vest",
+            "choice_band",
+            "choice_specs",
+            "eviolite",
+            "life_orb",
+            "muscle_band",
+            "wide_glasses",
+            "black_belt",
+            "black_glasses",
+            "charcoal_stick",
+            "dragon_fang",
+            "hard_stone",
+            "magnet",
+            "metal_coat",
+            "miracle_seed",
+            "mystic_water",
+            "never_melt_ice",
+            "poison_barb",
+            "sharp_beak",
+            "silk_scarf",
+            "silver_powder",
+            "soft_sand",
+            "spell_tag",
+            "twisted_spoon"
+            ));
 
     private static double damage(
         int attackerLevel,
@@ -100,7 +123,9 @@ public class PokeMathMax {
         }
 
         baseDamage *= stab;
-
+        //if(isevio or is assaultvest) -> do stuff
+        //else { baseDamage *= new function;
+        //TODO: Create a function that handles move multiplier and returns it here.
         // TYPE
         baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
         return baseDamage;
