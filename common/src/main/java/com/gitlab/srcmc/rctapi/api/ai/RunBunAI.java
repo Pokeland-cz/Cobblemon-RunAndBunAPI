@@ -287,6 +287,31 @@ public class RunBunAI implements BattleAI {
             "zingzap"
     ));
 
+    private static final List<String> thawingMoves = new ArrayList<>(List.of ("burnup",
+        "flamewheel",
+        "flareblitz",
+        "fusionflare",
+        "matchagatcha",
+        "pyroball",
+        "sacredfire",
+        "scald",
+        "scorchingsands",
+        "steameruption"
+    ));
+
+    private static final List<String> rechargeMoves = new ArrayList<>(List.of ("blastburn",
+        "eternabeam",
+        "frenzyplant",
+        "gigaimpact",
+        "hydrocannon",
+        "hyperbeam",
+        "meteorassault",
+        "prismaticlaser",
+        "roaroftime",
+        "rockwrecker",
+        "shadowhalf"
+    ));
+
     private static double typeEffectiveness(ElementalType attacker, ElementalType defender) {
         if (!typeChart.containsKey(defender)) return 1;
         if (typeChart.get(defender).containsKey(attacker)) return typeChart.get(defender).get(attacker);
@@ -350,7 +375,8 @@ public class RunBunAI implements BattleAI {
         ElementalType activeSecondaryType = null;
         ElementalTypes elementaltypes = ElementalTypes.INSTANCE;
         double activePokemonPercentHP = 0;
-        Ability currentAbility = null;
+       //Ability currentAbility = null;
+        String currentAbility = "";
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
         if (battlePokemon != null) {
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
@@ -364,7 +390,7 @@ public class RunBunAI implements BattleAI {
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
-            currentAbility = battlePokemon.getOriginalPokemon().getAbility();
+            currentAbility = battlePokemon.getEffectedPokemon().getAbility().getDisplayName();
 
             turnsForActivePokemon = BattleStates.get(activeBattlePokemon.getActor().getBattle())
                     .getPokemonState(activeBattlePokemon.getBattlePokemon())
@@ -578,6 +604,9 @@ public class RunBunAI implements BattleAI {
         boolean isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) >= getInBattleSpeed(opponent);
         boolean npcIsOHKO = isOHKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
         boolean npcIs2OHKO = is2HKO(oppMoves,opponent,activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
+        boolean npcIs3OHKO = is3HKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
+        boolean npcIsOHKOWithSS = wouldBeOHKOAfterShellSmash(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
+        boolean npcIsOHKOWithBD = isOHKOAfterBellyDrum(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
 
         //making list of highestest dmg nonkilling moves, and adding special cases.
         List<InBattleMove> nonKillingPossibleMoves = new ArrayList<>();
@@ -1202,38 +1231,170 @@ public class RunBunAI implements BattleAI {
             }
             //TODO: START OF GENERAL SETUP CODE
             String moveID = move.getKey().getId();
+            double roll;
             if(generalSetupMoves.contains(moveID)){
-                if(!currentHeldItem.equals("focussash") || !currentAbility.equals("sturdy")){
+                boolean hasThawingMove = false;
+                for(String m : thawingMoves){
+                    if(oppMoves.contains(m)){
+                        hasThawingMove = true;
+                        break;
+                    }
+                }
+                if(npcIsOHKO && (!"focussash".equals(currentHeldItem) || !currentAbility.equals("sturdy"))){
                     score-=20;
                 }
-                if(opponentAbility.equals("unaware") && (!moveID.equals("poweruppunch") || !moveID.equals("swordsdance") || !moveID.equals("howl"))){
+                if(opponentAbility.equals("unaware")){ 
                     score-=20;
                 }
                 //TODO: These moves are only setup moves when contrary ability holder is using them.
-                if(currentAbility.equals("contrary")){
+                if(currentAbility.equals("contrary") && score != 0){
                     switch (moveID){
-                        case "overheat":
-                            break;
-                        case "leafstorm":
+                        case "overheat", "leafstorm":
+                            score += 6;
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                                score += 3;
+                            }
+                            else if(!npcIs3OHKO) {
+                                score += 1;
+                                if(isFaster){
+                                    score += 1;
+                                }
+                            }
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                            if(npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) >= 2){
+                                score -= 1;
+                            }
                             break;
                         case "superpower":
                             break;
                     }
-                }
+                } 
                 switch(moveID){
-                    //TODO: OFFENSIVE SETUP MOVES (RECHARGING MOVES LIST AND THAWING MOVE LIST AND IF LOAFING AROUND TRUANT)
+                    //TODO: OFFENSIVE SETUP MOVES (IF LOAFING AROUND TRUANT)
                     case "dragondance", "shiftgear", "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
                         score+=6;
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                            score += 3;
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
                         break;
                     case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
+                        roll = RANDOM.nextDouble();
+                        score += 6;
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(roll > .05){
+                            if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                score += 2;
+                            }
+                            if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                                score += 2;
+                            }
+                        }
+                        break;
+                    case "coil", "bulkup", "calmmind", "quiverdance", "noretreat":      
+                        score += 6;
+                        if(hasPhysicalMove && (moveID.equals("calmmind") || moveID.equals("quiverdance"))){
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                            score += 3;
+                            }
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                        } 
+                        else {
+                            roll = RANDOM.nextDouble();
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                            if(roll > .05){
+                                if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                    score += 2;
+                                }
+                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                                    score += 2;
+                                }
+                            }
+                        }
+                        if(hasSpecialMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                                score += 3;
+                            }
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                        }      
+                        else {
+                            roll = RANDOM.nextDouble();
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                            if(roll > .05){
+                                if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                    score += 2;
+                                }
+                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                                    score += 2;
+                                }
+                            }
+                        }        
                         break;
                     case "agility", "rockpolish", "autotomize":
+                        if(!isFaster){
+                            score += 7;
+                        }
+                        else{
+                            score -= 20;
+                        }
                         break;
                     case "tailglow", "nastyplot", "workup":
+                        score += 6;
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                            score += 3;
+                        }
+                        else if(!npcIs3OHKO) {
+                            score += 1;
+                            if(isFaster){
+                                score += 1;
+                            }
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) >= 2){
+                            score -= 1;
+                        }
                         break;
                     case "shellsmash":
+                        score += 6;
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                            score += 3;
+                        }
+                        if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
+                            score += 2;
+                        }
+                        else{
+                            score -= 2;
+                        }
+                        if(npcStages.getOrDefault(Stat.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0 >= 1) || npcStages.getOrDefault(Stat.ATTACK, 0) == 6 || npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) == 6){
+                            score -= 20;
+                        }
                         break;
                     case "bellydrum":
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                            score += 9;
+                        }
+                        else if(!npcIsOHKOWithBD){
+                            score += 8;
+                        }
+                        else{
+                            score += 4;
+                        }
                         break;
                     case "focusenergy", "laserfocus":
                         break;
@@ -1366,6 +1527,71 @@ public class RunBunAI implements BattleAI {
             }
         }
         return false;
+    }
+    public static boolean is3HKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
+        int enemyDamage = 0;
+        int currentHP = defender.getHealth();
+        for (Move currentMove : moves) {
+            //activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getPrimaryType();
+            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove, attackerStages, defenderStages);
+            if (enemyDamage * 3 >= currentHP) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean wouldBeOHKOAfterShellSmash(List<Move> moves, BattlePokemon attacker, BattlePokemon defender, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
+    
+        Map<Stat,Integer> simulatedDefenderStages = new HashMap<>(defenderStages);
+        simulatedDefenderStages.put(Stat.DEFENSE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stat.DEFENSE, 0) - 2)));
+        simulatedDefenderStages.put(Stat.SPECIAL_DEFENSE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stat.SPECIAL_DEFENSE, 0) - 2)));
+        boolean result = false;
+        int currentHP = defender.getHealth();
+        
+        for (Move move : moves) {
+            int enemyDamage = PokeMathMax.damage(attacker, defender, move, attackerStages, simulatedDefenderStages);
+            if (enemyDamage >= currentHP) {
+                result = true;
+                if (currentHP == defender.getMaxHealth() &&
+                    defender.getEffectedPokemon().getAbility().getDisplayName().equals("sturdy")) {
+                    result = false;
+                }
+
+                if (defender.getHeldItemManager().showdownId(defender) != null) {
+                    if(currentHP == defender.getMaxHealth()
+                                && defender.getHeldItemManager().showdownId(defender).equals("focussash")){
+                            result = false;
+                    }
+                }
+                
+            }
+        }
+        return result;
+    }
+    public static boolean isOHKOAfterBellyDrum(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages){
+        int enemyDamage = 0;
+        int currentHP = defender.getHealth();
+        boolean result = false;
+        boolean hasSitrus = defender.getHeldItemManager().showdownId(defender).equals("sitrusberry");
+        boolean hasPinchBerry = defender.getHeldItemManager().showdownId(defender).equals("figyberry") 
+        || defender.getHeldItemManager().showdownId(defender).equals("wikiberry") 
+        || defender.getHeldItemManager().showdownId(defender).equals("magoberry") 
+        || defender.getHeldItemManager().showdownId(defender).equals("aguavberry")
+        || defender.getHeldItemManager().showdownId(defender).equals("iapapaberry");
+        int currentHPAfterBellyDrum = defender.getHealth()/2;
+        if(hasSitrus){
+            currentHPAfterBellyDrum += defender.getMaxHealth()/4;
+        }
+        if(hasPinchBerry){
+            currentHPAfterBellyDrum += defender.getMaxHealth()*.33;
+        }
+        for (Move currentMove : moves) {
+            enemyDamage = PokeMathMax.damage(attacker, defender, currentMove, attackerStages, defenderStages);
+            if (enemyDamage >= currentHP || enemyDamage >= currentHPAfterBellyDrum || enemyDamage >= ) {
+                return true;
+            }
+        }
+        return result;
     }
     public static boolean isPartySlowerThanOpponent(List<ActiveBattlePokemon> NPC, List<ActiveBattlePokemon> OPP){
         //get the slowest mon from each team and compare
