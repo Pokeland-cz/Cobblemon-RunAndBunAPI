@@ -215,7 +215,10 @@ public class RunBunAI implements BattleAI {
             "hypnosis",
             "lovelykiss",
             "sleeppowder",
-            "spore"));
+            "spore",
+            "poisongas",
+            "poisonpoder",
+            "toxic"));
 
     private static final List<String> soundMoves = new ArrayList<>(List.of ("alluringvoice",
             "boomburst",
@@ -342,13 +345,13 @@ public class RunBunAI implements BattleAI {
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
         ModCommon.LOG.info("started showdown response.");
+        String getOpponentHeldItem = "";
         String currentHeldItem ="";
         ElementalType activePrimaryType = null;
         ElementalType activeSecondaryType = null;
         double activePokemonPercentHP = 0;
         Ability currentAbility = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
-        int battleTurn = 0;
         if (battlePokemon != null) {
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
                 currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
@@ -360,7 +363,7 @@ public class RunBunAI implements BattleAI {
             ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getDefence()) + " def");
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
-            activePokemonPercentHP = Math.ceil(battlePokemon.getHealth() / battlePokemon.getMaxHealth() * 100);
+            activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
             currentAbility = battlePokemon.getOriginalPokemon().getAbility();
 
             turnsForActivePokemon = BattleStates.get(activeBattlePokemon.getActor().getBattle())
@@ -420,8 +423,9 @@ public class RunBunAI implements BattleAI {
                 ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
         if(opponent != null){
             opponentStages = getStageMap(opponent);
+            getOpponentHeldItem = opponent.getHeldItemManager().showdownId(opponent)!=null
+                    ? opponent.getHeldItemManager().showdownId(opponent):"";
         }
-
         if(bf.getBattleType().toString().equals("GEN_9_DOUBLES")){
             int partnerSlot = (currentBattleSlot == 0 ? 1 : 0);
             ActiveBattlePokemon opponentPartner = allOpponentActiveBattlePokemon.get(partnerSlot);
@@ -433,7 +437,7 @@ public class RunBunAI implements BattleAI {
         if(opponent != null){
             oppMoves = opponent.getMoveSet().getMoves();
             opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
-            oppPercentHP = Math.ceil(opponent.getHealth()/opponent.getMaxHealth() * 100);//this is rounded up
+            oppPercentHP = getCurrentPercentHP(opponent);//this is rounded up
         }
         //TODO: SWITCHING SCORING LOGIC STARTS HERE =======================================
         List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
@@ -746,7 +750,13 @@ public class RunBunAI implements BattleAI {
                                 score += 7;
                                 break;
                             case "stealthrock":
-                                //todo : figure out how to find out turn number. (keep track of all hazards on field)
+                                roll = RANDOM.nextDouble();
+                                if(turnsForActivePokemon == 1 && stealthRocks(opponent) ==0){
+                                    score += roll > .75 ? 8 : 9;
+                                }
+                                else{
+                                    score += roll > .75 ? 6 : 7;
+                                }
                                 //if first turn out\
                                 if(stealthRocks(opponent) !=0){
                                     score -=20;
@@ -754,12 +764,13 @@ public class RunBunAI implements BattleAI {
                                 //else
                                 break;
                             case "spikes":
-                                //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int spikeR1 = roll > .75 ? 8 : 9;
-                                int spikeR2 = roll > .75 ? 6 : 7;
-                                //first turn out ?
-
+                                if(turnsForActivePokemon == 1){
+                                    score += roll > .75 ? 8 : 9;
+                                }
+                                else{
+                                    score += roll > .75 ? 6 : 7;
+                                }
                                 if(spikesCount(opponent) == 3){
                                     score -=50;
                                 }
@@ -768,11 +779,13 @@ public class RunBunAI implements BattleAI {
                                 }
                                 break;
                             case "toxicspikes":
-                                //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int toxicspikesR1 = roll > .75 ? 8 : 9;
-                                int toxicspikesR2 = roll > .75 ? 6 : 7;
-                                //first turn out ?
+                                if(turnsForActivePokemon == 1){
+                                    score += roll > .75 ? 8 : 9;
+                                }
+                                else{
+                                    score += roll > .75 ? 6 : 7;
+                                }
                                 if(toxicSpikesCount(opponent) == 3){
                                     score -=50;
                                 }
@@ -781,11 +794,13 @@ public class RunBunAI implements BattleAI {
                                 }
                                 break;
                             case "stickyweb":
-                                //todo: Note: If at least 1 of the corresponding spikes is up already, score is lowered by 1 always
                                 roll = RANDOM.nextDouble();
-                                int stickywebR1 = roll > .75 ? 9 : 12;
-                                int stickywebR2 = roll > .75 ? 6 : 9;
-                                //first turn out ?
+                                if(turnsForActivePokemon == 1){
+                                    score+= roll > .75 ? 9:12;
+                                }
+                                else{
+                                    score += roll > .75 ? 6:9;
+                                }
                                 if(stickyWebCount(opponent) !=0){
                                     score -=20;
                                 }
@@ -832,8 +847,22 @@ public class RunBunAI implements BattleAI {
                                     && turnsForActivePokemon ==1){
                                     score--;
                                 }
-
-                                //todo : keep track of things that happened last turn and 2 turns ago.
+                                if(!moveHistory.isEmpty()){
+                                    if(moveHistory.getOrDefault(turnsForActivePokemon-1, "")== "protect"){
+                                        roll = RANDOM.nextDouble();
+                                        score += roll > .50 ? -20 : 0;
+                                        if(moveHistory.getOrDefault(turnsForActivePokemon-2, "")== "protect"){
+                                            score -= 20;
+                                        }
+                                    }
+                                    if(moveHistory.getOrDefault(turnsForActivePokemon-1, "")== "kingsshield"){
+                                        roll = RANDOM.nextDouble();
+                                        score += roll > .50 ? -20 : 0;
+                                        if(moveHistory.getOrDefault(turnsForActivePokemon-2, "")== "kingsshield"){
+                                            score -= 20;
+                                        }
+                                    }
+                                }
                                 break;
                             case "fling":
                                 if(currentHeldItem != null){
@@ -903,8 +932,7 @@ public class RunBunAI implements BattleAI {
                                 }
                                 break;
                             case "fakeout":
-                                //todo : first turn of mon or not
-                                if(opponentAbility.equals("shielddust") || opponentAbility.equals("innerfocus")){
+                                if((opponentAbility.equals("shielddust") || opponentAbility.equals("innerfocus") || getOpponentHeldItem.equals("covertcloak")) && turnsForActivePokemon == 1){
                                     score += 9;
                                 }
                                 break;
@@ -913,7 +941,6 @@ public class RunBunAI implements BattleAI {
                                 //   using a Status move
                                 if(currentBattleSlot == 1){
                                     //we are looking at our partners move choice
-
                                 }
                                 break;
                             case "finalgambit":
@@ -1086,10 +1113,38 @@ public class RunBunAI implements BattleAI {
                             case "yawn", "darkvoid", "sleeppowder", "hypnosis", "lovelykiss", "sing", "spore":
                                 
                                 break;
+                            case "poisongas", "poisonpoder", "toxic":
+                                score+=6;
+                                roll = RANDOM.nextDouble();
+                                boolean hasDamagingMoves = false;
+                                boolean hasCertainMove = false;
 
+                                //38% of the time and we cannot kill the enemy pokemon
+                                if(roll < .38 && killingMoves.isEmpty()){
+                                    if(!BattleEffects.Pokemon.Status.any(opponent) && getCurrentPercentHP(opponent) > 20){
+                                        for(Move oppMove : oppMoves){
+                                            if(oppMove.getPower() > 0){
+                                                hasDamagingMoves = true;
+                                            }
+                                        }
+                                        for(InBattleMove ourMoves : nonKillingPossibleMoves)
+                                        {
+                                            if(ourMoves.getId().equals("venomdrench") || ourMoves.getId().equals("hex") || ourMoves.getId().equals("venoshock")){
+                                                hasCertainMove = true;
+                                            }
+                                        }
+                                        if(hasDamagingMoves && hasCertainMove && currentAbility.equals("merciless")){
+                                            score+=2;
+                                        }
+                                    }
+                                }
                         }
                     }
                 }
+            }
+            //TODO: START OF GENERAL SETUP CODE
+            if(generalSetupMoves.contains(move.getKey().getId())){
+
             }
             //list of all opponents moves and their OHKO potential.
             if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
@@ -1244,7 +1299,7 @@ public class RunBunAI implements BattleAI {
         }
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
         ModCommon.LOG.info(Boolean.toString(hasLowScore));
-        if(Math.ceil(self.getHealth()/self.getMaxHealth()) * 100 <= 50){
+        if(Math.ceil(getCurrentPercentHP(self)) <= 50){
             return false;
         }
         for(BattlePokemon pokemon : party){
@@ -1266,7 +1321,7 @@ public class RunBunAI implements BattleAI {
         double currentCalc = 0;
         for(Move move : attackerMoves){
             //TODO: damage delt divided by map hp.
-            currentCalc = Math.ceil(PokeMathMax.damage(attacker,defender,move, npcStages, opponentStages) / defender.getMaxHealth());
+            currentCalc = Math.ceil((double)PokeMathMax.damage(attacker,defender,move, npcStages, opponentStages) / (double)defender.getMaxHealth());
             highestPercent = currentCalc > highestPercent ? currentCalc : highestPercent;
         }
         return highestPercent;
@@ -1322,6 +1377,9 @@ public class RunBunAI implements BattleAI {
             return BattleStates.getTransformationOrEffected(pokemon).getSpeed();
         }
         return BattleStates.getTransformationOrEffected(pokemon).getSpeed() * multiplier;
+    }
+    private static double getCurrentPercentHP(BattlePokemon pokemon){
+        return (double)pokemon.getHealth() / (double) pokemon.getMaxHealth() * 100;
     }
 
     public static void initialiseTypeChart() {
