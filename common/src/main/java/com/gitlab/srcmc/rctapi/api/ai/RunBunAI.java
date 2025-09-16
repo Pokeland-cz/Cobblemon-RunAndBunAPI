@@ -426,10 +426,13 @@ public class RunBunAI implements BattleAI {
             getOpponentHeldItem = opponent.getHeldItemManager().showdownId(opponent)!=null
                     ? opponent.getHeldItemManager().showdownId(opponent):"";
         }
+        ActiveBattlePokemon NPCPartner = null;
+        ActiveBattlePokemon opponentPartner = null;
         if(bf.getBattleType().toString().equals("GEN_9_DOUBLES")){
             int partnerSlot = (currentBattleSlot == 0 ? 1 : 0);
-            ActiveBattlePokemon opponentPartner = allOpponentActiveBattlePokemon.get(partnerSlot);
-            ActiveBattlePokemon NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
+            boolean hasHex = false;
+            opponentPartner = allOpponentActiveBattlePokemon.get(partnerSlot);
+            NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
         }
         List<Move> oppMoves = new ArrayList<>();
         String opponentAbility = "";
@@ -1084,13 +1087,13 @@ public class RunBunAI implements BattleAI {
                                     roll = RANDOM.nextDouble();
                                     int paraRoll = roll > .5 ? -1: 0;
                                     boolean fasterIfPara = false;
-                                    boolean hasFlinchMove = flinchMoves.stream()
-                                            .anyMatch(moveDamages::containsKey);
+                                    boolean hasFlinchMove = moveDamages.entrySet().stream()
+                                            .anyMatch(entry -> flinchMoves.contains(entry.getKey().getId()) && entry.getValue() > 0);
                                     if(getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
                                         fasterIfPara = true;
                                     }
                                     if((!isFaster && fasterIfPara) 
-                                        || moves.containsKey("hex") 
+                                        || hasMove(activeBattlePokemon.getBattlePokemon(), "hex")
                                         || hasFlinchMove 
                                         || BattleEffects.Pokemon.Volatile.attract(opponent) 
                                         || BattleEffects.Pokemon.Volatile.confusion(opponent)){
@@ -1109,8 +1112,8 @@ public class RunBunAI implements BattleAI {
                                     score += 6;
                                     roll = RANDOM.nextDouble();
                                     if(roll < .37){
-                                        if(move.getKey().getId().equals("hex") 
-                                        || (bf.getBattleType().toString().equals("GEN_9_DOUBLES") && NPCPartner.getMoveSet().getMoves().contains("hex"))){      
+                                        if(hasMove(activeBattlePokemon.getBattlePokemon(),"hex")
+                                        || (bf.getBattleType().toString().equals("GEN_9_DOUBLES") && hasMove(NPCPartner.getBattlePokemon(),"hex"))){
                                             score += 1;
                                         }
                                         if(hasPhysicalMove){
@@ -1141,9 +1144,9 @@ public class RunBunAI implements BattleAI {
                                 roll = RANDOM.nextDouble();
                                 if(!BattleEffects.Pokemon.Status.any(opponent)){
                                     if(roll < .25){
-                                        if((!BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon() || (BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon()) && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
-                                        && (!BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon()) || (BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon() && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
-                                        && !opponentAbility.equals("comatose"))
+                                        if((!BattleEffects.Field.Terrain.mistyterrain(opponent) || (BattleEffects.Field.Terrain.mistyterrain(opponent) && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
+                                        && (!BattleEffects.Field.Terrain.electricterrain(opponent) || (BattleEffects.Field.Terrain.electricterrain(opponent) && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
+                                        && !opponentAbility.equals("comatose")
                                         && !opponentAbility.equals("insomnia")
                                         && !opponentAbility.equals("vitalspirit")
                                         && !opponentAbility.equals("sweetveil")
@@ -1152,12 +1155,15 @@ public class RunBunAI implements BattleAI {
                                         && (((move.getKey().getId().equals("hypnosis") || move.getKey().getId().equals("spore")) && !opponentAbility.equals("magicbounce")))
                                         && (((move.getKey().getId().equals("grasswhistle") || move.getKey().getId().equals("sing")) && !opponentAbility.equals("soundproof")))
                                         && (!opponentAbility.equals("leafguard") || (opponentAbility.equals("leafguard") && (!BattleEffects.Field.Weather.harshsunlight(opponent) && !BattleEffects.Field.Weather.extremelyharshsunlight(opponent))))
-                                        && (!bf.getBattleType().toString().equals("GEN_9_DOUBLES") || (bf.getBattleType().toString().equals("GEN_9_DOUBLES") && (!opponentAbility.equals("flowerviel") || (opponentAbility.equals("flowerviel") &&  (opponentPartner.getEffectedPokemon().getPrimaryType() != elementaltypes.getGRASS() || opponentPartner.getEffectedPokemon().getSecondaryType() != elementaltypes.getGRASS()))))))){
+                                        && (!bf.getBattleType().toString().equals("GEN_9_DOUBLES") || (bf.getBattleType().toString().equals("GEN_9_DOUBLES")
+                                                && (!opponentAbility.equals("flowerviel") || (opponentAbility.equals("flowerviel")
+                                                &&  (opponentPartner.getBattlePokemon().getEffectedPokemon().getPrimaryType() != elementaltypes.getGRASS()
+                                                || opponentPartner.getBattlePokemon().getEffectedPokemon().getSecondaryType() != elementaltypes.getGRASS())))))){
                                             score += 1;
-                                            if((move.getKey().getId().equals("dreameater") || move.getKey().getId().equals("nightmare")) && (!oppMoves.contains("snore") || !oppMoves.contains("sleeptalk"))){
+                                            if((hasMove(activeBattlePokemon.getBattlePokemon(),"dreameater") || hasMove(activeBattlePokemon.getBattlePokemon(),"nightmare") && (!hasMove(opponent,"snore") || !hasMove(opponent,"sleeptalk")))){
                                                 score += 1;
                                                 }
-                                            if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && NPCPartner.getMoveSet().getMoves().contains("hex")){
+                                            if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && hasMove(NPCPartner.getBattlePokemon(),"hex")){
                                                 score += 1;
                                                 }
                                         }
@@ -1165,7 +1171,7 @@ public class RunBunAI implements BattleAI {
                                 }
                                
                                 break;
-                            case "poisongas", "poisonpoder", "toxic":
+                            case "poisongas", "poisonpowder", "toxic":
                                 score+=6;
                                 roll = RANDOM.nextDouble();
                                 boolean hasDamagingMoves = false;
@@ -1432,6 +1438,16 @@ public class RunBunAI implements BattleAI {
     }
     private static double getCurrentPercentHP(BattlePokemon pokemon){
         return (double)pokemon.getHealth() / (double) pokemon.getMaxHealth() * 100;
+    }
+    private static boolean hasMove(BattlePokemon pokemon, String moveID){
+        boolean hasMove = false;
+        List<Move> pokemonMoveSet = pokemon.getMoveSet().getMoves();
+        for(Move pkmMove : pokemonMoveSet){
+            if(pkmMove.getName().equals(moveID)){
+                hasMove = true;
+            }
+        }
+        return hasMove;
     }
 
     public static void initialiseTypeChart() {
