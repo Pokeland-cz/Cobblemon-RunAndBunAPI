@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
@@ -39,6 +40,7 @@ public class RunBunAI implements BattleAI {
     private static int battleTurn = 1;
     private static int turnsForActivePokemon = 1;
     private static Map<Integer,String> moveHistory = new HashMap<>(); //move name, turn used
+    private static Map<Integer,String> moveHistoryEnemy = new HashMap<>(); //move name, turn used
     private static Map<Stat,Integer> npcStages = new HashMap<>();
     private static Map<Stat,Integer> opponentStages = new HashMap<>();
     private static final Map<String, String> statIdMap = Map.of(
@@ -312,59 +314,7 @@ public class RunBunAI implements BattleAI {
         "shadowhalf"
     ));
 
-    private static double typeEffectiveness(ElementalType attacker, ElementalType defender) {
-        if (!typeChart.containsKey(defender)) return 1;
-        if (typeChart.get(defender).containsKey(attacker)) return typeChart.get(defender).get(attacker);
-        return 1;
-    }
-    private static double typeEffectiveness(ElementalType attacker, ElementalType defender, Ability defenderAbility) {
-        String defenderAbilityId = defenderAbility.getDisplayName();
-        if (attacker.equals(ElementalTypes.INSTANCE.getWATER())) {
-            if (
-                    defenderAbilityId.equals("cobblemon.ability.stormdrain") ||
-                            defenderAbilityId.equals("cobblemon.ability.waterabsorb") ||
-                            defenderAbilityId.equals("cobblemon.ability.dryskin")
-            ) {
-                return 0;
-            }
-        } else if (attacker.equals(ElementalTypes.INSTANCE.getELECTRIC())) {
-            if (
-                    defenderAbilityId.equals("cobblemon.ability.voltabsorb") ||
-                            defenderAbilityId.equals("cobblemon.ability.lightningrod") ||
-                            defenderAbilityId.equals("cobblemon.ability.motordrive")
-            ) {
-                return 0;
-            }
-        } else if (attacker.equals(ElementalTypes.INSTANCE.getGROUND())) {
-            if (
-                    defenderAbilityId.equals("cobblemon.ability.levitate") ||
-                            defenderAbilityId.equals("cobblemon.ability.eartheater")
-            ) {
-                return 0;
-            }
-        } else if (attacker.equals(ElementalTypes.INSTANCE.getFIRE())) {
-            if (
-                    defenderAbilityId.equals("cobblemon.ability.wellbakedbody") ||
-                            defenderAbilityId.equals("cobblemon.ability.flashfire")
-            ) {
-                return 0;
-            }
-        } else if (attacker.equals(ElementalTypes.INSTANCE.getGRASS())) {
-            if (defenderAbilityId.equals("cobblemon.ability.sapsipper")) {
-                return 0;
-            }
-        }
 
-        double typeEffectiveness = typeEffectiveness(attacker, defender);
-        if (
-                defenderAbilityId.equals("cobblemon.ability.wonderguard") &&
-                        typeEffectiveness != SUPER_EFFECTIVE
-        ) {
-            return 0;
-        }
-
-        return typeEffectiveness;
-    }
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
@@ -420,6 +370,7 @@ public class RunBunAI implements BattleAI {
                 int turn = entry.getKey();
                 ModCommon.LOG.info("Turns Since Active: " + turn + " used move " + moveName);
             }
+
         }
         List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
@@ -439,6 +390,8 @@ public class RunBunAI implements BattleAI {
                 )
                 .filter(abp -> !abp.isAllied(activeBattlePokemon))
                 .toList();
+
+
         BattleFormat bf = new BattleFormat();
         //setting up logic for double calcs. works the same for singles anyways.
 
@@ -451,6 +404,27 @@ public class RunBunAI implements BattleAI {
             opponentStages = getStageMap(opponent);
             getOpponentHeldItem = opponent.getHeldItemManager().showdownId(opponent)!=null
                     ? opponent.getHeldItemManager().showdownId(opponent):"";
+            if(turnsForActivePokemon == 1){
+                moveHistoryEnemy = new HashMap<>();
+            }
+            for (ShowdownActionResponse response : opponent.getActor().getResponses()) {
+                if (response instanceof MoveActionResponse) {
+                    MoveActionResponse move = (MoveActionResponse) response;
+                    ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
+                            + opponent.getName()
+                            + " used " + move.getMoveName());
+                    moveHistoryEnemy.put(turnsForActivePokemon,move.getMoveName());
+                } else {
+                    ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
+                            + opponent.getActor().getShowdownId() + " chose " + response.getClass().getSimpleName());
+                }
+            }
+            for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
+                String moveName = entry.getValue();
+                int turn = entry.getKey();
+                ModCommon.LOG.info("Turns Since Active: " + turn + " used move " + moveName);
+            }
+
         }
         ActiveBattlePokemon NPCPartner = null;
         ActiveBattlePokemon opponentPartner = null;
@@ -481,8 +455,13 @@ public class RunBunAI implements BattleAI {
 
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
+            if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
+                isSwitchMonFaster = getInBattleSpeed(possibleSwitch) <= getInBattleSpeed(opponent);
+            }
+            else{
+                isSwitchMonFaster = getInBattleSpeed(possibleSwitch) >= getInBattleSpeed(opponent);
+            }
 
-            isSwitchMonFaster = getInBattleSpeed(possibleSwitch) >= getInBattleSpeed(opponent);
             doesSwitchOHKO = isOHKO(possibleSwitch.getMoveSet().getMoves(), possibleSwitch, opponent, npcStages, opponentStages);
             doesOppOHKO = isOHKO(oppMoves, opponent, possibleSwitch, opponentStages, npcStages);
             if(isSwitchMonFaster && doesSwitchOHKO){
@@ -601,7 +580,13 @@ public class RunBunAI implements BattleAI {
             if (damage >= opponent.getHealth()) killingMoves.add(move);
         });
         Map<InBattleMove, Integer> moveScores = new HashMap<>();
-        boolean isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) >= getInBattleSpeed(opponent);
+        boolean isFaster = false;
+        if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
+            isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) <= getInBattleSpeed(opponent);
+        }
+        else{
+            isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) >= getInBattleSpeed(opponent);
+        }
         boolean npcIsOHKO = isOHKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
         boolean npcIs2OHKO = is2HKO(oppMoves,opponent,activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
         boolean npcIs3OHKO = is3HKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
@@ -636,11 +621,6 @@ public class RunBunAI implements BattleAI {
             InBattleMove currentMove = move.getKey();
             int score = 0;
             //int dmg = PokeMathMax.damage(activeBattlePokemon.getBattlePokemon(), opponent, currentMove);
-            double typeEffectiveness1 = typeEffectiveness(TypeChart.getMove(currentMove).getType(),
-                    opponent.getEffectedPokemon().getPrimaryType(), opponent.getEffectedPokemon().getAbility());
-            double typeEffectiveness2 = typeEffectiveness(TypeChart.getMove(currentMove).getType(),
-                    opponent.getEffectedPokemon().getSecondaryType(), opponent.getEffectedPokemon().getAbility());
-            double typeEffectivenessResult = typeEffectiveness1 * typeEffectiveness2;
 
             boolean hasSpecialMove = false;
             boolean hasPhysicalMove = false;
@@ -657,7 +637,7 @@ public class RunBunAI implements BattleAI {
             }
 
             //useless move because of abilities
-            if (typeEffectivenessResult == 0) {
+            if (TypeChart.getEffectiveness(TypeChart.getMove(currentMove).getType(), opponent) == 0) {
                 moveScores.put(currentMove, -20);
                 continue;
             }
@@ -711,20 +691,6 @@ public class RunBunAI implements BattleAI {
                     }
 
                     if (physicalAttackReductionMoves.contains(nonKillingMove) || specialAttackReductionMoves.contains(nonKillingMove)) {
-                        /*boolean hasSpecialMove = false;
-                        boolean hasPhysicalMove = false;
-                        String damageCategory ="";
-                        //String currentMoveCategory = "";
-                        for(Move opponentMove : oppMoves){
-                            damageCategory = opponentMove.getDamageCategory().getName();
-                            if(damageCategory.equals(DamageCategories.INSTANCE.getPHYSICAL().getName())){
-                                hasPhysicalMove = true;
-                            }
-                            if(damageCategory.equals(DamageCategories.INSTANCE.getSPECIAL().getName())){
-                                hasSpecialMove = true;
-                            }
-                        }*/
-                        //currentMoveCategory = TypeChart.getMove(nonKillingMove).getDamageCategory().getName();
                         if (moveScores.get(nonKillingMove) == maxDamage) {
                             roll = RANDOM.nextDouble();
                             score += (roll > 0.2) ? 6 : 8;
@@ -900,8 +866,7 @@ public class RunBunAI implements BattleAI {
                                 if(currentHeldItem != null){
                                     break;
                                 }
-                                double flingEffectiveness = typeEffectiveness(TypeChart.getMove(nonKillingMove).getType(),opponent.getEffectedPokemon().getPrimaryType())
-                                        * typeEffectiveness(TypeChart.getMove(nonKillingMove).getType(),opponent.getEffectedPokemon().getSecondaryType());
+                                double flingEffectiveness = TypeChart.getEffectiveness(TypeChart.getMove(nonKillingMove).getType(), opponent);
                                 //need to hold a salac berry and fling is not super effective.
                                 if(activeBattlePokemon.getBattlePokemon().getEffectedPokemon().heldItem().is(CobblemonItems.SALAC_BERRY)
                                         && (flingEffectiveness <=1)){
@@ -1118,7 +1083,7 @@ public class RunBunAI implements BattleAI {
                                     boolean fasterIfPara = false;
                                     boolean hasFlinchMove = moveDamages.entrySet().stream()
                                             .anyMatch(entry -> flinchMoves.contains(entry.getKey().getId()) && entry.getValue() > 0);
-                                    if(getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
+                                    if(!BattleEffects.Field.Room.trickroom(opponent) && getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
                                         fasterIfPara = true;
                                     }
                                     if((!isFaster && fasterIfPara) 
@@ -1232,6 +1197,15 @@ public class RunBunAI implements BattleAI {
             //TODO: START OF GENERAL SETUP CODE
             String moveID = move.getKey().getId();
             double roll;
+            String lastTurnMove = moveHistoryEnemy.getOrDefault(turnsForActivePokemon-1, "");
+            boolean isRecharging = false;
+            boolean isLoafing = false;
+            if(turnsForActivePokemon % 2 ==0 && opponentAbility.equals("truant")){
+                isLoafing = true;
+            }
+            if(rechargeMoves.contains(lastTurnMove)){
+                isRecharging = true;
+            }
             if(generalSetupMoves.contains(moveID)){
                 boolean hasThawingMove = false;
                 for(String m : thawingMoves){
@@ -1263,7 +1237,7 @@ public class RunBunAI implements BattleAI {
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
                             }
-                            if(npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) >= 2){
+                            if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
                                 score -= 1;
                             }
                             break;
@@ -1275,7 +1249,7 @@ public class RunBunAI implements BattleAI {
                     //TODO: OFFENSIVE SETUP MOVES (IF LOAFING AROUND TRUANT)
                     case "dragondance", "shiftgear", "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
                         score+=6;
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
                             score += 3;
                         }
                         if(!isFaster && npcIs2OHKO){
@@ -1292,7 +1266,7 @@ public class RunBunAI implements BattleAI {
                             if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
                                 score += 2;
                             }
-                            if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                            if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
                                 score += 2;
                             }
                         }
@@ -1300,7 +1274,7 @@ public class RunBunAI implements BattleAI {
                     case "coil", "bulkup", "calmmind", "quiverdance", "noretreat":      
                         score += 6;
                         if(hasPhysicalMove && (moveID.equals("calmmind") || moveID.equals("quiverdance"))){
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
                             score += 3;
                             }
                             if(!isFaster && npcIs2OHKO){
@@ -1316,20 +1290,22 @@ public class RunBunAI implements BattleAI {
                                 if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
                                     score += 2;
                                 }
-                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
                                     score += 2;
                                 }
                             }
                         }
-                        if(hasSpecialMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){  //check truant or recharge
+                        //Offensive setup, has at least 1 special and no physical moves
+                        if(hasSpecialMove && !hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
                                 score += 3;
                             }
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
                             }
-                        }      
-                        else {
+                        }
+                        //Deffensive setup, has at least 1 physical and no special moves
+                        else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
                             roll = RANDOM.nextDouble();
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
@@ -1338,7 +1314,7 @@ public class RunBunAI implements BattleAI {
                                 if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
                                     score += 2;
                                 }
-                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stat.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stat.DEFENCE, 0) < 2)){
+                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
                                     score += 2;
                                 }
                             }
@@ -1354,7 +1330,7 @@ public class RunBunAI implements BattleAI {
                         break;
                     case "tailglow", "nastyplot", "workup":
                         score += 6;
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){//check truant or recharge
                             score += 3;
                         }
                         else if(!npcIs3OHKO) {
@@ -1366,13 +1342,13 @@ public class RunBunAI implements BattleAI {
                         if(!isFaster && npcIs2OHKO){
                             score -= 5;
                         }
-                        if(npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) >= 2){
+                        if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
                             score -= 1;
                         }
                         break;
                     case "shellsmash":
                         score += 6;
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
                             score += 3;
                         }
                         if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
@@ -1381,12 +1357,12 @@ public class RunBunAI implements BattleAI {
                         else{
                             score -= 2;
                         }
-                        if(npcStages.getOrDefault(Stat.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0 >= 1) || npcStages.getOrDefault(Stat.ATTACK, 0) == 6 || npcStages.getOrDefault(Stat.SPECIAL_ATTACK, 0) == 6){
+                        if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.ATTACK, 0) == 6 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) == 6){
                             score -= 20;
                         }
                         break;
                     case "bellydrum":
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
                             score += 9;
                         }
                         else if(!npcIsOHKOWithBD){
@@ -1412,8 +1388,8 @@ public class RunBunAI implements BattleAI {
             }
             //if a damaging move has a high crit chance and is Super Effective on the target
             // (50% of the time the score gets increased by 1)
-            if (highCriticalMoves.contains(currentMove.getId()) && (typeEffectivenessResult == 2 || typeEffectivenessResult == 4)) {
-                double roll = RANDOM.nextDouble();
+            if (highCriticalMoves.contains(currentMove.getId()) && TypeChart.getEffectiveness(TypeChart.getMove(currentMove).getType(),opponent) >=2) {
+                roll = RANDOM.nextDouble();
                 score = (roll < .5) ? score + 1 : score;
             }
             if (currentMove.getId().equals("acidspray")) {
@@ -1421,7 +1397,7 @@ public class RunBunAI implements BattleAI {
             }
             //This puts the final score into the map with its move key.
             if(nonKillingPossibleMoves.contains(move.getKey())){
-                double roll = RANDOM.nextDouble();
+                roll = RANDOM.nextDouble();
                 score += roll > .2 ? 6:8;
                 ModCommon.LOG.info("NONKILLING MOVE " + move.getKey().getId() + "  " + Integer.toString(score));
             }
@@ -1453,8 +1429,6 @@ public class RunBunAI implements BattleAI {
                 .filter(entry -> entry.getValue() == maxScore)
                 .map(Map.Entry::getKey)
                 .toList();
-
-
         //if there are multiple best moves
         if(bestMoves.size() > 1){
             int randomInt = RANDOM.nextInt(bestMoves.size());
@@ -1541,19 +1515,18 @@ public class RunBunAI implements BattleAI {
         return false;
     }
     public static boolean wouldBeOHKOAfterShellSmash(List<Move> moves, BattlePokemon attacker, BattlePokemon defender, Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages) {
-    
+
         Map<Stat,Integer> simulatedDefenderStages = new HashMap<>(defenderStages);
-        simulatedDefenderStages.put(Stat.DEFENSE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stat.DEFENSE, 0) - 2)));
-        simulatedDefenderStages.put(Stat.SPECIAL_DEFENSE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stat.SPECIAL_DEFENSE, 0) - 2)));
+        simulatedDefenderStages.put(Stats.DEFENCE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stats.DEFENCE, 0) - 2)));
+        simulatedDefenderStages.put(Stats.SPECIAL_DEFENCE, Math.max(-6, Math.min(6, simulatedDefenderStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) - 2)));
         boolean result = false;
         int currentHP = defender.getHealth();
-        
         for (Move move : moves) {
             int enemyDamage = PokeMathMax.damage(attacker, defender, move, attackerStages, simulatedDefenderStages);
             if (enemyDamage >= currentHP) {
                 result = true;
                 if (currentHP == defender.getMaxHealth() &&
-                    defender.getEffectedPokemon().getAbility().getDisplayName().equals("sturdy")) {
+                        defender.getEffectedPokemon().getAbility().getDisplayName().equals("sturdy")) {
                     result = false;
                 }
 
@@ -1587,7 +1560,7 @@ public class RunBunAI implements BattleAI {
         }
         for (Move currentMove : moves) {
             enemyDamage = PokeMathMax.damage(attacker, defender, currentMove, attackerStages, defenderStages);
-            if (enemyDamage >= currentHP || enemyDamage >= currentHPAfterBellyDrum || enemyDamage >= ) {
+            if (enemyDamage >= currentHP || enemyDamage >= currentHPAfterBellyDrum) {
                 return true;
             }
         }
@@ -1711,185 +1684,5 @@ public class RunBunAI implements BattleAI {
             }
         }
         return hasMove;
-    }
-
-    public static void initialiseTypeChart() {
-        ElementalTypes types = ElementalTypes.INSTANCE;
-        ElementalType NORMAL = types.getNORMAL();
-        ElementalType FIGHTING = types.getFIGHTING();
-        ElementalType FLYING = types.getFLYING();
-        ElementalType POISON = types.getPOISON();
-        ElementalType GROUND = types.getGROUND();
-        ElementalType ROCK = types.getROCK();
-        ElementalType BUG = types.getBUG();
-        ElementalType GHOST = types.getGHOST();
-        ElementalType STEEL = types.getSTEEL();
-        ElementalType FIRE = types.getFIRE();
-        ElementalType WATER = types.getWATER();
-        ElementalType GRASS = types.getGRASS();
-        ElementalType ELECTRIC = types.getELECTRIC();
-        ElementalType PSYCHIC = types.getPSYCHIC();
-        ElementalType ICE = types.getICE();
-        ElementalType DRAGON = types.getDRAGON();
-        ElementalType DARK = types.getDARK();
-        ElementalType FAIRY = types.getFAIRY();
-
-        typeChart.put(NORMAL, Map.of(
-                FIGHTING, SUPER_EFFECTIVE,
-                GHOST, IMMUNE
-        ));
-        typeChart.put(FIGHTING, Map.of(
-                FLYING, SUPER_EFFECTIVE,
-                ROCK, NOT_VERY_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                PSYCHIC, SUPER_EFFECTIVE,
-                DARK, NOT_VERY_EFFECTIVE,
-                FAIRY, SUPER_EFFECTIVE
-        ));
-        typeChart.put(FLYING, Map.of(
-                FIGHTING, NOT_VERY_EFFECTIVE,
-                GROUND, IMMUNE,
-                ROCK, SUPER_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE,
-                ELECTRIC, SUPER_EFFECTIVE,
-                ICE, SUPER_EFFECTIVE
-        ));
-        typeChart.put(POISON, Map.of(
-                FIGHTING, NOT_VERY_EFFECTIVE,
-                POISON, NOT_VERY_EFFECTIVE,
-                GROUND, SUPER_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE,
-                PSYCHIC, SUPER_EFFECTIVE,
-                FAIRY, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(GROUND, Map.of(
-                POISON, NOT_VERY_EFFECTIVE,
-                ROCK, NOT_VERY_EFFECTIVE,
-                WATER, SUPER_EFFECTIVE,
-                GRASS, SUPER_EFFECTIVE,
-                ELECTRIC, IMMUNE,
-                ICE, SUPER_EFFECTIVE
-        ));
-        typeChart.put(ROCK, Map.of(
-                NORMAL, NOT_VERY_EFFECTIVE,
-                FIGHTING, SUPER_EFFECTIVE,
-                FLYING, NOT_VERY_EFFECTIVE,
-                POISON, NOT_VERY_EFFECTIVE,
-                GROUND, SUPER_EFFECTIVE,
-                STEEL, SUPER_EFFECTIVE,
-                FIRE, NOT_VERY_EFFECTIVE,
-                WATER, SUPER_EFFECTIVE,
-                GRASS, SUPER_EFFECTIVE
-        ));
-        typeChart.put(BUG, Map.of(
-                FIGHTING, NOT_VERY_EFFECTIVE,
-                FLYING, SUPER_EFFECTIVE,
-                GROUND, NOT_VERY_EFFECTIVE,
-                ROCK, SUPER_EFFECTIVE,
-                FIRE, SUPER_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(GHOST, Map.of(
-                NORMAL, IMMUNE,
-                FIGHTING, IMMUNE,
-                POISON, NOT_VERY_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                GHOST, SUPER_EFFECTIVE,
-                DARK, SUPER_EFFECTIVE
-        ));
-        Map<ElementalType, Double> steelMap = new HashMap<>(Map.of(
-                NORMAL, NOT_VERY_EFFECTIVE,
-                FIGHTING, SUPER_EFFECTIVE,
-                FLYING, NOT_VERY_EFFECTIVE,
-                POISON, IMMUNE,
-                GROUND, SUPER_EFFECTIVE,
-                ROCK, NOT_VERY_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                STEEL, NOT_VERY_EFFECTIVE,
-                FIRE, SUPER_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE
-        ));
-        steelMap.put(PSYCHIC, NOT_VERY_EFFECTIVE);
-        steelMap.put(ICE, NOT_VERY_EFFECTIVE);
-        steelMap.put(DRAGON, NOT_VERY_EFFECTIVE);
-        steelMap.put(FAIRY, NOT_VERY_EFFECTIVE);
-        typeChart.put(STEEL, steelMap);
-        typeChart.put(FIRE, Map.of(
-                GROUND, SUPER_EFFECTIVE,
-                ROCK, SUPER_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                STEEL, NOT_VERY_EFFECTIVE,
-                FIRE, NOT_VERY_EFFECTIVE,
-                WATER, SUPER_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE,
-                ICE, NOT_VERY_EFFECTIVE,
-                FAIRY, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(WATER, Map.of(
-                STEEL, NOT_VERY_EFFECTIVE,
-                FIRE, NOT_VERY_EFFECTIVE,
-                WATER, NOT_VERY_EFFECTIVE,
-                GRASS, SUPER_EFFECTIVE,
-                ELECTRIC, SUPER_EFFECTIVE,
-                ICE, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(GRASS, Map.of(
-                FLYING, SUPER_EFFECTIVE,
-                POISON, SUPER_EFFECTIVE,
-                GROUND, NOT_VERY_EFFECTIVE,
-                BUG, SUPER_EFFECTIVE,
-                FIRE, SUPER_EFFECTIVE,
-                WATER, NOT_VERY_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE,
-                ELECTRIC, NOT_VERY_EFFECTIVE,
-                ICE, SUPER_EFFECTIVE
-        ));
-        typeChart.put(ELECTRIC, Map.of(
-                FLYING, NOT_VERY_EFFECTIVE,
-                GROUND, SUPER_EFFECTIVE,
-                STEEL, NOT_VERY_EFFECTIVE,
-                ELECTRIC, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(PSYCHIC, Map.of(
-                FIGHTING, NOT_VERY_EFFECTIVE,
-                BUG, SUPER_EFFECTIVE,
-                GHOST, SUPER_EFFECTIVE,
-                PSYCHIC, NOT_VERY_EFFECTIVE,
-                DARK, SUPER_EFFECTIVE
-        ));
-        typeChart.put(ICE, Map.of(
-                FIGHTING, SUPER_EFFECTIVE,
-                ROCK, SUPER_EFFECTIVE,
-                STEEL, SUPER_EFFECTIVE,
-                FIRE, SUPER_EFFECTIVE,
-                ICE, NOT_VERY_EFFECTIVE
-        ));
-        typeChart.put(DRAGON, Map.of(
-                FIRE, NOT_VERY_EFFECTIVE,
-                WATER, NOT_VERY_EFFECTIVE,
-                GRASS, NOT_VERY_EFFECTIVE,
-                ELECTRIC, NOT_VERY_EFFECTIVE,
-                ICE, SUPER_EFFECTIVE,
-                DRAGON, SUPER_EFFECTIVE,
-                FAIRY, SUPER_EFFECTIVE
-        ));
-        typeChart.put(DARK, Map.of(
-                FIGHTING, SUPER_EFFECTIVE,
-                BUG, SUPER_EFFECTIVE,
-                GHOST, NOT_VERY_EFFECTIVE,
-                PSYCHIC, IMMUNE,
-                DARK, NOT_VERY_EFFECTIVE,
-                FAIRY, SUPER_EFFECTIVE
-        ));
-        typeChart.put(FAIRY, Map.of(
-                FIGHTING, NOT_VERY_EFFECTIVE,
-                POISON, SUPER_EFFECTIVE,
-                BUG, NOT_VERY_EFFECTIVE,
-                STEEL, SUPER_EFFECTIVE,
-                DRAGON, IMMUNE,
-                DARK, NOT_VERY_EFFECTIVE
-        ));
     }
 }
