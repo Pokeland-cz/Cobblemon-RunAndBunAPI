@@ -4,6 +4,8 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
+import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
+import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.api.moves.Move;
@@ -318,6 +320,7 @@ public class RunBunAI implements BattleAI {
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
+        battleTurn = activeBattlePokemon.getBattle().getTurn();
         ModCommon.LOG.info("started showdown response.");
         String getOpponentHeldItem = "";
         String currentHeldItem ="";
@@ -407,6 +410,7 @@ public class RunBunAI implements BattleAI {
             if(turnsForActivePokemon == 1){
                 moveHistoryEnemy = new HashMap<>();
             }
+            //this is getting the showdown response of the enemy mon and tracking their move history
             for (ShowdownActionResponse response : opponent.getActor().getResponses()) {
                 if (response instanceof MoveActionResponse) {
                     MoveActionResponse move = (MoveActionResponse) response;
@@ -417,6 +421,22 @@ public class RunBunAI implements BattleAI {
                 } else {
                     ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
                             + opponent.getActor().getShowdownId() + " chose " + response.getClass().getSimpleName());
+                }
+            }
+            //this is looking into if a move missed or failed or was immune for recharge logic.
+            PokemonBattle pb = activeBattlePokemon.getBattle();
+            for (Map.Entry<UUID, BattleMessage> entry : pb.getMinorBattleActions().entrySet()) {
+                BattleMessage msg = entry.getValue();
+                String type = msg.getId();
+
+                if ("-miss".equals(type) || "-immune".equals(type) || "-fail".equals(type)) {
+                    BattlePokemon mon = msg.battlePokemon(0, pb);
+                    ModCommon.LOG.info("Turn " + pb.getTurn() + ": "
+                            + mon.getName()
+                            + " had outcome " + type);
+                    if(mon.getUuid().equals(opponent.getUuid())){
+                        moveHistoryEnemy.put(turnsForActivePokemon, type);
+                    }
                 }
             }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
@@ -1203,7 +1223,8 @@ public class RunBunAI implements BattleAI {
             if(turnsForActivePokemon % 2 ==0 && opponentAbility.equals("truant")){
                 isLoafing = true;
             }
-            if(rechargeMoves.contains(lastTurnMove)){
+            //what if they miss?
+            if(rechargeMoves.contains(lastTurnMove) && (lastTurnMove != "-miss" || lastTurnMove != "-immune" || lastTurnMove != "-fail")){
                 isRecharging = true;
             }
             if(generalSetupMoves.contains(moveID)){
@@ -1373,8 +1394,20 @@ public class RunBunAI implements BattleAI {
                         }
                         break;
                     case "focusenergy", "laserfocus":
+                        if(currentHeldItem.equals("scopelens") || (currentAbility.equals("superluck") || currentAbility.equals("sniper"))){
+                            score+=7;
+                        }
+                        else{
+                            score+=6;
+                        }
                         break;
                     case "coaching":
+                        score+=6;
+                        if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && NPCPartner.getBattlePokemon().getEffectedPokemon().getAbility().getName().equals("contrary")){
+                            if(getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.ATTACK,0) <=2){
+
+                            }
+                        }
                         break;
                 }
             }
@@ -1435,7 +1468,6 @@ public class RunBunAI implements BattleAI {
             var bestMove = bestMoves.get(randomInt);
             ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
             List<Targetable> targets = bestMove.mustBeUsed() ? null : bestMove.getTarget().getTargetList().invoke(activeBattlePokemon);
-            RunBunAI.battleTurn++;
             moveHistory.put(turnsForActivePokemon, bestMove.getId());
             return new MoveActionResponse(bestMove.getId(),
                     targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
@@ -1443,7 +1475,6 @@ public class RunBunAI implements BattleAI {
         }
         List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
         ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
-        RunBunAI.battleTurn++;
         moveHistory.put(turnsForActivePokemon, bestMoves.get(0).getId());
         return new MoveActionResponse(bestMoves.get(0).getId(),
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
