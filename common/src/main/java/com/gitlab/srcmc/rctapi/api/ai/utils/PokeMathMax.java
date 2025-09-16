@@ -69,6 +69,7 @@ public class PokeMathMax {
         var attackerTeraType = attacker.getEffectedPokemon().getTeraType();
         var attackerAbility = attackerEp.getAbility();
         String attackerHeldItem = attacker.getHeldItemManager().showdownId(attacker)!=null ? attacker.getHeldItemManager().showdownId(attacker): "";
+        String defenderHeldItem = defender.getHeldItemManager().showdownId(defender)!=null ? defender.getHeldItemManager().showdownId(defender): "";
         // https://bulbapedia.bulbagarden.net/wiki/Damage#Generation_V_onward
         double baseDamage = (((2 * attackerLevel / 5.0 + 2) * movePower * attackerEffectiveAttack / defenderEffectiveDefence) / 50.0) + 2;
         if (multiTarget) baseDamage *= 0.75;
@@ -230,6 +231,62 @@ public class PokeMathMax {
 
             case "lifeorb":
                 baseDamage *= 1.3;
+                break;
+        }
+
+        switch(defenderHeldItem){
+            case "chilanberry":
+                if(moveType.equals(ElementalTypes.INSTANCE.getNORMAL())){
+                    baseDamage /= 2;
+                }
+                break;
+            case "occaberry":
+
+                break;
+            case "passhoberry":
+                
+                break;
+            case "wacanberry":
+                
+                break;
+            case "rindoberry":
+                
+                break;
+            case "yacheberry":
+                
+                break;
+            case "chopleberry":
+                
+                break;
+            case "kebiaberry":
+                
+                break;
+            case "shucaberry":
+                
+                break;
+            case "cobaberry":
+                
+                break;
+            case "payapaberry":
+                
+                break;
+            case "tangaberry":
+                
+                break;
+            case "chartiberry":
+                
+                break;
+            case "kasibberry":
+                
+                break;
+            case "habanberry":
+                
+                break;
+            case "colburberry":
+                
+                break;
+            case "babiriberry":
+                
                 break;
         }
         //if(isevio or is assaultvest) -> do stuff
