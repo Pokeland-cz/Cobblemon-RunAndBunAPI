@@ -22,7 +22,6 @@ import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
 import com.gitlab.srcmc.rctapi.api.ai.utils.PokeMathMax;
 import com.gitlab.srcmc.rctapi.api.ai.utils.TypeChart;
 
-import java.util.Random;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -345,6 +344,7 @@ public class RunBunAI implements BattleAI {
         String currentHeldItem ="";
         ElementalType activePrimaryType = null;
         ElementalType activeSecondaryType = null;
+        ElementalTypes elementaltypes = ElementalTypes.INSTANCE;
         double activePokemonPercentHP = 0;
         Ability currentAbility = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
@@ -1053,42 +1053,92 @@ public class RunBunAI implements BattleAI {
                                 break;
 
                             case "thunderwave", "stunspore", "glare", "nuzzle", "zapcannon":
-                                roll = RANDOM.nextDouble();
-                                int paraRoll = roll > .5 ? -1: 0;
-                                boolean fasterIfPara = false;
-                                boolean hasFlinchMove = flinchMoves.stream()
-                                        .anyMatch(moveDamages::containsKey);
-                                if(getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
-                                    fasterIfPara = true;
+                                if(!BattleEffects.Pokemon.Status.any(opponent)){
+                                    roll = RANDOM.nextDouble();
+                                    int paraRoll = roll > .5 ? -1: 0;
+                                    boolean fasterIfPara = false;
+                                    boolean hasFlinchMove = flinchMoves.stream()
+                                            .anyMatch(moveDamages::containsKey);
+                                    if(getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
+                                        fasterIfPara = true;
+                                    }
+                                    if((!isFaster && fasterIfPara) 
+                                        || moves.containsKey("hex") 
+                                        || hasFlinchMove 
+                                        || BattleEffects.Pokemon.Volatile.attract(opponent) 
+                                        || BattleEffects.Pokemon.Volatile.confusion(opponent)){
+                                        score += 8;
+                                    }
+                                    else{
+                                        score += 7;
+                                    }
+                                    score += paraRoll;
                                 }
-                                if((!isFaster && fasterIfPara) 
-                                    ||  moveDamages.containsKey("hex") 
-                                    || hasFlinchMove 
-                                    || BattleEffects.Pokemon.Volatile.attract(opponent) 
-                                    || BattleEffects.Pokemon.Volatile.confusion(opponent)){
-                                    score += 8;
-                                }
-                                else{
-                                    score += 7;
-                                }
-                                score += paraRoll;
 
                                 break;
 
                             case "willowisp":
+                                if(!BattleEffects.Pokemon.Status.any(opponent)){
+                                    score += 6;
+                                    roll = RANDOM.nextDouble();
+                                    if(roll < .37){
+                                        if(move.getKey().getId().equals("hex") 
+                                        || (bf.getBattleType().toString().equals("GEN_9_DOUBLES") && NPCPartner.getMoveSet().getMoves().contains("hex"))){      
+                                            score += 1;
+                                        }
+                                        if(hasPhysicalMove){
+                                            score += 1;
+                                        }
+                                    }
+                                }
                                 
                                 break;
 
                             case "trick", "switcheroo":
-
-                                break;
-
-                            case "yawn", "darkvoid", "sleeppowder", "hypnosis", "lovelykiss", "sing", "spore":
+                                if(currentHeldItem != null){
+                                    if(currentHeldItem.equals("toxicorb") || currentHeldItem.equals("flameorb") || currentHeldItem.equals("blacksludge")){
+                                        roll = RANDOM.nextDouble();
+                                        score += roll > .5 ? 6: 7;
+                                    }
+                                    else if (currentHeldItem.equals("ironball") || currentHeldItem.equals("laggingtail") || currentHeldItem.equals("stickybarb")) {
+                                        score += 7;
+                                    }else{
+                                        score += 5;
+                                    }
+                                }
                                 
                                 break;
 
+                            case "yawn", "darkvoid", "sleeppowder", "hypnosis", "lovelykiss", "spore", "grasswhistle":
+                                score += 6;
+                                roll = RANDOM.nextDouble();
+                                if(!BattleEffects.Pokemon.Status.any(opponent)){
+                                    if(roll < .25){
+                                        if((!BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon() || (BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon()) && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
+                                        && (!BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon()) || (BattleEffects.Field.Terrain.mistyterrain(activeBattlePokemon.getBattlePokemon() && (opponent.getEffectedPokemon().getPrimaryType() == elementaltypes.getFLYING() || opponent.getEffectedPokemon().getSecondaryType() == elementaltypes.getFLYING())))
+                                        && !opponentAbility.equals("comatose"))
+                                        && !opponentAbility.equals("insomnia")
+                                        && !opponentAbility.equals("vitalspirit")
+                                        && !opponentAbility.equals("sweetveil")
+                                        && !opponentAbility.equals("purifyingsalt")
+                                        && !opponentAbility.equals("goodasgold")
+                                        && (((move.getKey().getId().equals("hypnosis") || move.getKey().getId().equals("spore")) && !opponentAbility.equals("magicbounce")))
+                                        && (((move.getKey().getId().equals("grasswhistle") || move.getKey().getId().equals("sing")) && !opponentAbility.equals("soundproof")))
+                                        && (!opponentAbility.equals("leafguard") || (opponentAbility.equals("leafguard") && (!BattleEffects.Field.Weather.harshsunlight(opponent) && !BattleEffects.Field.Weather.extremelyharshsunlight(opponent))))
+                                        && (!bf.getBattleType().toString().equals("GEN_9_DOUBLES") || (bf.getBattleType().toString().equals("GEN_9_DOUBLES") && (!opponentAbility.equals("flowerviel") || (opponentAbility.equals("flowerviel") &&  (opponentPartner.getEffectedPokemon().getPrimaryType() != elementaltypes.getGRASS() || opponentPartner.getEffectedPokemon().getSecondaryType() != elementaltypes.getGRASS()))))))){
+                                            score += 1;
+                                            if((move.getKey().getId().equals("dreameater") || move.getKey().getId().equals("nightmare")) && (!oppMoves.contains("snore") || !oppMoves.contains("sleeptalk"))){
+                                                score += 1;
+                                                }
+                                            if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && NPCPartner.getMoveSet().getMoves().contains("hex")){
+                                                score += 1;
+                                                }
+                                        }
+                                    }
+                                }
+                               
+                                break;
                         }
-                    }
                 }
             }
             //list of all opponents moves and their OHKO potential.
