@@ -247,55 +247,92 @@ public class PokeMathMax {
                 }
                 break;
             case "occaberry":
-
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getFIRE())){
+                    baseDamage /= 2;
+                }
                 break;
             case "passhoberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getWATER())){
+                    baseDamage /= 2;
+                }
                 break;
             case "wacanberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getELECTRIC())){
+                    baseDamage /= 2;
+                }
                 break;
             case "rindoberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getGRASS())){
+                    baseDamage /= 2;
+                }
                 break;
             case "yacheberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getICE())){
+                    baseDamage /= 2;
+                }
                 break;
             case "chopleberry":
-                
+                if((TypeChart.getEffectiveness(attacker, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getFIGHTING())){
+                    baseDamage /= 2;
+                }
                 break;
             case "kebiaberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getPOISON())){
+                    baseDamage /= 2;
+                }
                 break;
             case "shucaberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getGROUND())){
+                    baseDamage /= 2;
+                }
                 break;
             case "cobaberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getFLYING())){
+                    baseDamage /= 2;
+                }
                 break;
             case "payapaberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC())){
+                    baseDamage /= 2;
+                }
                 break;
             case "tangaberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getBUG())){
+                    baseDamage /= 2;
+                }
                 break;
             case "chartiberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getROCK())){
+                    baseDamage /= 2;
+                }
                 break;
             case "kasibberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getGHOST())){
+                    baseDamage /= 2;
+                }
                 break;
             case "habanberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getDRAGON())){
+                    baseDamage /= 2;
+                }
                 break;
             case "colburberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getDARK())){
+                    baseDamage /= 2;
+                }
                 break;
             case "babiriberry":
-                
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getSTEEL())){
+                    baseDamage /= 2;
+                }
+                break;
+            case "roseliberry":
+                if((TypeChart.getEffectiveness(moveType, defender) >= 2) && moveType.equals(ElementalTypes.INSTANCE.getFAIRY())){
+                    baseDamage /= 2;
+                }
                 break;
         }
-        
+
         return baseDamage;
     }
 
