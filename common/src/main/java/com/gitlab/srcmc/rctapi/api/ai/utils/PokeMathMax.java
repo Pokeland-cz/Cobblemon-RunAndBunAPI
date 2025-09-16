@@ -234,6 +234,12 @@ public class PokeMathMax {
                 break;
         }
 
+        //if(isevio or is assaultvest) -> do stuff
+        //else { baseDamage *= new function;
+        //TODO: Create a function that handles move multiplier and returns it here.
+        // TYPE
+        baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
+
         switch(defenderHeldItem){
             case "chilanberry":
                 if(moveType.equals(ElementalTypes.INSTANCE.getNORMAL())){
@@ -289,11 +295,7 @@ public class PokeMathMax {
                 
                 break;
         }
-        //if(isevio or is assaultvest) -> do stuff
-        //else { baseDamage *= new function;
-        //TODO: Create a function that handles move multiplier and returns it here.
-        // TYPE
-        baseDamage = baseDamage * TypeChart.getEffectiveness(moveType, defender);
+        
         return baseDamage;
     }
 
