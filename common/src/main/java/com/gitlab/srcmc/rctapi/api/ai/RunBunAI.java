@@ -1201,8 +1201,45 @@ public class RunBunAI implements BattleAI {
                 }
             }
             //TODO: START OF GENERAL SETUP CODE
-            if(generalSetupMoves.contains(move.getKey().getId())){
-
+            String moveID = move.getKey().getId();
+            if(generalSetupMoves.contains(moveID)){
+                if(!currentHeldItem.equals("focussash") || !currentAbility.equals("sturdy")){
+                    score-=20;
+                }
+                if(opponentAbility.equals("unaware") && (!moveID.equals("poweruppunch") || !moveID.equals("swordsdance") || !moveID.equals("howl"))){
+                    score-=20;
+                }
+                //TODO: These moves are only setup moves when contrary ability holder is using them.
+                if(currentAbility.equals("contrary")){
+                    switch (moveID){
+                        case "overheat":
+                            break;
+                        case "leafstorm":
+                            break;
+                        case "superpower":
+                            break;
+                    }
+                }
+                switch(moveID){
+                    //TODO: OFFENSIVE SETUP MOVES (RECHARGING MOVES LIST AND THAWING MOVE LIST AND IF LOAFING AROUND TRUANT)
+                    case "dragondance", "shiftgear", "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
+                        score+=6;
+                        break;
+                    case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
+                        break;
+                    case "agility", "rockpolish", "autotomize":
+                        break;
+                    case "tailglow", "nastyplot", "workup":
+                        break;
+                    case "shellsmash":
+                        break;
+                    case "bellydrum":
+                        break;
+                    case "focusenergy", "laserfocus":
+                        break;
+                    case "coaching":
+                        break;
+                }
             }
             //list of all opponents moves and their OHKO potential.
             if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
