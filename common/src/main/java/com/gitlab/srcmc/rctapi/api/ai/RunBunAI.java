@@ -479,10 +479,16 @@ public class RunBunAI implements BattleAI {
             NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
         }
         List<Move> oppMoves = new ArrayList<>();
+        double oppMaxDamage = PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), oppMoves.getFirst(), opponentStages, npcStages);
         String opponentAbility = "";
         double oppPercentHP = 0;
         if(opponent != null){
             oppMoves = opponent.getMoveSet().getMoves();
+            for(Move m : oppMoves){
+                if(PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages) > oppMaxDamage){
+                    oppMaxDamage = PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages);
+                }
+            }
             opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
             oppPercentHP = getCurrentPercentHP(opponent);//this is rounded up
         }
@@ -1266,18 +1272,12 @@ public class RunBunAI implements BattleAI {
                         break;
                     }
                 }
-                if(npcIsOHKO && (!"focussash".equals(currentHeldItem) || !currentAbility.equals("sturdy"))){
-                    score-=20;
-                }
-                if(opponentAbility.equals("unaware")){ 
-                    score-=20;
-                }
                 //TODO: These moves are only setup moves when contrary ability holder is using them.
                 if(currentAbility.equals("contrary") && score != 0){
                     switch (moveID){
                         case "overheat", "leafstorm":
                             score += 6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)){ //check truant or recharge
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) ||  isLoafing || isRecharging){ 
                                 score += 3;
                             }
                             else if(!npcIs3OHKO) {
@@ -1294,51 +1294,92 @@ public class RunBunAI implements BattleAI {
                             }
                             break;
                         case "superpower":
+                            score += 6;
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){ 
+                                score += 3;
+                            }
+                            else if(!npcIs3OHKO) {
+                                score += 1;
+                                if(isFaster){
+                                    score += 1;
+                                }
+                            }
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
+                            }
+                            if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2){
+                                score -= 1;
+                            }
                             break;
                     }
                 } 
+                if(npcIsOHKO && ((!"focussash".equals(currentHeldItem) || !currentAbility.equals("sturdy")) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
+                    score-=20;
+                }
+                if(opponentAbility.equals("unaware")){ 
+                    score-=20;
+
+                }
                 switch(moveID){
                     //TODO: OFFENSIVE SETUP MOVES (IF WE ARE FASTER AFTER A SPEED BUFF GIVE MORE SCORE eg. DRAGON DANCE, SHIFT GEAR, QUIVER DANCE)
                     case "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score+=6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
-                                score += 3;
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
+                        score += 6;
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
+                            score += 3;
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
                         }
                             break;
                     case "dragondance", "shiftgear", "tidyup":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if(moveID.equals("shiftgear")){
-                                if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 1, 0)){
-                                score += 5;
-                                }
+                        score += 6;
+                        if(moveID.equals("shiftgear")){
+                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 1, 0)){
+                            score += 5;
                             }
-                            else{
-                                if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 0)){
-                                score += 5;
-                                }
+                        }
+                        else{
+                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 0)){
+                            score += 5;
                             }
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
+                        }
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
+                            score += 3;
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2){
+                            score -= 3;
+                        }
+                        break;
+                    case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
+                        score += 6;
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(roll > .05){
+                            if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                score += 2;
+                            }
+                            if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
+                                score += 2;
+                            }
+                        }
+                        break;
+                    case "coil", "bulkup", "calmmind", "curse":
+                        score += 6;
+                        if(((hasPhysicalMove && !hasSpecialMove) || ((!hasPhysicalMove && !hasSpecialMove))) && (moveID.equals("calmmind"))){
+                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
                                 score += 3;
                             }
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
                             }
-                            if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.SPEED, 0) >= 2){
-                                score -= 3;
-                            }
-                        }
-                        break;
-                    case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
+                        } 
+                        else if (!hasPhysicalMove && hasSpecialMove && (moveID.equals("calmmind"))){
                             roll = RANDOM.nextDouble();
-                            score += 6;
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
                             }
@@ -1351,174 +1392,132 @@ public class RunBunAI implements BattleAI {
                                 }
                             }
                         }
-                        break;
-                    case "coil", "bulkup", "calmmind", "curse":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if(((hasPhysicalMove && !hasSpecialMove) || ((!hasPhysicalMove && !hasSpecialMove))) && (moveID.equals("calmmind"))){
-                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
-                                score += 3;
-                                }
-                                if(!isFaster && npcIs2OHKO){
-                                    score -= 5;
-                                }
-                            } 
-                            else if (!hasPhysicalMove && hasSpecialMove && (moveID.equals("calmmind"))){
-                                roll = RANDOM.nextDouble();
-                                if(!isFaster && npcIs2OHKO){
-                                    score -= 5;
-                                }
-                                if(roll > .05){
-                                    if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
-                                        score += 2;
-                                    }
-                                    if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                        score += 2;
-                                    }
-                                }
-                            }
                             //Offensive setup, has at least 1 special and no physical moves
-                            if(((hasSpecialMove && !hasPhysicalMove) || (!hasPhysicalMove && !hasSpecialMove)) && (moveID.equals("coil") || moveID.equals("bulkup") ||  moveID.equals("curse"))){
-                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
-                                    score += 3;
-                                }
-                                if(!isFaster && npcIs2OHKO){
-                                    score -= 5;
-                                }
-                            }
-                            //Deffensive setup, has at least 1 physical and no special moves
-                            else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
-                                roll = RANDOM.nextDouble();
-                                if(!isFaster && npcIs2OHKO){
-                                    score -= 5;
-                                }
-                                if(roll > .05){
-                                    if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
-                                        score += 2;
-                                    }
-                                    if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                        score += 2;
-                                    }
-                                }
-                            }        
-                        }
-                        break;
-                    case "quiverdance", "geomancy":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if(moveID.equals("geomancy")){
-                                if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 2, 2) && "powerherb".equals(currentHeldItem)){
-                                score += 5;
-                                }
-                                else{
-                                    score -= 20;
-                                }
-                            }
-                            else{
-                                if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
-                                score += 5;
-                                }
-                            }
+                        if(((hasSpecialMove && !hasPhysicalMove) || (!hasPhysicalMove && !hasSpecialMove)) && (moveID.equals("coil") || moveID.equals("bulkup") ||  moveID.equals("curse"))){
                             if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
                                 score += 3;
                             }
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
                             }
-                            if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
-                                score -= 3;
+                        }
+                            //Deffensive setup, has at least 1 physical and no special moves
+                        else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
+                            roll = RANDOM.nextDouble();
+                            if(!isFaster && npcIs2OHKO){
+                                score -= 5;
                             }
+                            if(roll > .05){
+                                if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                    score += 2;
+                                }
+                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
+                                    score += 2;
+                                }
+                            }
+                        }        
+                        break;
+                    case "quiverdance", "geomancy":
+                        score += 6;
+                        if(moveID.equals("geomancy")){
+                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 2, 2) && "powerherb".equals(currentHeldItem)){
+                                score += 5;
+                            }
+                            else{
+                                score -= 20;
+                            }
+                        }
+                        else{
+                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
+                                score += 5;
+                            }
+                        }
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
+                            score += 3;
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
+                            score -= 3;
                         }
                         break;
                     
                     case "noretreat":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
-                                score += 5;
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.DEFENCE, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
-                            || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
-                                score -= 3;
-                            }
+                        score += 6;
+                        if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
+                            score += 5;
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.DEFENCE, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
+                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
+                            score -= 3;
                         }
                         break;
                     case "agility", "rockpolish", "autotomize":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            if(!isFaster){
-                                score += 7;
-                            }
-                            else{
-                                score -= 20;
-                            }
+                        if(!isFaster){
+                            score += 7;
+                        }
+                        else{
+                            score -= 20;
                         }
                         break;
                     case "tailglow", "nastyplot", "workup":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){//check truant or recharge
-                                score += 3;
-                            }
-                            else if(!npcIs3OHKO) {
+                        score += 6;
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){//check truant or recharge
+                            score += 3;
+                        }
+                        else if(!npcIs3OHKO) {
+                            score += 1;
+                            if(isFaster){
                                 score += 1;
-                                if(isFaster){
-                                    score += 1;
-                                }
                             }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
-                                score -= 1;
-                            }
+                        }
+                        if(!isFaster && npcIs2OHKO){
+                            score -= 5;
+                        }
+                        if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
+                            score -= 1;
                         }
                         break;
                     case "shellsmash":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            score += 6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
-                                score += 3;
-                            }
-                            if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
-                                score += 2;
-                            }
-                            else{
-                                score -= 2;
-                            }
-                            if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.ATTACK, 0) == 6 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) == 6){
-                                score -= 20;
-                            }
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
+                            score += 3;
+                        }
+                        if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
+                            score += 2;
+                        }
+                        else{
+                            score -= 2;
+                        }
+                        if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.ATTACK, 0) == 6 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) == 6){
+                            score -= 20;
                         }
                         break;
                     case "bellydrum":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
-                                score += 9;
-                            }
-                            else if(!npcIsOHKOWithBD){
-                                score += 8;
-                            }
-                            else{
-                                score += 4;
-                            }
+                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
+                            score += 9;
+                        }
+                        else if(!npcIsOHKOWithBD){
+                            score += 8;
+                        }
+                        else{
+                            score += 4;
                         }
                         break;
                     case "focusenergy", "laserfocus":
-                        if(!npcIsOHKO || (("focussash".equals(currentHeldItem) || "sturdy".equals(currentAbility)) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                            if("scopelens".equals(currentHeldItem) || (currentAbility.equals("superluck") || currentAbility.equals("sniper"))){
-                                score+=7;
-                            }
-                            else{
-                                score+=6;
-                            }
+                        if("scopelens".equals(currentHeldItem) || (currentAbility.equals("superluck") || currentAbility.equals("sniper"))){
+                            score+=7;
+                        }
+                        else{
+                            score+=6;
                         }
                         break;
                     case "coaching":
