@@ -617,6 +617,7 @@ public class RunBunAI implements BattleAI {
                                 .findFirst().get().create()
                 ));
         Map<InBattleMove, Integer> moveDamages = new HashMap<>();
+
         inBattleMoves.forEach(inBattleMove -> {
             int dmg = PokeMathMax.damage(
                     activeBattlePokemon.getBattlePokemon(),
@@ -655,7 +656,6 @@ public class RunBunAI implements BattleAI {
         if (killingMoves.isEmpty()) {
             for (int dmg : moveDamages.values()) {
                 maxDamage = maxDamage >= dmg ? maxDamage : dmg;
-
             }
             ModCommon.LOG.info("This is the max damage potential    "+ Integer.toString(maxDamage));
             for (Map.Entry<InBattleMove, Integer> entry : moveDamages.entrySet()) {
@@ -665,22 +665,24 @@ public class RunBunAI implements BattleAI {
                 } else if (trapMoves.contains(entry.getKey().getId())
                         || physicalAttackReductionMoves.contains(entry.getValue())
                         || specialAttackReductionMoves.contains(entry.getKey())
-                        || speedReductionMoves.contains(entry.getValue())) {
+                        || speedReductionMoves.contains(entry.getValue())
+                        || specialFunctionMoves.contains(entry.getValue())) {
                     ModCommon.LOG.info("NonPossibleKill Max Damage Move (Special Case)    " + entry.getKey().getId());
                     nonKillingPossibleMoves.add(entry.getKey());
                 }
-
             }
         }
         //TODO: START OF THE MOVE DAMAGE SCORING CALCULATIONS
         for (var move : moveDamages.entrySet()) {
             InBattleMove currentMove = move.getKey();
+            int moveDamage = move.getValue();
             int score = 0;
             //int dmg = PokeMathMax.damage(activeBattlePokemon.getBattlePokemon(), opponent, currentMove);
 
             boolean hasSpecialMove = false;
             boolean hasPhysicalMove = false;
             String damageCategory ="";
+
             //String currentMoveCategory = "";
             for(Move opponentMove : oppMoves){
                 damageCategory = opponentMove.getDamageCategory().getName();
@@ -1883,6 +1885,6 @@ public class RunBunAI implements BattleAI {
         attackerStages.put(Stats.ATTACK, Math.max(-6, Math.min(6, attackerStages.getOrDefault(Stats.ATTACK, 0) + boostedAtk)));
         attackerStages.put(Stats.SPECIAL_ATTACK,  Math.max(-6, Math.min(6, attackerStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) + boostedSpAtk)));
 
-        return getEffectiveSpeed(attacker, attackerStages) >= getEffectiveSpeed(defender, defenderStages) && isOHKO(attacker.getMoves(), attacker, defender, attackerStages, defenderStages);
+        return getEffectiveSpeed(attacker, attackerStages) >= getEffectiveSpeed(defender, defenderStages) && isOHKO(attacker.getMoveSet().getMoves(), attacker, defender, attackerStages, defenderStages);
     }
 }
