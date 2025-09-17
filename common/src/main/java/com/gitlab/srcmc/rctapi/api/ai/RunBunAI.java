@@ -1,3 +1,25 @@
+/*
+ MIT License
+Copyright (c) [2025] [Jacob Hooten, Mitchell Mclaughlin]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
 package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.Cobblemon;
@@ -155,7 +177,8 @@ public class RunBunAI implements BattleAI {
             "workup",
             "curse",
             "coil",
-            "noretreat"));
+            "noretreat",
+            "tidyup"));
     private static final List<String> ignoreStatDropAbilities = new ArrayList<>(List.of(
             "cobblemon.ability.contrary",
             "cobblemon.ability.clearbody",
@@ -320,7 +343,7 @@ public class RunBunAI implements BattleAI {
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
-        battleTurn = activeBattlePokemon.getBattle().getTurn();
+        battleTurn = activeBattlePokemon.getBattle().getTurn() +1;
         ModCommon.LOG.info("started showdown response.");
         String getOpponentHeldItem = "";
         String currentHeldItem ="";
@@ -442,7 +465,7 @@ public class RunBunAI implements BattleAI {
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
-                ModCommon.LOG.info("Turns Since Active: " + turn + " used move " + moveName);
+                ModCommon.LOG.info("Turns Since Active: " + turn + "ENEMY used move " + moveName);
             }
 
         }
@@ -475,13 +498,14 @@ public class RunBunAI implements BattleAI {
 
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
-            if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
-                isSwitchMonFaster = getInBattleSpeed(possibleSwitch) <= getInBattleSpeed(opponent);
+            if(activeBattlePokemon.getBattlePokemon()!=null){
+                if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
+                    isSwitchMonFaster = getInBattleSpeed(possibleSwitch) <= getInBattleSpeed(opponent);
+                }
+                else{
+                    isSwitchMonFaster = getInBattleSpeed(possibleSwitch) >= getInBattleSpeed(opponent);
+                }
             }
-            else{
-                isSwitchMonFaster = getInBattleSpeed(possibleSwitch) >= getInBattleSpeed(opponent);
-            }
-
             doesSwitchOHKO = isOHKO(possibleSwitch.getMoveSet().getMoves(), possibleSwitch, opponent, npcStages, opponentStages);
             doesOppOHKO = isOHKO(oppMoves, opponent, possibleSwitch, opponentStages, npcStages);
             if(isSwitchMonFaster && doesSwitchOHKO){
@@ -504,12 +528,12 @@ public class RunBunAI implements BattleAI {
             else if(!isSwitchMonFaster && doesOppOHKO){
                 switchScore -=1;
             }
-            if(possibleSwitch.getOriginalPokemon().getDisplayName().equals("ditto")){
+            if(possibleSwitch.getName().equals("ditto")){
                 switchScore += 2;
             }
             if(isSwitchMonFaster && !doesOppOHKO){
-                if(possibleSwitch.getOriginalPokemon().getDisplayName().equals("wynaut")
-                    || possibleSwitch.getOriginalPokemon().getDisplayName().equals("wobbuffet")) {
+                if(possibleSwitch.getName().equals("wynaut")
+                    || possibleSwitch.getName().equals("wobbuffet")) {
                     switchScore += 2;
                 }
             }
@@ -521,11 +545,13 @@ public class RunBunAI implements BattleAI {
                 .stream()
                 .max(Integer::compareTo)
                 .orElse(Integer.MIN_VALUE);
+
         List<BattlePokemon> bestSwitches = switchingScores.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue() == maxSwitchingScore)
                 .map(Map.Entry::getKey)
                 .toList();
+        ModCommon.LOG.info(maxSwitchingScore + " THIS IS THE MAX SWITCH SCORE    ::   " + bestSwitches.getFirst().getName() + " THIS IS THE FIRST BEST SWITCH");
         BattlePokemon nextPokemon = null;
         if (!bestSwitches.isEmpty()) {
             nextPokemon = bestSwitches.getFirst();
@@ -601,11 +627,14 @@ public class RunBunAI implements BattleAI {
         });
         Map<InBattleMove, Integer> moveScores = new HashMap<>();
         boolean isFaster = false;
-        if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
-            isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) <= getInBattleSpeed(opponent);
-        }
-        else{
-            isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) >= getInBattleSpeed(opponent);
+
+        if(activeBattlePokemon.getBattlePokemon() != null){
+            if(BattleEffects.Field.Room.trickroom(activeBattlePokemon.getBattlePokemon())){
+                isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) <= getInBattleSpeed(opponent);
+            }
+            else{
+                isFaster = getInBattleSpeed(activeBattlePokemon.getBattlePokemon()) >= getInBattleSpeed(opponent);
+            }
         }
         boolean npcIsOHKO = isOHKO(oppMoves, opponent, activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
         boolean npcIs2OHKO = is2HKO(oppMoves,opponent,activeBattlePokemon.getBattlePokemon(), opponentStages, npcStages);
@@ -1103,7 +1132,8 @@ public class RunBunAI implements BattleAI {
                                     boolean fasterIfPara = false;
                                     boolean hasFlinchMove = moveDamages.entrySet().stream()
                                             .anyMatch(entry -> flinchMoves.contains(entry.getKey().getId()) && entry.getValue() > 0);
-                                    if(!BattleEffects.Field.Room.trickroom(opponent) && getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
+
+                                    if(getInBattleSpeed(opponent)/4 < getInBattleSpeed(activeBattlePokemon.getBattlePokemon())){
                                         fasterIfPara = true;
                                     }
                                     if((!isFaster && fasterIfPara) 
@@ -1267,8 +1297,8 @@ public class RunBunAI implements BattleAI {
                     }
                 } 
                 switch(moveID){
-                    //TODO: OFFENSIVE SETUP MOVES (IF LOAFING AROUND TRUANT)
-                    case "dragondance", "shiftgear", "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
+                    //TODO: OFFENSIVE SETUP MOVES (IF WE ARE FASTER AFTER A SPEED BUFF GIVE MORE SCORE eg. DRAGON DANCE, SHIFT GEAR, QUIVER DANCE)
+                    case "dragondance", "shiftgear", "swordsdance", "howl", "sharpen", "meditate", "honeclaws", "tidyup":
                         score+=6;
                         if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
                             score += 3;
@@ -1292,7 +1322,7 @@ public class RunBunAI implements BattleAI {
                             }
                         }
                         break;
-                    case "coil", "bulkup", "calmmind", "quiverdance", "noretreat":      
+                    case "coil", "bulkup", "calmmind", "quiverdance", "noretreat", "curse":
                         score += 6;
                         if(hasPhysicalMove && (moveID.equals("calmmind") || moveID.equals("quiverdance"))){
                             if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
@@ -1317,7 +1347,7 @@ public class RunBunAI implements BattleAI {
                             }
                         }
                         //Offensive setup, has at least 1 special and no physical moves
-                        if(hasSpecialMove && !hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
+                        if(hasSpecialMove && !hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
                             if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
                                 score += 3;
                             }
@@ -1326,7 +1356,7 @@ public class RunBunAI implements BattleAI {
                             }
                         }
                         //Deffensive setup, has at least 1 physical and no special moves
-                        else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat"))){
+                        else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
                             roll = RANDOM.nextDouble();
                             if(!isFaster && npcIs2OHKO){
                                 score -= 5;
@@ -1440,6 +1470,7 @@ public class RunBunAI implements BattleAI {
         // END OF SCORING LOGIC::START OF SWITCH AI LOGIC
         if(isSwitching(moveScores, aliveParty, activeBattlePokemon.getBattlePokemon(), opponent)){
             double flip = RANDOM.nextDouble();
+            ModCommon.LOG.info(flip + "this is the flip result for switching");
             boolean result = (flip > .5);
             ModCommon.LOG.info(Boolean.toString(result) + "    coin toss result");
             if(result){
@@ -1623,18 +1654,21 @@ public class RunBunAI implements BattleAI {
             scores.add(val);
         }
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
-        ModCommon.LOG.info(Boolean.toString(hasLowScore));
+        ModCommon.LOG.info(Boolean.toString(hasLowScore) + "  ALL SCORES ARE LOWER THAN -5");
         if(Math.ceil(getCurrentPercentHP(self)) <= 50){
+            ModCommon.LOG.info(getCurrentPercentHP(self)+" is not lower than 50%  false");
             return false;
         }
         for(BattlePokemon pokemon : party){
             //TODO: ((if mon is faster than opp, and not OHKO) || (if mon is slower and not 2OHKO)) && not below 50% hp
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED)
                 && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
+                ModCommon.LOG.info("second switch con is true");
                 isSecondCondition = true;
             }
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getEffectedPokemon().getStat(Stats.SPEED)
                     && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
+                ModCommon.LOG.info("third switch con is true");
                 isThirdCondition = true;
             }
         }
@@ -1704,7 +1738,7 @@ public class RunBunAI implements BattleAI {
         return BattleStates.getTransformationOrEffected(pokemon).getSpeed() * multiplier;
     }
     private static double getCurrentPercentHP(BattlePokemon pokemon){
-        return (double)pokemon.getHealth() / (double) pokemon.getMaxHealth() * 100;
+        return ((double)pokemon.getHealth() / (double) pokemon.getMaxHealth()) * 100;
     }
     private static boolean hasMove(BattlePokemon pokemon, String moveID){
         boolean hasMove = false;
