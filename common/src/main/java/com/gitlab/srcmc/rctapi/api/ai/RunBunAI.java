@@ -52,6 +52,7 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ambient.Bat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -327,7 +328,8 @@ public class RunBunAI implements BattleAI {
         "steameruption"
     ));
 
-    private static final List<String> rechargeMoves = new ArrayList<>(List.of ("blastburn",
+    private static final List<String> rechargeMoves = new ArrayList<>(List.of (
+            "blastburn",
         "eternabeam",
         "frenzyplant",
         "gigaimpact",
@@ -339,6 +341,19 @@ public class RunBunAI implements BattleAI {
         "rockwrecker",
         "shadowhalf"
     ));
+    private static final List<String> recoveryMoves = new ArrayList<>(List.of (
+            "roost",
+            "slackoff",
+            "healorder",
+            "recover",
+            "strengthsap",
+            "morningsun",
+            "synthesis",
+            "moonlight",
+            "rest",
+            "junglehealing",
+            "lifedew",
+            "softboiled"));
 
 
     @NotNull
@@ -435,17 +450,22 @@ public class RunBunAI implements BattleAI {
                 moveHistoryEnemy = new HashMap<>();
             }
             //this is getting the showdown response of the enemy mon and tracking their move history
-            for (ShowdownActionResponse response : opponent.getActor().getResponses()) {
-                if (response instanceof MoveActionResponse) {
-                    MoveActionResponse move = (MoveActionResponse) response;
-                    ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
-                            + opponent.getName()
-                            + " used " + move.getMoveName());
-                    moveHistoryEnemy.put(turnsForActivePokemon,move.getMoveName());
-                } else {
-                    ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
-                            + opponent.getActor().getShowdownId() + " chose " + response.getClass().getSimpleName());
+            if(!opponent.getActor().getResponses().isEmpty()){
+                for (ShowdownActionResponse response : opponent.getActor().getResponses()) {
+                    if (response instanceof MoveActionResponse) {
+                        MoveActionResponse move = (MoveActionResponse) response;
+                        ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
+                                + opponent.getName()
+                                + " used " + move.getMoveName());
+                        moveHistoryEnemy.put(turnsForActivePokemon,move.getMoveName());
+                    } else {
+                        ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
+                                + opponent.getActor().getShowdownId() + " chose " + response.getClass().getSimpleName());
+                    }
                 }
+            }
+            else {
+                ModCommon.LOG.info("OPPONENT'S SHOWDOWN RESPONSE IS EMPTY");
             }
             //this is looking into if a move missed or failed or was immune for recharge logic.
             PokemonBattle pb = activeBattlePokemon.getBattle();
@@ -462,6 +482,15 @@ public class RunBunAI implements BattleAI {
                         moveHistoryEnemy.put(turnsForActivePokemon, type);
                     }
                 }
+                //TODO: THIS IS TEMP CODE REMOVE WHEN DONE TESTING
+                else{
+                    BattlePokemon mon = msg.battlePokemon(0, pb);
+                    ModCommon.LOG.info("Turn " + pb.getTurn() + ": "
+                            + mon.getName()
+                            + " had outcome " + type);
+                    moveHistoryEnemy.put(turnsForActivePokemon, type);
+                }
+                //TODO ==================================================
             }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
@@ -479,14 +508,14 @@ public class RunBunAI implements BattleAI {
             NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
         }
         List<Move> oppMoves = new ArrayList<>();
-        double oppMaxDamage = PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), oppMoves.getFirst(), opponentStages, npcStages);
+        double oppMaxDamage = PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), oppMoves.getFirst(), opponentStages, npcStages);
         String opponentAbility = "";
         double oppPercentHP = 0;
         if(opponent != null){
             oppMoves = opponent.getMoveSet().getMoves();
             for(Move m : oppMoves){
-                if(PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages) > oppMaxDamage){
-                    oppMaxDamage = PokeMathMax(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages);
+                if(PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages) > oppMaxDamage){
+                    oppMaxDamage = PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages);
                 }
             }
             opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
@@ -565,7 +594,7 @@ public class RunBunAI implements BattleAI {
         }
         if (forceSwitch || activeBattlePokemon.isGone()) {
             if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
-            if (opponentActiveBattlePokemon.isEmpty() || opponentActiveBattlePokemon.get().getBattlePokemon() == null) {
+            if (opponent==null) {
                 nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
                 nextPokemon.setWillBeSwitchedIn(true);
                 moveHistory = new HashMap<>();
@@ -583,7 +612,6 @@ public class RunBunAI implements BattleAI {
             moveHistory = new HashMap<>();
             return new SwitchActionResponse(nextPokemon.getUuid());
         }
-
 
         if (moveset == null) return PassActionResponse.INSTANCE;
         if (moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
@@ -1357,6 +1385,7 @@ public class RunBunAI implements BattleAI {
                         }
                         break;
                     case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
+                        roll = RANDOM.nextDouble();
                         score += 6;
                         if(!isFaster && npcIs2OHKO){
                             score -= 5;
@@ -1557,6 +1586,90 @@ public class RunBunAI implements BattleAI {
                         break;
                 }
             }
+            if(recoveryMoves.contains(move.getKey().getId())){
+
+                switch (move.getKey().getId()){
+                    case "junglehealing", "lifedew":
+                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 25, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                            score+=7;
+                        }
+                        else{
+                            if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                score += -20;
+                            }
+                            else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                score += -6;
+                            }
+                            else{
+                                score+=5;
+                            }
+                        }
+
+                        break;
+                    case "recover","slackoff","healorder","softboiled","roost","strengthsap":
+                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 50, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                            score+=7;
+                        }
+                        else{
+                            if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                score += -20;
+                            }
+                            else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                score += -6;
+                            }
+                            else{
+                                score+=5;
+                            }
+                        }
+                        break;
+                    case "morningsun","synthesis", "moonlight":
+                        boolean isSunActive = BattleEffects.Field.Weather.harshsunlight(opponent) || BattleEffects.Field.Weather.extremelyharshsunlight(opponent);
+                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
+                                && isSunActive){
+                            score+=7;
+                        }
+                        else if(!shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
+                                || !isSunActive){
+                            if(shouldRecover(oppMaxDamage,move.getKey().getId(),50,isFaster,activeBattlePokemon.getBattlePokemon(),opponent)) {
+                                score+=7;
+                            }
+                            else{
+                                if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                    score += -20;
+                                }
+                                else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                    score += -6;
+                                }
+                                else{
+                                    score+=5;
+                                }
+                            }
+                        }
+                        break;
+                    case "rest":
+                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 100, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                            List<Move> NPCmoveSet = activeBattlePokemon.getBattlePokemon().getMoveSet().getMoves();
+                            boolean sleepTalkSnore = false;
+                            boolean holdingCureSleep = currentHeldItem.equals("chestoberry") || currentHeldItem.equals("lumberry")
+                                    || currentHeldItem.equals("saftygoogles") || (currentAbility.equals("guts") || currentHeldItem.equals("flameorb"));
+                            boolean shedSkinEarlyBird = currentAbility.equals("earlybird") || currentAbility.equals("shedskin");
+                            boolean hydrationRaining = currentAbility.equals("hydration") && (BattleEffects.Field.Weather.rain(opponent) || BattleEffects.Field.Weather.heavyrain(opponent));
+                            if(hasMoveName(activeBattlePokemon.getBattlePokemon(),"sleeptalk") || hasMoveName(activeBattlePokemon.getBattlePokemon(),"snore")) {
+                                sleepTalkSnore = true;
+                            }
+                            if(holdingCureSleep || sleepTalkSnore || shedSkinEarlyBird || hydrationRaining){
+                                score+=8;
+                            }
+                            else{
+                                score+=7;
+                            }
+                        }
+                        else{
+                            score+=5;
+                        }
+                        break;
+                }
+            }
             //list of all opponents moves and their OHKO potential.
             if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
                 score += 11;
@@ -1573,6 +1686,30 @@ public class RunBunAI implements BattleAI {
             }
             if (currentMove.getId().equals("acidspray")) {
                 score += 6;
+            }
+            if(currentMove.getId().equals("taunt")){
+                boolean hasDefog = hasMoveName(opponent,"defog");
+                boolean hasTrickRoom = hasMoveName(opponent,"trickroom");
+                if(hasTrickRoom && !BattleEffects.Field.Room.trickroom(opponent)) {
+                    score += 9;
+                }
+                    //TODO: check if aura veil is active
+                else if(hasDefog && isFaster){
+                    score+=9;
+                }
+                else{
+                    score+=5;
+                }
+            }
+            if(currentMove.getId().equals("encore")){
+                //TODO: if last turn the opponent used a non-damaging move
+                if(isFaster){
+                    score+=7;
+                }
+                else{
+                    roll = RANDOM.nextDouble();
+                    score += roll > .5 ? 6:5;
+                }
             }
             //This puts the final score into the map with its move key.
             if(nonKillingPossibleMoves.contains(move.getKey())){
@@ -1641,6 +1778,42 @@ public class RunBunAI implements BattleAI {
     }
     public static int getSpeedStat(ActiveBattlePokemon pkmn){
         return  pkmn.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED);
+    }
+    public static boolean hasMoveName(BattlePokemon pokemon, String moveName){
+        for(Move move : pokemon.getMoveSet().getMoves()){
+            if(move.getName().equals(moveName)){
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean shouldRecover(double oppMaxDamage, String recoverMove, int recoverAmount, boolean isAIFaster, BattlePokemon AIpokemon, BattlePokemon oppPokemon){
+        double maxPercentHPDamage = oppMaxDamage/(double)AIpokemon.getMaxHealth() * 100;
+        double roll = RANDOM.nextDouble();
+        double currentAIPercentHP = getCurrentPercentHP(AIpokemon);
+        if(maxPercentHPDamage > 50 && BattleEffects.Pokemon.Status.tox(AIpokemon)){
+            return false;
+        }
+        if(isAIFaster && maxPercentHPDamage >= currentAIPercentHP && currentAIPercentHP+recoverAmount > maxPercentHPDamage){
+            return true;
+        }
+        if(maxPercentHPDamage <= currentAIPercentHP){
+            if(currentAIPercentHP < 66 && currentAIPercentHP > 40){
+                return roll > .5;
+            }
+            if(currentAIPercentHP < 40){
+                return true;
+            }
+        }
+        if(!isAIFaster){
+            if(currentAIPercentHP < 70){
+                return roll < .75;
+            }
+            if(currentAIPercentHP < 50){
+                return true;
+            }
+        }
+        return false;
     }
     public static boolean isOHKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages){
         int enemyDamage = 0;
