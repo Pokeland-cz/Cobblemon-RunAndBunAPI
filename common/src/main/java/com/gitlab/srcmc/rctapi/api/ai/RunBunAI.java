@@ -426,12 +426,6 @@ public class RunBunAI implements BattleAI {
                     gimmick = null;
                 }
             }
-
-            /*ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getAttack()) + " Attack");
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialAttack()) + " SpAttack");
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpeed()) + " speed");
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialDefence()) + " spDef");
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getDefence()) + " def");*/
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
@@ -517,20 +511,11 @@ public class RunBunAI implements BattleAI {
                         moveHistoryEnemy.put(turnsForActivePokemon, type);
                     }
                 }
-                //TODO: THIS IS TEMP CODE REMOVE WHEN DONE TESTING
-                else{
-                    BattlePokemon mon = msg.battlePokemon(0, pb);
-                    ModCommon.LOG.info("Turn " + pb.getTurn() + ": "
-                            + mon.getName()
-                            + " had outcome " + type);
-                    moveHistoryEnemy.put(turnsForActivePokemon, type);
-                }
-                //TODO ==================================================
             }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
-                ModCommon.LOG.info("Turns Since Active: " + turn + "ENEMY used move " + moveName);
+                ModCommon.LOG.info("Turns Since Active: " + turn + "   ::   ENEMY used move " + moveName);
             }
 
         }
@@ -727,14 +712,12 @@ public class RunBunAI implements BattleAI {
             ModCommon.LOG.info("This is the max damage potential    "+ Integer.toString(maxDamage));
             for (Map.Entry<InBattleMove, Integer> entry : moveDamages.entrySet()) {
                 if (entry.getValue() == maxDamage) {
-                    ModCommon.LOG.info("NonPossibleKill Max Damage Move     " + entry.getKey().getId());
                     nonKillingPossibleMoves.add(entry.getKey());
                 } else if (trapMoves.contains(entry.getKey().getId())
                         || physicalAttackReductionMoves.contains(entry.getValue())
                         || specialAttackReductionMoves.contains(entry.getKey())
                         || speedReductionMoves.contains(entry.getValue())
                         || specialFunctionMoves.contains(entry.getValue())) {
-                    ModCommon.LOG.info("NonPossibleKill Max Damage Move (Special Case)    " + entry.getKey().getId());
                     nonKillingPossibleMoves.add(entry.getKey());
                 }
             }
@@ -1754,7 +1737,6 @@ public class RunBunAI implements BattleAI {
             if(nonKillingPossibleMoves.contains(move.getKey())){
                 roll = RANDOM.nextDouble();
                 score += roll > .2 ? 6:8;
-                ModCommon.LOG.info("NONKILLING MOVE " + move.getKey().getId() + "  " + Integer.toString(score));
             }
             moveScores.put(currentMove, score);
             ModCommon.LOG.info(currentMove.getId() + "  " + Integer.toString(score));
@@ -1762,7 +1744,6 @@ public class RunBunAI implements BattleAI {
         // END OF SCORING LOGIC::START OF SWITCH AI LOGIC
         if(isSwitching(moveScores, aliveParty, activeBattlePokemon.getBattlePokemon(), opponent)){
             double flip = RANDOM.nextDouble();
-            ModCommon.LOG.info(flip + "this is the flip result for switching");
             boolean result = (flip > .5);
             ModCommon.LOG.info(Boolean.toString(result) + "    coin toss result");
             if(result){
@@ -1984,19 +1965,16 @@ public class RunBunAI implements BattleAI {
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
         ModCommon.LOG.info(Boolean.toString(hasLowScore) + "  ALL SCORES ARE LOWER THAN -5");
         if(Math.ceil(getCurrentPercentHP(self)) <= 50){
-            ModCommon.LOG.info(getCurrentPercentHP(self)+" is lower than 50%");
             return false;
         }
         for(BattlePokemon pokemon : party){
             //TODO: ((if mon is faster than opp, and not OHKO) || (if mon is slower and not 2OHKO)) && not below 50% hp
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) >= opponent.getEffectedPokemon().getStat(Stats.SPEED)
                 && !isOHKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
-                ModCommon.LOG.info("second switch con is true");
                 isSecondCondition = true;
             }
             if(pokemon.getEffectedPokemon().getStat(Stats.SPEED) < opponent.getEffectedPokemon().getStat(Stats.SPEED)
                     && !is2HKO(opponent.getMoveSet().getMoves(), opponent, pokemon, opponentStages, npcStages)){
-                ModCommon.LOG.info("third switch con is true");
                 isThirdCondition = true;
             }
         }
