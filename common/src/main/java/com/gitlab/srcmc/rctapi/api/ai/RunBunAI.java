@@ -33,6 +33,7 @@ import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
+import com.cobblemon.mod.common.api.pokemon.helditem.HeldItemManager;
 import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.StatProvider;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
@@ -51,6 +52,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ambient.Bat;
 import org.jetbrains.annotations.NotNull;
@@ -355,11 +357,54 @@ public class RunBunAI implements BattleAI {
             "lifedew",
             "softboiled"));
 
+    private static final List<String> megaStones = new ArrayList<>(List.of ("absolite",
+            "aerodactylite",
+            "aggronite",
+            "alakazite",
+            "altarianite",
+            "ampharosite",
+            "audinite",
+            "banettite",
+            "beedrillite",
+            "blastoisinite",
+            "blazikenite",
+            "cameruptite",
+            "charizarditex",
+            "charizarditey",
+            "diancite",
+            "gardevoirite",
+            "galladite",
+            "gyaradosite",
+            "garchompite",
+            "gengarite",
+            "heracronite",
+            "houndoominite",
+            "lopunnite",
+            "lucarionite",
+            "latiasite",
+            "latiosite",
+            "manectite",
+            "mawilite",
+            "metagrossite",
+            "pinsirite",
+            "sablenite",
+            "salamencite",
+            "sharpedonite",
+            "slowbronite",
+            "steelixite",
+            "swampertite",
+            "sceptilite",
+            "scizorite",
+            "tyranitarite",
+            "venusaurite",
+            "mewtwonitex",
+            "mewtwonitey"));
 
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
-        battleTurn = activeBattlePokemon.getBattle().getTurn() +1;
+        battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? activeBattlePokemon.getBattle().getTurn():1;
+
         ModCommon.LOG.info("started showdown response.");
         String getOpponentHeldItem = "";
         String currentHeldItem ="";
@@ -369,16 +414,24 @@ public class RunBunAI implements BattleAI {
         double activePokemonPercentHP = 0;
        //Ability currentAbility = null;
         String currentAbility = "";
+        String gimmick = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
         if (battlePokemon != null) {
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
                 currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
+                if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1){
+                    gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
+                }
+                else{
+                    gimmick = null;
+                }
             }
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getAttack()) + " Attack");
+
+            /*ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getAttack()) + " Attack");
             ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialAttack()) + " SpAttack");
             ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpeed()) + " speed");
             ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getSpecialDefence()) + " spDef");
-            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getDefence()) + " def");
+            ModCommon.LOG.info(Integer.toString(battlePokemon.getEffectedPokemon().getDefence()) + " def");*/
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
@@ -449,24 +502,6 @@ public class RunBunAI implements BattleAI {
             if(turnsForActivePokemon == 1){
                 moveHistoryEnemy = new HashMap<>();
             }
-            //this is getting the showdown response of the enemy mon and tracking their move history
-            if(!opponent.getActor().getResponses().isEmpty()){
-                for (ShowdownActionResponse response : opponent.getActor().getResponses()) {
-                    if (response instanceof MoveActionResponse) {
-                        MoveActionResponse move = (MoveActionResponse) response;
-                        ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
-                                + opponent.getName()
-                                + " used " + move.getMoveName());
-                        moveHistoryEnemy.put(turnsForActivePokemon,move.getMoveName());
-                    } else {
-                        ModCommon.LOG.info("Turn " + turnsForActivePokemon + ": "
-                                + opponent.getActor().getShowdownId() + " chose " + response.getClass().getSimpleName());
-                    }
-                }
-            }
-            else {
-                ModCommon.LOG.info("OPPONENT'S SHOWDOWN RESPONSE IS EMPTY");
-            }
             //this is looking into if a move missed or failed or was immune for recharge logic.
             PokemonBattle pb = activeBattlePokemon.getBattle();
             for (Map.Entry<UUID, BattleMessage> entry : pb.getMinorBattleActions().entrySet()) {
@@ -508,14 +543,17 @@ public class RunBunAI implements BattleAI {
             NPCPartner = allNPCActiveBattlePokemon.get(partnerSlot);
         }
         List<Move> oppMoves = new ArrayList<>();
-        double oppMaxDamage = PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), oppMoves.getFirst(), opponentStages, npcStages);
+        double oppMaxDamage = 0;
         String opponentAbility = "";
         double oppPercentHP = 0;
         if(opponent != null){
             oppMoves = opponent.getMoveSet().getMoves();
-            for(Move m : oppMoves){
-                if(PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages) > oppMaxDamage){
-                    oppMaxDamage = PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages);
+
+            if(activeBattlePokemon.getBattlePokemon() != null){
+                for(Move m : oppMoves){
+                    if(PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages) > oppMaxDamage){
+                        oppMaxDamage = PokeMathMax.damage(opponent, activeBattlePokemon.getBattlePokemon(), m, opponentStages, npcStages);
+                    }
                 }
             }
             opponentAbility = opponent.getEffectedPokemon().getAbility().getDisplayName();
@@ -587,12 +625,13 @@ public class RunBunAI implements BattleAI {
                 .filter(entry -> entry.getValue() == maxSwitchingScore)
                 .map(Map.Entry::getKey)
                 .toList();
-        ModCommon.LOG.info(maxSwitchingScore + " THIS IS THE MAX SWITCH SCORE    ::   " + bestSwitches.getFirst().getName() + " THIS IS THE FIRST BEST SWITCH");
+
         BattlePokemon nextPokemon = null;
         if (!bestSwitches.isEmpty()) {
             nextPokemon = bestSwitches.getFirst();
         }
-        if (forceSwitch || activeBattlePokemon.isGone()) {
+        if (forceSwitch || activeBattlePokemon.isGone() || activeBattlePokemon.getBattlePokemon() == null) {
+            ModCommon.LOG.info(maxSwitchingScore + " THIS IS THE MAX SWITCH SCORE    ::   " + bestSwitches.getFirst().getOriginalPokemon().getDisplayName() + " THIS IS THE FIRST BEST SWITCH");
             if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
             if (opponent==null) {
                 nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
@@ -1945,7 +1984,7 @@ public class RunBunAI implements BattleAI {
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
         ModCommon.LOG.info(Boolean.toString(hasLowScore) + "  ALL SCORES ARE LOWER THAN -5");
         if(Math.ceil(getCurrentPercentHP(self)) <= 50){
-            ModCommon.LOG.info(getCurrentPercentHP(self)+" is not lower than 50%  false");
+            ModCommon.LOG.info(getCurrentPercentHP(self)+" is lower than 50%");
             return false;
         }
         for(BattlePokemon pokemon : party){
