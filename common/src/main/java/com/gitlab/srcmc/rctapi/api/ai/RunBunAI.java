@@ -356,55 +356,53 @@ public class RunBunAI implements BattleAI {
             "junglehealing",
             "lifedew",
             "softboiled"));
-
-    private static final List<String> megaStones = new ArrayList<>(List.of ("absolite",
-            "aerodactylite",
-            "aggronite",
-            "alakazite",
-            "altarianite",
-            "ampharosite",
-            "audinite",
-            "banettite",
-            "beedrillite",
-            "blastoisinite",
-            "blazikenite",
-            "cameruptite",
-            "charizarditex",
-            "charizarditey",
-            "diancite",
-            "gardevoirite",
-            "galladite",
-            "gyaradosite",
-            "garchompite",
-            "gengarite",
-            "heracronite",
-            "houndoominite",
-            "lopunnite",
-            "lucarionite",
-            "latiasite",
-            "latiosite",
-            "manectite",
-            "mawilite",
-            "metagrossite",
-            "pinsirite",
-            "sablenite",
-            "salamencite",
-            "sharpedonite",
-            "slowbronite",
-            "steelixite",
-            "swampertite",
-            "sceptilite",
-            "scizorite",
-            "tyranitarite",
-            "venusaurite",
-            "mewtwonitex",
-            "mewtwonitey"));
+//TODO capitalize this list
+    private static final List<String> megaStones = new ArrayList<>(List.of ("Absolite",
+        "Aerodactylite",
+        "Aggronite",
+        "Alakazite",
+        "Altarianite",
+        "Ampharosite",
+        "Audinite",
+        "Banettite",
+        "Beedrillite",
+        "Blastoisinite",
+        "Blazikenite",
+        "Cameruptite",
+        "Charizarditex",
+        "Charizarditey",
+        "Diancite",
+        "Gardevoirite",
+        "Galladite",
+        "Gyaradosite",
+        "Garchompite",
+        "Gengarite",
+        "Heracronite",
+        "Houndoominite",
+        "Lopunnite",
+        "Lucarionite",
+        "Latiasite",
+        "Latiosite",
+        "Manectite",
+        "Mawilite",
+        "Metagrossite",
+        "Pinsirite",
+        "Sablenite",
+        "Salamencite",
+        "Sharpedonite",
+        "Slowbronite",
+        "Steelixite",
+        "Swampertite",
+        "Sceptilite",
+        "Scizorite",
+        "Tyranitarite",
+        "Venusaurite",
+        "Mewtwonitex",
+        "Mewtwonitey"));
 
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
-        battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? activeBattlePokemon.getBattle().getTurn():1;
-
         ModCommon.LOG.info("started showdown response.");
         String getOpponentHeldItem = "";
         String currentHeldItem ="";
@@ -417,15 +415,6 @@ public class RunBunAI implements BattleAI {
         String gimmick = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
         if (battlePokemon != null) {
-            if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
-                currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
-                if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1){
-                    gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
-                }
-                else{
-                    gimmick = null;
-                }
-            }
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
@@ -441,8 +430,6 @@ public class RunBunAI implements BattleAI {
                 || lastUniqueActivePokemon.getGone()){
                 lastUniqueActivePokemon = battlePokemon;
             }
-            ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
-                    + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon));
             npcStages = getStageMap(activeBattlePokemon.getBattlePokemon());
             for (Map.Entry<Stat, Integer> entry : npcStages.entrySet()) {
                 Stat stat = entry.getKey();
@@ -458,6 +445,16 @@ public class RunBunAI implements BattleAI {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
                 ModCommon.LOG.info("Turns Since Active: " + turn + " used move " + moveName);
+            }
+            if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
+                currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
+                ModCommon.LOG.info("THIS IS THE HELD ITEM ID " + currentHeldItem);
+                if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1){
+                    gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
+                }
+                else{
+                    gimmick = null;
+                }
             }
 
         }
@@ -498,6 +495,9 @@ public class RunBunAI implements BattleAI {
             }
             //this is looking into if a move missed or failed or was immune for recharge logic.
             PokemonBattle pb = activeBattlePokemon.getBattle();
+            battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? pb.getTurn():1;
+            ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
+                    + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon));
             for (Map.Entry<UUID, BattleMessage> entry : pb.getMinorBattleActions().entrySet()) {
                 BattleMessage msg = entry.getValue();
                 String type = msg.getId();
@@ -639,7 +639,7 @@ public class RunBunAI implements BattleAI {
 
         if (moveset == null) return PassActionResponse.INSTANCE;
         if (moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
-            return new MoveActionResponse("recharge", null, null);
+            return new MoveActionResponse("recharge", null, gimmick);
         }
         List<InBattleMove> inBattleMoves = moveset.moves.stream()
                 .filter(InBattleMove::canBeUsed)
@@ -648,16 +648,16 @@ public class RunBunAI implements BattleAI {
                     return inBattleMove.mustBeUsed() || targetList == null || !targetList.isEmpty();
                 }).toList();
 
-        if (inBattleMoves.isEmpty()) return new MoveActionResponse("struggle", null, null);
+        if (inBattleMoves.isEmpty()) return new MoveActionResponse("struggle", null, gimmick);
         if (opponentActiveBattlePokemon.isEmpty()) {
             return new MoveActionResponse(
-                    inBattleMoves.get(RANDOM.nextInt(moveset.moves.size())).id, null, null
+                    inBattleMoves.get(RANDOM.nextInt(moveset.moves.size())).id, null, gimmick
             );
         }
 
         if (opponent == null) {
             return new MoveActionResponse(
-                    inBattleMoves.get(RANDOM.nextInt(moveset.moves.size())).id, null, null
+                    inBattleMoves.get(RANDOM.nextInt(moveset.moves.size())).id, null, gimmick
             );
         }
 
@@ -1775,14 +1775,14 @@ public class RunBunAI implements BattleAI {
             moveHistory.put(turnsForActivePokemon, bestMove.getId());
             return new MoveActionResponse(bestMove.getId(),
                     targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
-                    null);
+                    gimmick);
         }
         List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
         ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
         moveHistory.put(turnsForActivePokemon, bestMoves.get(0).getId());
         return new MoveActionResponse(bestMoves.get(0).getId(),
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
-                null);
+                gimmick);
     }
     public static int spikesCount(BattlePokemon pkmn) {
         return BattleEffects.Side.Hazard.spikes(pkmn);
