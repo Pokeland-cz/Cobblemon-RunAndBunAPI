@@ -24,12 +24,14 @@ package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonItems;
+import com.cobblemon.mod.common.CobblemonNetwork;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
+import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
@@ -42,6 +44,7 @@ import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.interpreter.ContextManager;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.cobblemon.mod.common.net.messages.client.battle.BattleEndPacket;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
@@ -53,19 +56,51 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
+import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ambient.Bat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.cobblemon.mod.common.api.Priority;
+import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.api.events.battles.BattleStartedPreEvent;
+import kotlin.Unit;
 
 public class RunBunAI implements BattleAI {
+    private static boolean registered = false;
+    public RunBunAI() {
+        if(!registered){
+            CobblemonEvents.BATTLE_STARTED_PRE.subscribe(
+                    Priority.NORMAL,  // ✅ Priority required
+                    event -> {
+                        System.out.println("Battle is about to start! " +
+                                "Players: " + event.getBattle().getPlayers());
+
+                        // 👉 Custom logic here
+                        RunBunAI.setHasResetDefault(false);
+                        ModCommon.LOG.info("WE HAVE STARTED A NEW BATTLE AND RESET TO DEFAULT");
+                        // Example: cancel battle
+                        // event.setCanceled(true);
+
+                        return Unit.INSTANCE;  // ✅ Kotlin Unit return
+                    }
+            );
+            registered = true;
+        }
+    }
     private static final Random RANDOM = new Random();
-    private static final double SUPER_EFFECTIVE = 2;
-    private static final double NOT_VERY_EFFECTIVE = 0.5;
-    private static final double IMMUNE = 0;
+    public static void setHasResetDefault(boolean hasResetDefault) {
+        RunBunAI.hasResetDefault = hasResetDefault;
+    }
+    private static boolean hasResetDefault = false;
     private static BattlePokemon lastUniqueActivePokemon = null;
     private static int battleTurn = 1;
-    private static int turnsForActivePokemon = 1;
+    private static int turnsForActivePokemon = 0;
+    private static int swappedTurn = 0;
+    private static boolean hasUsedMega = false;
+    private static boolean hasUsedTera = false;
+    private static UUID currentPokemonUUID = null;
     private static Map<Integer,String> moveHistory = new HashMap<>(); //move name, turn used
     private static Map<Integer,String> moveHistoryEnemy = new HashMap<>(); //move name, turn used
     private static Map<Stat,Integer> npcStages = new HashMap<>();
@@ -403,6 +438,19 @@ public class RunBunAI implements BattleAI {
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
+        if(!hasResetDefault){
+            hasResetDefault = true;
+            currentPokemonUUID = null;
+            lastUniqueActivePokemon = null;
+            battleTurn = 1;
+            turnsForActivePokemon = 0;
+            swappedTurn = 0;
+            hasUsedMega = false;
+            hasUsedTera = false;
+            moveHistory = new HashMap<>(); //move name, turn used
+            moveHistoryEnemy = new HashMap<>();
+        }
+
         ModCommon.LOG.info("started showdown response.");
         String getOpponentHeldItem = "";
         String currentHeldItem ="";
@@ -410,19 +458,53 @@ public class RunBunAI implements BattleAI {
         ElementalType activeSecondaryType = null;
         ElementalTypes elementaltypes = ElementalTypes.INSTANCE;
         double activePokemonPercentHP = 0;
+
+        List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
+                .filter(BattlePokemon::canBeSentOut)
+                .toList();
+        Optional<ActiveBattlePokemon> opponentActiveBattlePokemon = StreamSupport.stream(
+                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
+                )
+                .filter(abp -> !abp.isAllied(activeBattlePokemon))
+                .findFirst();
+        List<ActiveBattlePokemon> allNPCActiveBattlePokemon = StreamSupport.stream(
+                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
+                )
+                .filter(abp -> abp.isAllied(activeBattlePokemon))
+                .toList();
+        List<ActiveBattlePokemon> allOpponentActiveBattlePokemon = StreamSupport.stream(
+                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
+                )
+                .filter(abp -> !abp.isAllied(activeBattlePokemon))
+                .toList();
+
        //Ability currentAbility = null;
         String currentAbility = "";
         String gimmick = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
+
         if (battlePokemon != null) {
+            if(currentPokemonUUID == null){
+                currentPokemonUUID = activeBattlePokemon.getBattlePokemon().getUuid();
+                turnsForActivePokemon = battleTurn - swappedTurn;
+            }
+            else if(currentPokemonUUID != activeBattlePokemon.getBattlePokemon().getUuid()){
+                swappedTurn = battleTurn;
+                turnsForActivePokemon = battleTurn - (swappedTurn - 1);
+            }
+            int pastTurn = battleTurn;
+            PokemonBattle pb = activeBattlePokemon.getBattle();
+            battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? pb.getTurn():1;
+            if(pastTurn != battleTurn && currentPokemonUUID == activeBattlePokemon.getBattlePokemon().getUuid()){
+                turnsForActivePokemon++;
+            }
+           // ModCommon.LOG.info("Past Turn: " + pastTurn + "    BattleTurn: " + battleTurn);
+            //ModCommon.LOG.info((currentPokemonUUID == activeBattlePokemon.getBattlePokemon().getUuid()) + "");
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
             currentAbility = battlePokemon.getEffectedPokemon().getAbility().getDisplayName();
 
-            turnsForActivePokemon = BattleStates.get(activeBattlePokemon.getActor().getBattle())
-                    .getPokemonState(activeBattlePokemon.getBattlePokemon())
-                    .age(BattleEffects.Custom.TURN);
             if(lastUniqueActivePokemon ==null){
                 lastUniqueActivePokemon = battlePokemon;
             }
@@ -448,35 +530,21 @@ public class RunBunAI implements BattleAI {
             }
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
                 currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
-                ModCommon.LOG.info("THIS IS THE HELD ITEM ID " + currentHeldItem);
-                if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1){
+                //ModCommon.LOG.info("THIS IS THE HELD ITEM ID " + currentHeldItem);
+
+                if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1 && !hasUsedMega){
                     gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
+                    hasUsedMega = true;
+                }
+                else if(!megaStones.contains(currentHeldItem) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >= 50 && !hasUsedTera){
+                    gimmick = ShowdownMoveset.Gimmick.TERASTALLIZATION.getId();
+                    hasUsedTera = true;
                 }
                 else{
                     gimmick = null;
                 }
             }
-
         }
-        List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
-                .filter(BattlePokemon::canBeSentOut)
-                .toList();
-        Optional<ActiveBattlePokemon> opponentActiveBattlePokemon = StreamSupport.stream(
-                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
-                )
-                .filter(abp -> !abp.isAllied(activeBattlePokemon))
-                .findFirst();
-        List<ActiveBattlePokemon> allNPCActiveBattlePokemon = StreamSupport.stream(
-                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
-                )
-                .filter(abp -> abp.isAllied(activeBattlePokemon))
-                .toList();
-        List<ActiveBattlePokemon> allOpponentActiveBattlePokemon = StreamSupport.stream(
-                        activeBattlePokemon.getAllActivePokemon().spliterator(), false
-                )
-                .filter(abp -> !abp.isAllied(activeBattlePokemon))
-                .toList();
-
 
         BattleFormat bf = new BattleFormat();
         //setting up logic for double calcs. works the same for singles anyways.
@@ -493,17 +561,16 @@ public class RunBunAI implements BattleAI {
             if(turnsForActivePokemon == 1){
                 moveHistoryEnemy = new HashMap<>();
             }
-            //this is looking into if a move missed or failed or was immune for recharge logic.
             PokemonBattle pb = activeBattlePokemon.getBattle();
-            battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? pb.getTurn():1;
+            //this is looking into if a move missed or failed or was immune for recharge logic.
             ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
                     + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon));
             for (Map.Entry<UUID, BattleMessage> entry : pb.getMinorBattleActions().entrySet()) {
                 BattleMessage msg = entry.getValue();
                 String type = msg.getId();
-
+                BattlePokemon mon = msg.battlePokemon(0, pb);
                 if ("-miss".equals(type) || "-immune".equals(type) || "-fail".equals(type)) {
-                    BattlePokemon mon = msg.battlePokemon(0, pb);
+
                     ModCommon.LOG.info("Turn " + pb.getTurn() + ": "
                             + mon.getName()
                             + " had outcome " + type);
@@ -512,13 +579,24 @@ public class RunBunAI implements BattleAI {
                     }
                 }
             }
+            for (Map.Entry<UUID, BattleMessage> entry : pb.getMajorBattleActions().entrySet()) {
+                BattleMessage msg = entry.getValue();
+                String type = msg.getId();
+                BattlePokemon mon = msg.battlePokemon(0, pb);
+                //ModCommon.LOG.info("THIS IS THE WHOLE MESSAGE: " + msg);
+                //ModCommon.LOG.info("THIS IS THE MESSAGE TYPE: " + type);
+                if ("move".equals(type) && mon.getUuid() == opponent.getUuid()) {
+                    String moveName = msg.moveAt(1).getName() != null ? msg.moveAt(1).getName() : null;
+                    moveHistoryEnemy.put(turnsForActivePokemon,moveName);
+                }
+            }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
                 ModCommon.LOG.info("Turns Since Active: " + turn + "   ::   ENEMY used move " + moveName);
             }
-
         }
+
         ActiveBattlePokemon NPCPartner = null;
         ActiveBattlePokemon opponentPartner = null;
         if(bf.getBattleType().toString().equals("GEN_9_DOUBLES")){
@@ -617,7 +695,10 @@ public class RunBunAI implements BattleAI {
         }
         if (forceSwitch || activeBattlePokemon.isGone() || activeBattlePokemon.getBattlePokemon() == null) {
             ModCommon.LOG.info(maxSwitchingScore + " THIS IS THE MAX SWITCH SCORE    ::   " + bestSwitches.getFirst().getOriginalPokemon().getDisplayName() + " THIS IS THE FIRST BEST SWITCH");
-            if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
+            if (canSwitchTo.isEmpty()){
+                hasResetDefault = false;
+                return PassActionResponse.INSTANCE;
+            }
             if (opponent==null) {
                 nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
                 nextPokemon.setWillBeSwitchedIn(true);
@@ -628,11 +709,12 @@ public class RunBunAI implements BattleAI {
                 if (!canSwitchTo.isEmpty()) {
                     nextPokemon = bestSwitches.getFirst();
                 } else {
+                    hasResetDefault = false;
                     return PassActionResponse.INSTANCE; // no Pokémon to switch to
                 }
             }
             nextPokemon.setWillBeSwitchedIn(true);
-            //resetting the move history for the next mon
+            //resetting the move history for the next mon;
             moveHistory = new HashMap<>();
             return new SwitchActionResponse(nextPokemon.getUuid());
         }
@@ -1797,7 +1879,7 @@ public class RunBunAI implements BattleAI {
         return BattleEffects.Side.Hazard.stickyweb(pkmn);
     }
     public static int getSpeedStat(ActiveBattlePokemon pkmn){
-        return  pkmn.getBattlePokemon().getEffectedPokemon().getStat(Stats.SPEED);
+        return  (int)PokeMathMax.calcSpeedWithStatChange(pkmn.getBattlePokemon(), getStageMap(pkmn.getBattlePokemon()));
     }
     public static boolean hasMoveName(BattlePokemon pokemon, String moveName){
         for(Move move : pokemon.getMoveSet().getMoves()){

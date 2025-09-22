@@ -461,4 +461,17 @@ public class PokeMathMax {
         }
         return -1;
     }
+    public static double calcSpeedWithStatChange(BattlePokemon pokemon, Map<Stat, Integer> statStages) {
+        double multiplier = 1;
+        if (statStages.getOrDefault(Stats.SPEED, 0) < 0) {
+            double statChange = statStages.getOrDefault(Stats.SPEED, 0);
+            multiplier = 2 / (2 - (statChange));
+            return BattleStates.getTransformationOrEffected(pokemon).getSpeed() * multiplier;
+        } else if (statStages.getOrDefault(Stats.SPEED, 0) > 0) {
+            double statChange = statStages.getOrDefault(Stats.SPEED, 0);
+            multiplier = (2 + (statChange)) / 2;
+            return BattleStates.getTransformationOrEffected(pokemon).getSpeed() * multiplier;
+        }
+        return BattleStates.getTransformationOrEffected(pokemon).getSpeed();
+    }
 }
