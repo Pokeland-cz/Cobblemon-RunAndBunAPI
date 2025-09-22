@@ -242,22 +242,26 @@ public class PokeMathMax {
                 baseDamage *= 1.3;
                 break;
             case "souldew":
-                if(attacker.getOriginalPokemon().getDisplayName().getString() == "latias" || attacker.getOriginalPokemon().getDisplayName().getString() == "latios"){
+                if((attacker.getOriginalPokemon().getDisplayName().getString() == "latias" || attacker.getOriginalPokemon().getDisplayName().getString() == "latios") 
+                && (moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC()) || moveType.equals(ElementalTypes.INSTANCE.getDRAGON()))){
                     baseDamage *= 1.2;
                 }
                 break;
             case "adamantorb":
-                if(attacker.getOriginalPokemon().getDisplayName().getString() == "dialga"){
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "dialga" 
+                && (moveType.equals(ElementalTypes.INSTANCE.getSTEEL()) || moveType.equals(ElementalTypes.INSTANCE.getDRAGON()))){
                     baseDamage *= 1.2;
                 }
                 break;
             case "lustrousorb":
-                if(attacker.getOriginalPokemon().getDisplayName().getString() == "palkia"){
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "palkia"
+                &&(moveType.equals(ElementalTypes.INSTANCE.getWATER()) || moveType.equals(ElementalTypes.INSTANCE.getDRAGON()))){
                     baseDamage *= 1.2;
                 }
                 break;
             case "griseousorb":
-                if(attacker.getOriginalPokemon().getDisplayName().getString() == "giratina"){
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "giratina"
+                && (moveType.equals(ElementalTypes.INSTANCE.getGHOST()) || moveType.equals(ElementalTypes.INSTANCE.getDRAGON()))){
                     baseDamage *= 1.2;
                 }
                 break;
