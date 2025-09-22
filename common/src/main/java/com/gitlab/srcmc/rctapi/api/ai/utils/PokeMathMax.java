@@ -136,73 +136,73 @@ public class PokeMathMax {
                 }
                 break;
 
-            case "blackbelt":
+            case "blackbelt", "fistplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFIGHTING())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "blackglasses":
+            case "blackglasses", "dreadplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getDARK())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "charcoalstick":
+            case "charcoalstick", "flameplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFIRE())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "dragonfang":
+            case "dragonfang", "dracoplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getDRAGON())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "hardstone":
+            case "hardstone", "rockincense", "stoneplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getROCK())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "magnet":
+            case "magnet", "zapplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getELECTRIC())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "metalcoat":
+            case "metalcoat", "ironplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getSTEEL())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "miracleseed":
+            case "miracleseed", "roseincense", "meadowplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGRASS())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "mysticwater":
+            case "mysticwater", "seaincense", "waveincense", "splashplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getWATER())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "nevermeltice":
+            case "nevermeltice", "icicleplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getICE())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "poisonbarb":
+            case "poisonbarb", "toxicplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getPOISON())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "sharpbeak":
+            case "sharpbeak", "skyplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getFLYING())) {
                     baseDamage *= 1.2;
                 }
@@ -214,25 +214,25 @@ public class PokeMathMax {
                 }
                 break;
 
-            case "silverpowder":
+            case "silverpowder", "insectplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getBUG())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "softsand":
+            case "softsand", "earthplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGROUND())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "spelltag":
+            case "spelltag", "spookyplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getGHOST())) {
                     baseDamage *= 1.2;
                 }
                 break;
 
-            case "twistedspoon":
+            case "twistedspoon", "oddincense", "mindplate":
                 if (moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC())) {
                     baseDamage *= 1.2;
                 }
@@ -240,6 +240,111 @@ public class PokeMathMax {
 
             case "lifeorb":
                 baseDamage *= 1.3;
+                break;
+            case "souldew":
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "latias" || attacker.getOriginalPokemon().getDisplayName().getString() == "latios"){
+                    baseDamage *= 1.2;
+                }
+                break;
+            case "adamantorb":
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "dialga"){
+                    baseDamage *= 1.2;
+                }
+                break;
+            case "lustrousorb":
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "palkia"){
+                    baseDamage *= 1.2;
+                }
+                break;
+            case "griseousorb":
+                if(attacker.getOriginalPokemon().getDisplayName().getString() == "giratina"){
+                    baseDamage *= 1.2;
+                }
+                break;
+            case "fightinggem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFIGHTING())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "normalgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getNORMAL())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "firegem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFIRE())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "watergem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getWATER())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "grassgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGRASS())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "icegem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getICE())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "poisongem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getPOISON())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "groundgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGROUND())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "flyinggem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFLYING())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "psychicgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getPSYCHIC())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "buggem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getBUG())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "rockgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getROCK())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "ghostgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getGHOST())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "dragongem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getDRAGON())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "darkgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getDARK())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "steelgem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getSTEEL())) {
+                    baseDamage *= 1.3;
+                }
+                break;
+            case "fairygem":
+                if (moveType.equals(ElementalTypes.INSTANCE.getFAIRY())) {
+                    baseDamage *= 1.3;
+                }
                 break;
         }
 
