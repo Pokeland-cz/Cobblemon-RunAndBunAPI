@@ -107,6 +107,11 @@ public class PokeMathMax {
         baseDamage *= stab;
         //ModCommon.LOG.info(attackerHeldItem + " IS THE HELD ITEM");
         switch (attackerHeldItem) {
+            case "expertbelt":
+                if(TypeChart.getEffectiveness(moveType, defender) >= 2){
+                    baseDamage *= 1.2;
+                }
+                break;
             case "choiceband":
                 if (physical) {
                     baseDamage *= 1.5;
