@@ -1691,32 +1691,27 @@ public class RunBunAI implements BattleAI {
                                     score+=7;
                                 }
                                 else{
-                                    if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                        score += -20;
-                                    }
-                                    else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                        score += -6;
-                                    }
-                                    else{
-                                        score+=5;
-                                    }
+                                    score+=5;
                                 }
-
+                                if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                    score += -20;
+                                }
+                                else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                    score += -6;
+                                }
                                 break;
                             case "recover","slackoff","healorder","softboiled","roost","strengthsap":
                                 if(shouldRecover(oppMaxDamage, move.getKey().getId(), 50, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
                                     score+=7;
                                 }
                                 else{
-                                    if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                        score += -20;
-                                    }
-                                    else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                        score += -6;
-                                    }
-                                    else{
-                                        score+=5;
-                                    }
+                                    score+=5;
+                                }
+                                if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                    score += -20;
+                                }
+                                else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                    score += -6;
                                 }
                                 break;
                             case "morningsun","synthesis", "moonlight":
@@ -1731,24 +1726,22 @@ public class RunBunAI implements BattleAI {
                                         score+=7;
                                     }
                                     else{
-                                        if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                            score += -20;
-                                        }
-                                        else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                            score += -6;
-                                        }
-                                        else{
-                                            score+=5;
-                                        }
+                                        score += 5;
                                     }
+                                }
+
+                                if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                    score += -20;
+                                }
+                                else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                    score += -6;
                                 }
                                 break;
                             case "rest":
                                 if(shouldRecover(oppMaxDamage, move.getKey().getId(), 100, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
                                     List<Move> NPCmoveSet = activeBattlePokemon.getBattlePokemon().getMoveSet().getMoves();
                                     boolean sleepTalkSnore = false;
-                                    boolean holdingCureSleep = currentHeldItem.equals("chestoberry") || currentHeldItem.equals("lumberry")
-                                            || currentHeldItem.equals("saftygoogles") || (currentAbility.equals("guts") || currentHeldItem.equals("flameorb"));
+                                    boolean holdingCureSleep = "chestoberry".equals(currentHeldItem) || "lumberry".equals(currentHeldItem);
                                     boolean shedSkinEarlyBird = currentAbility.equals("earlybird") || currentAbility.equals("shedskin");
                                     boolean hydrationRaining = currentAbility.equals("hydration") && (BattleEffects.Field.Weather.rain(opponent) || BattleEffects.Field.Weather.heavyrain(opponent));
                                     if(hasMoveName(activeBattlePokemon.getBattlePokemon(),"sleeptalk") || hasMoveName(activeBattlePokemon.getBattlePokemon(),"snore")) {
@@ -1888,30 +1881,36 @@ public class RunBunAI implements BattleAI {
         double maxPercentHPDamage = oppMaxDamage/(double)AIpokemon.getMaxHealth() * 100;
         double roll = RANDOM.nextDouble();
         double currentAIPercentHP = getCurrentPercentHP(AIpokemon);
-        if(maxPercentHPDamage > 50 && BattleEffects.Pokemon.Status.tox(AIpokemon)){
+        if(BattleEffects.Pokemon.Status.tox(AIpokemon)){
             return false;
         }
-        if(isAIFaster && maxPercentHPDamage >= currentAIPercentHP && currentAIPercentHP+recoverAmount > maxPercentHPDamage){
-            return true;
+        if(oppMaxDamage >= recoverAmount){
+            return false;
         }
-        if(maxPercentHPDamage <= currentAIPercentHP){
-            if(currentAIPercentHP < 66 && currentAIPercentHP > 40){
-                return roll > .5;
-            }
-            if(currentAIPercentHP < 40){
+        if(isAIFaster){
+            if(maxPercentHPDamage >= currentAIPercentHP && maxPercentHPDamage < currentAIPercentHP + recoverAmount){
                 return true;
             }
-        }
-        if(!isAIFaster){
-            if(currentAIPercentHP < 70){
-                return roll < .75;
+            else if(maxPercentHPDamage < currentAIPercentHP){
+                if(currentAIPercentHP < 66 && currentAIPercentHP > 40){
+                    return roll > .5;
+                }
+                else if(currentAIPercentHP < 40){
+                    return true;
+                }
             }
-            if(currentAIPercentHP < 50){
+        }
+        else{
+            if(currentAIPercentHP < 70){
+                return  roll > .25;
+            }
+            else if(currentAIPercentHP < 50){
                 return true;
             }
         }
         return false;
     }
+
     public static boolean isOHKO(List<Move> moves, BattlePokemon attacker, BattlePokemon defender,Map<Stat,Integer> attackerStages, Map<Stat,Integer> defenderStages){
         int enemyDamage = 0;
         int currentHP = defender.getHealth();
