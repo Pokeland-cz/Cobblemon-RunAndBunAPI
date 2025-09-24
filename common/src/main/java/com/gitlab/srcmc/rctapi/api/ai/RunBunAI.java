@@ -57,6 +57,7 @@ import java.util.stream.StreamSupport;
 
 import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
+import dev.architectury.platform.Mod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ambient.Bat;
@@ -76,13 +77,7 @@ public class RunBunAI implements BattleAI {
                     event -> {
                         System.out.println("Battle is about to start! " +
                                 "Players: " + event.getBattle().getPlayers());
-
-                        // 👉 Custom logic here
                         RunBunAI.setHasResetDefault(false);
-                        ModCommon.LOG.info("WE HAVE STARTED A NEW BATTLE AND RESET TO DEFAULT");
-                        // Example: cancel battle
-                        // event.setCanceled(true);
-
                         return Unit.INSTANCE;  // ✅ Kotlin Unit return
                     }
             );
@@ -94,13 +89,13 @@ public class RunBunAI implements BattleAI {
         RunBunAI.hasResetDefault = hasResetDefault;
     }
     private static boolean hasResetDefault = false;
-    private static BattlePokemon lastUniqueActivePokemon = null;
     private static int battleTurn = 1;
-    private static int turnsForActivePokemon = 0;
-    private static int swappedTurn = 0;
+    private static PokemonBattle pb = null;
+    private static int turnsForActivePokemon = 1;
     private static boolean hasUsedMega = false;
     private static boolean hasUsedTera = false;
     private static UUID currentPokemonUUID = null;
+    private static boolean switchedLastTurn = false;
     private static Map<Integer,String> moveHistory = new HashMap<>(); //move name, turn used
     private static Map<Integer,String> moveHistoryEnemy = new HashMap<>(); //move name, turn used
     private static Map<Stat,Integer> npcStages = new HashMap<>();
@@ -434,21 +429,31 @@ public class RunBunAI implements BattleAI {
         "Venusaurite",
         "Mewtwonitex",
         "Mewtwonitey"));
+    private static final List<String> ignoreDamageMoves = new ArrayList<>(List.of ("explosion",
+            "selfdestruct",
+            "mistyexplosion",
+            "rollout",
+            "meteorbeam",
+            "finalgambit",
+            "relicsong",
+            "futuresight"
+            ));
 
     @NotNull
     @Override
     public ShowdownActionResponse choose(@NotNull ActiveBattlePokemon activeBattlePokemon, @Nullable ShowdownMoveset moveset, boolean forceSwitch) {
+
         if(!hasResetDefault){
             hasResetDefault = true;
             currentPokemonUUID = null;
-            lastUniqueActivePokemon = null;
             battleTurn = 1;
-            turnsForActivePokemon = 0;
-            swappedTurn = 0;
+            turnsForActivePokemon = 1;
             hasUsedMega = false;
             hasUsedTera = false;
             moveHistory = new HashMap<>(); //move name, turn used
             moveHistoryEnemy = new HashMap<>();
+            pb = null;
+            switchedLastTurn = false;
         }
 
         ModCommon.LOG.info("started showdown response.");
@@ -482,56 +487,45 @@ public class RunBunAI implements BattleAI {
         String currentAbility = "";
         String gimmick = null;
         BattlePokemon battlePokemon = activeBattlePokemon.getBattlePokemon();
+        BattleFormat bf = new BattleFormat();
+        //setting up logic for double calcs. works the same for singles anyways.
+        int currentBattleSlot = allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) != -1
+                ? allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) : 0;
+        BattlePokemon opponent = allOpponentActiveBattlePokemon.isEmpty()
+                ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
+
 
         if (battlePokemon != null) {
+            if(pb == null){
+                pb = opponent.getActor().getBattle();
+            }
             if(currentPokemonUUID == null){
                 currentPokemonUUID = activeBattlePokemon.getBattlePokemon().getUuid();
-                turnsForActivePokemon = battleTurn - swappedTurn;
             }
             else if(currentPokemonUUID != activeBattlePokemon.getBattlePokemon().getUuid()){
-                swappedTurn = battleTurn;
-                turnsForActivePokemon = battleTurn - (swappedTurn - 1);
+                turnsForActivePokemon = 1;
+                currentPokemonUUID = activeBattlePokemon.getBattlePokemon().getUuid();
             }
-            int pastTurn = battleTurn;
-            PokemonBattle pb = activeBattlePokemon.getBattle();
-            battleTurn = activeBattlePokemon.getBattle().getTurn() > 0 ? pb.getTurn():1;
-            if(pastTurn != battleTurn && currentPokemonUUID == activeBattlePokemon.getBattlePokemon().getUuid()){
-                turnsForActivePokemon++;
-            }
-           // ModCommon.LOG.info("Past Turn: " + pastTurn + "    BattleTurn: " + battleTurn);
-            //ModCommon.LOG.info((currentPokemonUUID == activeBattlePokemon.getBattlePokemon().getUuid()) + "");
             activePrimaryType = battlePokemon.getEffectedPokemon().getPrimaryType();
             activeSecondaryType = battlePokemon.getEffectedPokemon().getSecondaryType();
             activePokemonPercentHP = getCurrentPercentHP(activeBattlePokemon.getBattlePokemon());
             currentAbility = battlePokemon.getEffectedPokemon().getAbility().getDisplayName();
 
-            if(lastUniqueActivePokemon ==null){
-                lastUniqueActivePokemon = battlePokemon;
-            }
-            if(!lastUniqueActivePokemon.getName().equals(activeBattlePokemon.getBattlePokemon().getName())
-                || lastUniqueActivePokemon.getGone()){
-                lastUniqueActivePokemon = battlePokemon;
-            }
             npcStages = getStageMap(activeBattlePokemon.getBattlePokemon());
             for (Map.Entry<Stat, Integer> entry : npcStages.entrySet()) {
                 Stat stat = entry.getKey();
                 int stage = entry.getValue();
-                ModCommon.LOG.info("NPC: " + stat + " is at stage " + stage);
             }
             for (Map.Entry<Stat, Integer> entry : opponentStages.entrySet()) {
                 Stat stat = entry.getKey();
                 int stage = entry.getValue();
-                ModCommon.LOG.info("Opp: " + stat + " is at stage " + stage);
             }
             for (Map.Entry<Integer, String> entry : moveHistory.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
-                ModCommon.LOG.info("Turns Since Active: " + turn + " used move " + moveName);
             }
             if (battlePokemon.getHeldItemManager().showdownId(battlePokemon) != null) {
                 currentHeldItem = battlePokemon.getHeldItemManager().showdownId(battlePokemon);
-                //ModCommon.LOG.info("THIS IS THE HELD ITEM ID " + currentHeldItem);
-
                 if(megaStones.contains(currentHeldItem) && turnsForActivePokemon == 1 && !hasUsedMega){
                     gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
                     hasUsedMega = true;
@@ -546,22 +540,11 @@ public class RunBunAI implements BattleAI {
             }
         }
 
-        BattleFormat bf = new BattleFormat();
-        //setting up logic for double calcs. works the same for singles anyways.
 
-        int currentBattleSlot = allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) != -1
-                ? allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) : 0;
-
-        BattlePokemon opponent = allOpponentActiveBattlePokemon.isEmpty()
-                ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
         if(opponent != null){
             opponentStages = getStageMap(opponent);
             getOpponentHeldItem = opponent.getHeldItemManager().showdownId(opponent)!=null
                     ? opponent.getHeldItemManager().showdownId(opponent):"";
-            if(turnsForActivePokemon == 1){
-                moveHistoryEnemy = new HashMap<>();
-            }
-            PokemonBattle pb = activeBattlePokemon.getBattle();
             //this is looking into if a move missed or failed or was immune for recharge logic.
             ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
                     + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon));
@@ -575,7 +558,7 @@ public class RunBunAI implements BattleAI {
                             + mon.getName()
                             + " had outcome " + type);
                     if(mon.getUuid().equals(opponent.getUuid())){
-                        moveHistoryEnemy.put(turnsForActivePokemon, type);
+                        moveHistoryEnemy.put(battleTurn-1, type);
                     }
                 }
             }
@@ -583,11 +566,13 @@ public class RunBunAI implements BattleAI {
                 BattleMessage msg = entry.getValue();
                 String type = msg.getId();
                 BattlePokemon mon = msg.battlePokemon(0, pb);
-                //ModCommon.LOG.info("THIS IS THE WHOLE MESSAGE: " + msg);
-                //ModCommon.LOG.info("THIS IS THE MESSAGE TYPE: " + type);
                 if ("move".equals(type) && mon.getUuid() == opponent.getUuid()) {
                     String moveName = msg.moveAt(1).getName() != null ? msg.moveAt(1).getName() : null;
-                    moveHistoryEnemy.put(turnsForActivePokemon,moveName);
+                    moveHistoryEnemy.put(battleTurn-1,moveName);
+                }
+                else if("move".equals(type) && mon.getUuid() == currentPokemonUUID){
+                    String moveName = msg.moveAt(1).getName() != null ? msg.moveAt(1).getName() : null;
+                    moveHistory.put(turnsForActivePokemon-1,moveName);
                 }
             }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
@@ -626,7 +611,7 @@ public class RunBunAI implements BattleAI {
         List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
                 .toList();
-        if (canSwitchTo.isEmpty()) return PassActionResponse.INSTANCE;
+
         Map<BattlePokemon, Integer> switchingScores = new HashMap<>();
         int switchScore = 0;
         boolean isSwitchMonFaster = false;
@@ -693,34 +678,36 @@ public class RunBunAI implements BattleAI {
         if (!bestSwitches.isEmpty()) {
             nextPokemon = bestSwitches.getFirst();
         }
-        if (forceSwitch || activeBattlePokemon.isGone() || activeBattlePokemon.getBattlePokemon() == null) {
-            ModCommon.LOG.info(maxSwitchingScore + " THIS IS THE MAX SWITCH SCORE    ::   " + bestSwitches.getFirst().getOriginalPokemon().getDisplayName() + " THIS IS THE FIRST BEST SWITCH");
+        if (forceSwitch || activeBattlePokemon.isGone()) {
             if (canSwitchTo.isEmpty()){
-                hasResetDefault = false;
                 return PassActionResponse.INSTANCE;
             }
             if (opponent==null) {
-                nextPokemon = bestSwitches.get(RANDOM.nextInt(canSwitchTo.size()));
+                if (!canSwitchTo.isEmpty()) {
+                    nextPokemon = bestSwitches.getFirst();
+                }
                 nextPokemon.setWillBeSwitchedIn(true);
                 moveHistory = new HashMap<>();
+                switchedLastTurn = true;
                 return new SwitchActionResponse(nextPokemon.getUuid());
             }
             if (nextPokemon == null) {
                 if (!canSwitchTo.isEmpty()) {
                     nextPokemon = bestSwitches.getFirst();
                 } else {
-                    hasResetDefault = false;
                     return PassActionResponse.INSTANCE; // no Pokémon to switch to
                 }
             }
             nextPokemon.setWillBeSwitchedIn(true);
             //resetting the move history for the next mon;
             moveHistory = new HashMap<>();
+            switchedLastTurn = true;
             return new SwitchActionResponse(nextPokemon.getUuid());
         }
 
         if (moveset == null) return PassActionResponse.INSTANCE;
         if (moveset.moves.size() == 1 && moveset.moves.get(0).getId().equals("recharge")) {
+            changeTurn(activeBattlePokemon.getBattlePokemon());
             return new MoveActionResponse("recharge", null, gimmick);
         }
         List<InBattleMove> inBattleMoves = moveset.moves.stream()
@@ -732,6 +719,7 @@ public class RunBunAI implements BattleAI {
 
         if (inBattleMoves.isEmpty()) return new MoveActionResponse("struggle", null, gimmick);
         if (opponentActiveBattlePokemon.isEmpty()) {
+            changeTurn(activeBattlePokemon.getBattlePokemon());
             return new MoveActionResponse(
                     inBattleMoves.get(RANDOM.nextInt(moveset.moves.size())).id, null, gimmick
             );
@@ -759,13 +747,21 @@ public class RunBunAI implements BattleAI {
                     moveMap.get(inBattleMove),
                     npcStages, opponentStages
             );
-            moveDamages.put(inBattleMove, dmg);
+            if(ignoreDamageMoves.contains(inBattleMove.getId()) || trapMoves.contains(inBattleMove.getId())){
+                moveDamages.put(inBattleMove, 0);
+            }
+            else{
+                moveDamages.put(inBattleMove, dmg);
+            }
+
             ModCommon.LOG.info(inBattleMove.getId() + "     DAMAGE = " + Integer.toString(dmg));
         });
 
         List<InBattleMove> killingMoves = new ArrayList<>();
         moveDamages.forEach((move, damage) -> {
-            if (damage >= opponent.getHealth()) killingMoves.add(move);
+            if (damage >= opponent.getHealth()){
+                killingMoves.add(move);
+            }
         });
         Map<InBattleMove, Integer> moveScores = new HashMap<>();
         boolean isFaster = false;
@@ -787,20 +783,24 @@ public class RunBunAI implements BattleAI {
         //making list of highestest dmg nonkilling moves, and adding special cases.
         List<InBattleMove> nonKillingPossibleMoves = new ArrayList<>();
         int maxDamage = 0;
+        InBattleMove maxMove = null;
         if (killingMoves.isEmpty()) {
             for (int dmg : moveDamages.values()) {
                 maxDamage = maxDamage >= dmg ? maxDamage : dmg;
             }
-            ModCommon.LOG.info("This is the max damage potential    "+ Integer.toString(maxDamage));
             for (Map.Entry<InBattleMove, Integer> entry : moveDamages.entrySet()) {
-                if (entry.getValue() == maxDamage) {
+                String name = entry.getKey().getId().toLowerCase(Locale.ROOT).trim();
+                if (trapMoves.contains(name)
+                        || physicalAttackReductionMoves.contains(name)
+                        || specialAttackReductionMoves.contains(name)
+                        || speedReductionMoves.contains(name)
+                        || specialFunctionMoves.contains(name)
+                        || generalSetupMoves.contains(name)){
                     nonKillingPossibleMoves.add(entry.getKey());
-                } else if (trapMoves.contains(entry.getKey().getId())
-                        || physicalAttackReductionMoves.contains(entry.getValue())
-                        || specialAttackReductionMoves.contains(entry.getKey())
-                        || speedReductionMoves.contains(entry.getValue())
-                        || specialFunctionMoves.contains(entry.getValue())) {
+                }
+                else if (entry.getValue() == maxDamage) {
                     nonKillingPossibleMoves.add(entry.getKey());
+                    maxMove = entry.getKey();
                 }
             }
         }
@@ -809,13 +809,11 @@ public class RunBunAI implements BattleAI {
             InBattleMove currentMove = move.getKey();
             int moveDamage = move.getValue();
             int score = 0;
-            //int dmg = PokeMathMax.damage(activeBattlePokemon.getBattlePokemon(), opponent, currentMove);
 
             boolean hasSpecialMove = false;
             boolean hasPhysicalMove = false;
             String damageCategory ="";
 
-            //String currentMoveCategory = "";
             for(Move opponentMove : oppMoves){
                 damageCategory = opponentMove.getDamageCategory().getName();
                 if(damageCategory.equals(DamageCategories.INSTANCE.getPHYSICAL().getName())){
@@ -843,7 +841,7 @@ public class RunBunAI implements BattleAI {
                 }
                 //if we are slower than the opponent and we see a kill with priority. (+6)
                 else {
-                    if (priorityDamageMoves.contains(currentMove.id)) {
+                    if (priorityDamageMoves.contains(currentMove.getId())) {
                         score += 6;
                     }
                     //if we are slower and see a kill without priority
@@ -851,8 +849,8 @@ public class RunBunAI implements BattleAI {
                         score += 3;
                     }
                 }
-                if(currentMove.getId().equals("futuresight")){
-                    score+= isFaster ? 8:6;
+                if(currentMove.getId().equals("pursuit")){
+                    score = 10;
                 }
                 //todo: when meloetta uses relic song she transforms to pirouette form.
                 // (we want to keep track of if she has used relic song already)
@@ -860,35 +858,41 @@ public class RunBunAI implements BattleAI {
             //highest damaging move, speed reduction moves, ATK/SpATK reduction moves, Trap Moves (6 , 8)
             //if the move is a non-killing move.
             if (!nonKillingPossibleMoves.isEmpty()) {
-                for (InBattleMove nonKillingMove : nonKillingPossibleMoves) {
+                if(nonKillingPossibleMoves.contains(currentMove)){
+                    String moveID = currentMove.getId();
                     double roll = RANDOM.nextDouble();
 
-                    if (trapMoves.contains(nonKillingMove)) {
+                    //This puts the final score into the map with its move key.
+                    if(maxMove != null){
+                        if(maxMove == currentMove){
+                            roll = RANDOM.nextDouble();
+                            score += roll > .2 ? 6:8;
+                        }
+                    }
+
+                    if (trapMoves.contains(moveID)) {
                         score += (roll > 0.2) ? 6 : 8;
                     }
                     //if the move is a speed reducing move.
-                    if (speedReductionMoves.contains(nonKillingMove)) {
-                        if (moveScores.get(nonKillingMove) == maxDamage) {
+                    if (speedReductionMoves.contains(moveID)) {
+                        if (moveScores.get(currentMove) == maxDamage) {
                             roll = RANDOM.nextDouble();
                             score += (roll > 0.2) ? 6 : 8;
                         }
                         //the ai is not faster and the enemy mon can be reduced.
                         else {
-                            score += !ignoreStatDropAbilities.contains(opponentAbility) && !isFaster ?
-                                     6 : 5;
+                            score += !ignoreStatDropAbilities.contains(opponentAbility) && !isFaster ? 6 : 5;
                         }
-
                     }
-
-                    if (physicalAttackReductionMoves.contains(nonKillingMove) || specialAttackReductionMoves.contains(nonKillingMove)) {
-                        if (moveScores.get(nonKillingMove) == maxDamage) {
+                    if (physicalAttackReductionMoves.contains(moveID) || specialAttackReductionMoves.contains(moveID)) {
+                        if (moveScores.get(currentMove) == maxDamage) {
                             roll = RANDOM.nextDouble();
                             score += (roll > 0.2) ? 6 : 8;
                         } else if(!ignoreStatDropAbilities.contains(opponentAbility)){
-                            if(specialAttackReductionMoves.contains(nonKillingMove) && hasSpecialMove){
+                            if(specialAttackReductionMoves.contains(moveID) && hasSpecialMove){
                                 score += 6;
                             }
-                            else if(physicalAttackReductionMoves.contains(nonKillingMove) && hasPhysicalMove){
+                            else if(physicalAttackReductionMoves.contains(moveID) && hasPhysicalMove){
                                 score+=6;
                             }
                         }
@@ -898,8 +902,8 @@ public class RunBunAI implements BattleAI {
                     }
                     //if contains in special list then do special functionality bellow.
                     //=============================================================================================
-                    if (specialFunctionMoves.contains(nonKillingMove)) {
-                        switch (nonKillingMove.getId()){
+                    if (specialFunctionMoves.contains(moveID)) {
+                        switch (moveID){
                             case "futuresight":
                                 // If AI is faster than target and is KO’d by target
                                 score += isFaster && npcIsOHKO ? 8 : 6;
@@ -912,17 +916,12 @@ public class RunBunAI implements BattleAI {
                                 //score += activeBattlePokemon.getBattlePokemon().getEffectedPokemon().getDisplayName().equals("meloetta") ? 10 : 0;
                                 break;
                             case "pursuit":
-                                if(killingMoves.contains(nonKillingMove)){
+                                if(oppPercentHP <= 20){
                                     score+=10;
                                 }
-                                else{
-                                    if(oppPercentHP <= 20){
-                                        score+=10;
-                                    }
-                                    else if(oppPercentHP <= 40){
-                                        roll = RANDOM.nextDouble();
-                                        score += roll < .5 ? 8 : 0;
-                                    }
+                                else if(oppPercentHP <= 40){
+                                    roll = RANDOM.nextDouble();
+                                    score += roll < .5 ? 8 : 0;
                                 }
                                 break;
                             case "fellstinger":
@@ -1027,7 +1026,6 @@ public class RunBunAI implements BattleAI {
                                         if(activePokemonPercentHP <= 8){
                                             score-=20;
                                         }
-
                                     }
                                 }
                                 // If it's AI mon's first turn out and it is not a double battle:
@@ -1056,7 +1054,7 @@ public class RunBunAI implements BattleAI {
                                 if(currentHeldItem != null){
                                     break;
                                 }
-                                double flingEffectiveness = TypeChart.getEffectiveness(TypeChart.getMove(nonKillingMove).getType(), opponent);
+                                double flingEffectiveness = TypeChart.getEffectiveness(TypeChart.getMove(currentMove).getType(), opponent);
                                 //need to hold a salac berry and fling is not super effective.
                                 if(activeBattlePokemon.getBattlePokemon().getEffectedPokemon().heldItem().is(CobblemonItems.SALAC_BERRY)
                                         && (flingEffectiveness <=1)){
@@ -1225,7 +1223,7 @@ public class RunBunAI implements BattleAI {
                                 roll = RANDOM.nextDouble();
                                 int explosionResult1 = roll > .3 ? 8 : 0;
                                 int explosionResult2 = roll > .5 ? 7 : 0;
-                                int explosionResult3 = roll > .05 ? 7 : 0;
+                                int explosionResult3 = roll > .95 ? 7 : 0;
                                 if(!aliveParty.isEmpty() || (allOpponentActiveBattlePokemon.isEmpty() && aliveParty.isEmpty())){    
                                     if(activePokemonPercentHP < 10){
                                         score += 10;
@@ -1294,6 +1292,7 @@ public class RunBunAI implements BattleAI {
 
                             case "willowisp":
                                 if(!BattleEffects.Pokemon.Status.any(opponent)){
+
                                     score += 6;
                                     roll = RANDOM.nextDouble();
                                     if(roll < .37){
@@ -1306,7 +1305,6 @@ public class RunBunAI implements BattleAI {
                                         }
                                     }
                                 }
-                                
                                 break;
 
                             case "trick", "switcheroo":
@@ -1383,443 +1381,442 @@ public class RunBunAI implements BattleAI {
                                 }
                         }
                     }
-                }
-            }
-            //TODO: START OF GENERAL SETUP CODE
-            String moveID = move.getKey().getId();
-            double roll;
-            String lastTurnMove = moveHistoryEnemy.getOrDefault(turnsForActivePokemon-1, "");
-            boolean isRecharging = false;
-            boolean isLoafing = false;
-            if(turnsForActivePokemon % 2 ==0 && opponentAbility.equals("truant")){
-                isLoafing = true;
-            }
-            //what if they miss?
-            if(rechargeMoves.contains(lastTurnMove) && (lastTurnMove != "-miss" || lastTurnMove != "-immune" || lastTurnMove != "-fail")){
-                isRecharging = true;
-            }
-            if(generalSetupMoves.contains(moveID)){
-                boolean hasThawingMove = false;
-                for(String m : thawingMoves){
-                    if(oppMoves.contains(m)){
-                        hasThawingMove = true;
-                        break;
+                    //TODO: START OF GENERAL SETUP CODE
+                    String lastTurnMove = moveHistoryEnemy.getOrDefault(battleTurn-1, "");
+                    boolean isRecharging = false;
+                    boolean isLoafing = false;
+                    if(turnsForActivePokemon % 2 ==0 && opponentAbility.equals("truant")){
+                        isLoafing = true;
                     }
-                }
-                //TODO: These moves are only setup moves when contrary ability holder is using them.
-                if(currentAbility.equals("contrary") && score != 0){
-                    switch (moveID){
-                        case "overheat", "leafstorm":
-                            score += 6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) ||  isLoafing || isRecharging){ 
-                                score += 3;
-                            }
-                            else if(!npcIs3OHKO) {
-                                score += 1;
-                                if(isFaster){
-                                    score += 1;
-                                }
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
-                                score -= 1;
-                            }
-                            break;
-                        case "superpower":
-                            score += 6;
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){ 
-                                score += 3;
-                            }
-                            else if(!npcIs3OHKO) {
-                                score += 1;
-                                if(isFaster){
-                                    score += 1;
-                                }
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2){
-                                score -= 1;
-                            }
-                            break;
+                    //what if they miss?
+                    if(rechargeMoves.contains(lastTurnMove) && (lastTurnMove != "-miss" || lastTurnMove != "-immune" || lastTurnMove != "-fail")){
+                        isRecharging = true;
                     }
-                } 
-                if(npcIsOHKO && ((!"focussash".equals(currentHeldItem) || !currentAbility.equals("sturdy")) && getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100)){
-                    score-=20;
-                }
-                if(opponentAbility.equals("unaware")){ 
-                    score-=20;
+                    if(generalSetupMoves.contains(moveID)){
+                        boolean hasThawingMove = false;
+                        for(String m : thawingMoves){
+                            if(oppMoves.contains(m)){
+                                hasThawingMove = true;
+                                break;
+                            }
+                        }
+                        //TODO: These moves are only setup moves when contrary ability holder is using them.
+                        if(currentAbility.equals("contrary") && score != 0){
+                            switch (moveID){
+                                case "overheat", "leafstorm":
+                                    score += 6;
+                                    if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) ||  isLoafing || isRecharging){
+                                        score += 3;
+                                    }
+                                    else if(!npcIs3OHKO) {
+                                        score += 1;
+                                        if(isFaster){
+                                            score += 1;
+                                        }
+                                    }
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                    if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
+                                        score -= 1;
+                                    }
+                                    break;
+                                case "superpower":
+                                    score += 6;
+                                    if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){
+                                        score += 3;
+                                    }
+                                    else if(!npcIs3OHKO) {
+                                        score += 1;
+                                        if(isFaster){
+                                            score += 1;
+                                        }
+                                    }
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                    if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2){
+                                        score -= 1;
+                                    }
+                                    break;
+                            }
+                        }
+                        if(npcIsOHKO){
+                            score-=20;
+                        }
+                        if(opponentAbility.equals("unaware")){
+                            score-=20;
+                        }
+                        switch(moveID){
+                            //TODO: OFFENSIVE SETUP MOVES (IF WE ARE FASTER AFTER A SPEED BUFF GIVE MORE SCORE eg. DRAGON DANCE, SHIFT GEAR, QUIVER DANCE)
+                            case "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
+                                score += 6;
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
+                                    score += 3;
+                                }
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                break;
+                            case "dragondance", "shiftgear", "tidyup":
+                                score += 6;
+                                if(moveID.equals("shiftgear")){
+                                    if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 1, 0)){
+                                        score += 5;
+                                    }
+                                }
+                                else{
+                                    if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 0)){
+                                        score += 5;
+                                    }
+                                }
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
+                                    score += 3;
+                                }
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2){
+                                    score -= 3;
+                                }
+                                break;
+                            case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
+                                roll = RANDOM.nextDouble();
+                                score += 6;
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                if(roll > .05){
+                                    if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                        score += 2;
+                                    }
+                                    if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
+                                        score += 2;
+                                    }
+                                }
+                                break;
+                            case "coil", "bulkup", "calmmind", "curse":
+                                score += 6;
+                                if(((hasPhysicalMove && !hasSpecialMove) || ((!hasPhysicalMove && !hasSpecialMove))) && (moveID.equals("calmmind"))){
+                                    if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
+                                        score += 3;
+                                    }
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                }
+                                else if (!hasPhysicalMove && hasSpecialMove && (moveID.equals("calmmind"))){
+                                    roll = RANDOM.nextDouble();
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                    if(roll > .05){
+                                        if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                            score += 2;
+                                        }
+                                        if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
+                                            score += 2;
+                                        }
+                                    }
+                                }
+                                //Offensive setup, has at least 1 special and no physical moves
+                                if(((hasSpecialMove && !hasPhysicalMove) || (!hasPhysicalMove && !hasSpecialMove)) && (moveID.equals("coil") || moveID.equals("bulkup") ||  moveID.equals("curse"))){
+                                    if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
+                                        score += 3;
+                                    }
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                }
+                                //Deffensive setup, has at least 1 physical and no special moves
+                                else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
+                                    roll = RANDOM.nextDouble();
+                                    if(!isFaster && npcIs2OHKO){
+                                        score -= 5;
+                                    }
+                                    if(roll > .05){
+                                        if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                                            score += 2;
+                                        }
+                                        if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
+                                            score += 2;
+                                        }
+                                    }
+                                }
+                                break;
+                            case "quiverdance", "geomancy":
+                                score += 6;
+                                if(moveID.equals("geomancy")){
+                                    if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 2, 2) && "powerherb".equals(currentHeldItem)){
+                                        score += 5;
+                                    }
+                                    else{
+                                        score -= 20;
+                                    }
+                                }
+                                else{
+                                    if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
+                                        score += 5;
+                                    }
+                                }
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
+                                    score += 3;
+                                }
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
+                                    score -= 3;
+                                }
+                                break;
 
-                }
-                switch(moveID){
-                    //TODO: OFFENSIVE SETUP MOVES (IF WE ARE FASTER AFTER A SPEED BUFF GIVE MORE SCORE eg. DRAGON DANCE, SHIFT GEAR, QUIVER DANCE)
-                    case "swordsdance", "howl", "sharpen", "meditate", "honeclaws":
-                        score += 6;
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
-                            score += 3;
-                        }
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                            break;
-                    case "dragondance", "shiftgear", "tidyup":
-                        score += 6;
-                        if(moveID.equals("shiftgear")){
-                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 1, 0)){
-                            score += 5;
-                            }
-                        }
-                        else{
-                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 0)){
-                            score += 5;
-                            }
-                        }
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent) || isLoafing || isRecharging){  //check truant or recharge
-                            score += 3;
-                        }
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                        if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2){
-                            score -= 3;
-                        }
-                        break;
-                    case "acidarmor", "barrier", "cottonguard", "harden", "irondefense", "stockpile", "cosmicpower":
-                        roll = RANDOM.nextDouble();
-                        score += 6;
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                        if(roll > .05){
-                            if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
-                                score += 2;
-                            }
-                            if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                score += 2;
-                            }
-                        }
-                        break;
-                    case "coil", "bulkup", "calmmind", "curse":
-                        score += 6;
-                        if(((hasPhysicalMove && !hasSpecialMove) || ((!hasPhysicalMove && !hasSpecialMove))) && (moveID.equals("calmmind"))){
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
-                                score += 3;
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                        } 
-                        else if (!hasPhysicalMove && hasSpecialMove && (moveID.equals("calmmind"))){
-                            roll = RANDOM.nextDouble();
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(roll > .05){
-                                if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
+                            case "noretreat":
+                                score += 6;
+                                if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
+                                    score += 5;
+                                }
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.DEFENCE, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.ATTACK, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2
+                                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
+                                    score -= 3;
+                                }
+                                break;
+                            case "agility", "rockpolish", "autotomize":
+                                if(!isFaster){
+                                    score += 7;
+                                }
+                                else{
+                                    score -= 20;
+                                }
+                                break;
+                            case "tailglow", "nastyplot", "workup":
+                                score += 6;
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){//check truant or recharge
+                                    score += 3;
+                                }
+                                else if(!npcIs3OHKO) {
+                                    score += 1;
+                                    if(isFaster){
+                                        score += 1;
+                                    }
+                                }
+                                if(!isFaster && npcIs2OHKO){
+                                    score -= 5;
+                                }
+                                if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
+                                    score -= 1;
+                                }
+                                break;
+                            case "shellsmash":
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
+                                    score += 3;
+                                }
+                                if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
                                     score += 2;
                                 }
-                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                    score += 2;
+                                else{
+                                    score -= 2;
                                 }
-                            }
-                        }
-                            //Offensive setup, has at least 1 special and no physical moves
-                        if(((hasSpecialMove && !hasPhysicalMove) || (!hasPhysicalMove && !hasSpecialMove)) && (moveID.equals("coil") || moveID.equals("bulkup") ||  moveID.equals("curse"))){
-                            if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
-                                score += 3;
-                            }
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                        }
-                            //Deffensive setup, has at least 1 physical and no special moves
-                        else if(!hasSpecialMove && hasPhysicalMove && (moveID.equals("coil") || moveID.equals("bulkup") || moveID.equals("noretreat") || moveID.equals("curse"))){
-                            roll = RANDOM.nextDouble();
-                            if(!isFaster && npcIs2OHKO){
-                                score -= 5;
-                            }
-                            if(roll > .05){
-                                if(BattleEffects.Pokemon.Status.frz(opponent) || BattleEffects.Pokemon.Status.slp(opponent)){
-                                    score += 2;
+                                if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.ATTACK, 0) == 6 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) == 6){
+                                    score -= 20;
                                 }
-                                if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                    score += 2;
+                                break;
+                            case "bellydrum":
+                                if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
+                                    score += 9;
                                 }
-                            }
-                        }        
-                        break;
-                    case "quiverdance", "geomancy":
-                        score += 6;
-                        if(moveID.equals("geomancy")){
-                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 2, 2, 2) && "powerherb".equals(currentHeldItem)){
-                                score += 5;
-                            }
-                            else{
-                                score -= 20;
-                            }
+                                else if(!npcIsOHKOWithBD){
+                                    score += 8;
+                                }
+                                else{
+                                    score += 4;
+                                }
+                                break;
+                            case "focusenergy", "laserfocus":
+                                if("scopelens".equals(currentHeldItem) || (currentAbility.equals("superluck") || currentAbility.equals("sniper"))){
+                                    score+=7;
+                                }
+                                else{
+                                    score+=6;
+                                }
+                                break;
+                            case "coaching":
+                                roll = RANDOM.nextDouble();
+                                score += 6;
+                                if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && !NPCPartner.getBattlePokemon().getEffectedPokemon().getAbility().getName().equals("contrary")){
+                                    if(getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.ATTACK,0) <=2){
+                                        score += 1 - getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.ATTACK,0);
+                                    }
+                                    if(getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.DEFENCE,0) <=2){
+                                        score += 1 - getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.DEFENCE,0);
+                                    }
+                                    score += roll > .2 ? 1: 0;
+                                }
+                                else {
+                                    score -= 20;
+                                }
+                                break;
+                            case "meteorbeam":
+                                if("powerherb".equals(currentHeldItem)){
+                                    score += 9;
+                                }
+                                else{
+                                    score -= 20;
+                                }
+                                break;
+                            case "destinybond":
+                                roll = RANDOM.nextDouble();
+                                if(isFaster && npcIsOHKO){
+                                    score += roll > .19 ? 7: 6;
+                                }
+                                if(!isFaster){
+                                    score += roll > .5 ? 5: 6;
+                                }
+                                break;
                         }
-                        else{
-                            if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
-                                score += 5;
-                            }
-                        }
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){  //check truant or recharge
-                            score += 3;
-                        }
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                        if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
-                            score -= 3;
-                        }
-                        break;
-                    
-                    case "noretreat":
-                        score += 6;
-                        if(fasterAndOHKOAfterBoost(activeBattlePokemon.getBattlePokemon(), opponent, 1, 1, 1)){
-                            score += 5;
-                        }
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                        if(npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.DEFENCE, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.ATTACK, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2 
-                        || npcStages.getOrDefault(Stats.SPEED, 0) >= 2 ){
-                            score -= 3;
-                        }
-                        break;
-                    case "agility", "rockpolish", "autotomize":
-                        if(!isFaster){
-                            score += 7;
-                        }
-                        else{
-                            score -= 20;
-                        }
-                        break;
-                    case "tailglow", "nastyplot", "workup":
-                        score += 6;
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){//check truant or recharge
-                            score += 3;
-                        }
-                        else if(!npcIs3OHKO) {
-                            score += 1;
-                            if(isFaster){
-                                score += 1;
-                            }
-                        }
-                        if(!isFaster && npcIs2OHKO){
-                            score -= 5;
-                        }
-                        if(npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 2){
-                            score -= 1;
-                        }
-                        break;
-                    case "shellsmash":
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
-                            score += 3;
-                        }
-                        if(!npcIsOHKOWithSS || (!npcIsOHKO && "whiteherb".equals(currentHeldItem))){
-                            score += 2;
-                        }
-                        else{
-                            score -= 2;
-                        }
-                        if(npcStages.getOrDefault(Stats.ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) >= 1 || npcStages.getOrDefault(Stats.ATTACK, 0) == 6 || npcStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) == 6){
-                            score -= 20;
-                        }
-                        break;
-                    case "bellydrum":
-                        if((BattleEffects.Pokemon.Status.frz(opponent) && !hasThawingMove) || BattleEffects.Pokemon.Status.slp(opponent)|| isLoafing || isRecharging){ //check truant or recharge
-                            score += 9;
-                        }
-                        else if(!npcIsOHKOWithBD){
-                            score += 8;
-                        }
-                        else{
-                            score += 4;
-                        }
-                        break;
-                    case "focusenergy", "laserfocus":
-                        if("scopelens".equals(currentHeldItem) || (currentAbility.equals("superluck") || currentAbility.equals("sniper"))){
-                            score+=7;
-                        }
-                        else{
-                            score+=6;
-                        }
-                        break;
-                    case "coaching":
-                        roll = RANDOM.nextDouble();
-                        score += 6;
-                        if(bf.getBattleType().toString().equals("GEN_9_DOUBLES") && !NPCPartner.getBattlePokemon().getEffectedPokemon().getAbility().getName().equals("contrary")){
-                            if(getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.ATTACK,0) <=2){
-                                score += 1 - getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.ATTACK,0);
-                            }
-                            if(getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.DEFENCE,0) <=2){
-                                score += 1 - getStageMap(NPCPartner.getBattlePokemon()).getOrDefault(Stats.DEFENCE,0);
-                            }
-                            score += roll > .2 ? 1: 0;
-                        }
-                        else {
-                            score -= 20;
-                        }
-                        break;
-                    case "meteorbeam":
-                        if("powerherb".equals(currentHeldItem)){
-                            score += 9;
-                        }
-                        else{
-                            score -= 20;
-                        }
-                        break;
-                    case "destinybond":
-                        roll = RANDOM.nextDouble();
-                        if(isFaster && npcIsOHKO){
-                            score += roll > .19 ? 7: 6;
-                        }
-                        if(!isFaster){
-                            score += roll > .5 ? 5: 6;
-                        }
-                        break;
-                }
-            }
-            if(recoveryMoves.contains(move.getKey().getId())){
+                    }
+                    if(recoveryMoves.contains(move.getKey().getId())){
 
-                switch (move.getKey().getId()){
-                    case "junglehealing", "lifedew":
-                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 25, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
-                            score+=7;
-                        }
-                        else{
-                            if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                score += -20;
-                            }
-                            else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                score += -6;
-                            }
-                            else{
-                                score+=5;
-                            }
-                        }
-
-                        break;
-                    case "recover","slackoff","healorder","softboiled","roost","strengthsap":
-                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 50, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
-                            score+=7;
-                        }
-                        else{
-                            if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                score += -20;
-                            }
-                            else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                score += -6;
-                            }
-                            else{
-                                score+=5;
-                            }
-                        }
-                        break;
-                    case "morningsun","synthesis", "moonlight":
-                        boolean isSunActive = BattleEffects.Field.Weather.harshsunlight(opponent) || BattleEffects.Field.Weather.extremelyharshsunlight(opponent);
-                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
-                                && isSunActive){
-                            score+=7;
-                        }
-                        else if(!shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
-                                || !isSunActive){
-                            if(shouldRecover(oppMaxDamage,move.getKey().getId(),50,isFaster,activeBattlePokemon.getBattlePokemon(),opponent)) {
-                                score+=7;
-                            }
-                            else{
-                                if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
-                                    score += -20;
+                        switch (move.getKey().getId()){
+                            case "junglehealing", "lifedew":
+                                if(shouldRecover(oppMaxDamage, move.getKey().getId(), 25, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                                    score+=7;
                                 }
-                                else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
-                                    score += -6;
+                                else{
+                                    if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                        score += -20;
+                                    }
+                                    else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                        score += -6;
+                                    }
+                                    else{
+                                        score+=5;
+                                    }
+                                }
+
+                                break;
+                            case "recover","slackoff","healorder","softboiled","roost","strengthsap":
+                                if(shouldRecover(oppMaxDamage, move.getKey().getId(), 50, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                                    score+=7;
+                                }
+                                else{
+                                    if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                        score += -20;
+                                    }
+                                    else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                        score += -6;
+                                    }
+                                    else{
+                                        score+=5;
+                                    }
+                                }
+                                break;
+                            case "morningsun","synthesis", "moonlight":
+                                boolean isSunActive = BattleEffects.Field.Weather.harshsunlight(opponent) || BattleEffects.Field.Weather.extremelyharshsunlight(opponent);
+                                if(shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
+                                        && isSunActive){
+                                    score+=7;
+                                }
+                                else if(!shouldRecover(oppMaxDamage, move.getKey().getId(), 67, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)
+                                        || !isSunActive){
+                                    if(shouldRecover(oppMaxDamage,move.getKey().getId(),50,isFaster,activeBattlePokemon.getBattlePokemon(),opponent)) {
+                                        score+=7;
+                                    }
+                                    else{
+                                        if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) == 100){
+                                            score += -20;
+                                        }
+                                        else if(getCurrentPercentHP(activeBattlePokemon.getBattlePokemon()) >=85){
+                                            score += -6;
+                                        }
+                                        else{
+                                            score+=5;
+                                        }
+                                    }
+                                }
+                                break;
+                            case "rest":
+                                if(shouldRecover(oppMaxDamage, move.getKey().getId(), 100, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
+                                    List<Move> NPCmoveSet = activeBattlePokemon.getBattlePokemon().getMoveSet().getMoves();
+                                    boolean sleepTalkSnore = false;
+                                    boolean holdingCureSleep = currentHeldItem.equals("chestoberry") || currentHeldItem.equals("lumberry")
+                                            || currentHeldItem.equals("saftygoogles") || (currentAbility.equals("guts") || currentHeldItem.equals("flameorb"));
+                                    boolean shedSkinEarlyBird = currentAbility.equals("earlybird") || currentAbility.equals("shedskin");
+                                    boolean hydrationRaining = currentAbility.equals("hydration") && (BattleEffects.Field.Weather.rain(opponent) || BattleEffects.Field.Weather.heavyrain(opponent));
+                                    if(hasMoveName(activeBattlePokemon.getBattlePokemon(),"sleeptalk") || hasMoveName(activeBattlePokemon.getBattlePokemon(),"snore")) {
+                                        sleepTalkSnore = true;
+                                    }
+                                    if(holdingCureSleep || sleepTalkSnore || shedSkinEarlyBird || hydrationRaining){
+                                        score+=8;
+                                    }
+                                    else{
+                                        score+=7;
+                                    }
                                 }
                                 else{
                                     score+=5;
                                 }
-                            }
+                                break;
                         }
-                        break;
-                    case "rest":
-                        if(shouldRecover(oppMaxDamage, move.getKey().getId(), 100, isFaster, activeBattlePokemon.getBattlePokemon(),opponent)){
-                            List<Move> NPCmoveSet = activeBattlePokemon.getBattlePokemon().getMoveSet().getMoves();
-                            boolean sleepTalkSnore = false;
-                            boolean holdingCureSleep = currentHeldItem.equals("chestoberry") || currentHeldItem.equals("lumberry")
-                                    || currentHeldItem.equals("saftygoogles") || (currentAbility.equals("guts") || currentHeldItem.equals("flameorb"));
-                            boolean shedSkinEarlyBird = currentAbility.equals("earlybird") || currentAbility.equals("shedskin");
-                            boolean hydrationRaining = currentAbility.equals("hydration") && (BattleEffects.Field.Weather.rain(opponent) || BattleEffects.Field.Weather.heavyrain(opponent));
-                            if(hasMoveName(activeBattlePokemon.getBattlePokemon(),"sleeptalk") || hasMoveName(activeBattlePokemon.getBattlePokemon(),"snore")) {
-                                sleepTalkSnore = true;
-                            }
-                            if(holdingCureSleep || sleepTalkSnore || shedSkinEarlyBird || hydrationRaining){
-                                score+=8;
-                            }
-                            else{
-                                score+=7;
-                            }
+                    }
+                    //list of all opponents moves and their OHKO potential.
+                    if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
+                        score += 11;
+                    }
+                    //if our pokemon has a special ability give its score +1
+                    if (abilityStatBooster.contains(activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getAbility().getName())) {
+                        score++;
+                    }
+                    //if a damaging move has a high crit chance and is Super Effective on the target
+                    // (50% of the time the score gets increased by 1)
+                    if (highCriticalMoves.contains(currentMove.getId()) && TypeChart.getEffectiveness(TypeChart.getMove(currentMove).getType(),opponent) >=2) {
+                        roll = RANDOM.nextDouble();
+                        score = (roll < .5) ? score + 1 : score;
+                    }
+                    if (currentMove.getId().equals("acidspray")) {
+                        score += 6;
+                    }
+                    if(currentMove.getId().equals("taunt")){
+                        boolean hasDefog = hasMoveName(opponent,"defog");
+                        boolean hasTrickRoom = hasMoveName(opponent,"trickroom");
+                        if(hasTrickRoom && !BattleEffects.Field.Room.trickroom(opponent)) {
+                            score += 9;
+                        }
+                        //TODO: check if aura veil is active
+                        else if(hasDefog && isFaster){
+                            score+=9;
                         }
                         else{
                             score+=5;
                         }
-                        break;
+                    }
+                    if(currentMove.getId().equals("encore")){
+                        //TODO: if last turn the opponent used a non-damaging move
+                        if(isFaster){
+                            score+=7;
+                        }
+                        else{
+                            roll = RANDOM.nextDouble();
+                            score += roll > .5 ? 6:5;
+                        }
+                    }
                 }
             }
-            //list of all opponents moves and their OHKO potential.
-            if (priorityDamageMoves.contains(move.getKey().getId()) && !isFaster && npcIsOHKO) {
-                score += 11;
+            if(currentMove.getId().equals("futuresight")){
+                score+= isFaster && npcIsOHKO ? 8:6;
             }
-            //if our pokemon has a special ability give its score +1
-            if (abilityStatBooster.contains(activeBattlePokemon.getBattlePokemon().getOriginalPokemon().getAbility().getName())) {
-                score++;
+            if(currentMove.getId().equals("pursuit") && isFaster){
+                score+=3;
             }
-            //if a damaging move has a high crit chance and is Super Effective on the target
-            // (50% of the time the score gets increased by 1)
-            if (highCriticalMoves.contains(currentMove.getId()) && TypeChart.getEffectiveness(TypeChart.getMove(currentMove).getType(),opponent) >=2) {
-                roll = RANDOM.nextDouble();
-                score = (roll < .5) ? score + 1 : score;
-            }
-            if (currentMove.getId().equals("acidspray")) {
-                score += 6;
-            }
-            if(currentMove.getId().equals("taunt")){
-                boolean hasDefog = hasMoveName(opponent,"defog");
-                boolean hasTrickRoom = hasMoveName(opponent,"trickroom");
-                if(hasTrickRoom && !BattleEffects.Field.Room.trickroom(opponent)) {
-                    score += 9;
-                }
-                    //TODO: check if aura veil is active
-                else if(hasDefog && isFaster){
-                    score+=9;
-                }
-                else{
-                    score+=5;
-                }
-            }
-            if(currentMove.getId().equals("encore")){
-                //TODO: if last turn the opponent used a non-damaging move
-                if(isFaster){
-                    score+=7;
-                }
-                else{
-                    roll = RANDOM.nextDouble();
-                    score += roll > .5 ? 6:5;
-                }
-            }
-            //This puts the final score into the map with its move key.
-            if(nonKillingPossibleMoves.contains(move.getKey())){
-                roll = RANDOM.nextDouble();
-                score += roll > .2 ? 6:8;
-            }
+
             moveScores.put(currentMove, score);
             ModCommon.LOG.info(currentMove.getId() + "  " + Integer.toString(score));
         }
@@ -1832,12 +1829,10 @@ public class RunBunAI implements BattleAI {
                 nextPokemon.setWillBeSwitchedIn(true);
                 moveHistory = new HashMap<>();
                 ModCommon.LOG.info("SWITCHING INTO NEXT MON");
+                switchedLastTurn = true;
                 return new SwitchActionResponse(nextPokemon.getUuid());
                 //start switching logic
             }
-        }
-        else{
-            ModCommon.LOG.info("NO REASON TO SWITCH THIS MON");
         }
         int maxScore = moveScores.values()
                 .stream()
@@ -1854,14 +1849,14 @@ public class RunBunAI implements BattleAI {
             var bestMove = bestMoves.get(randomInt);
             ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
             List<Targetable> targets = bestMove.mustBeUsed() ? null : bestMove.getTarget().getTargetList().invoke(activeBattlePokemon);
-            moveHistory.put(turnsForActivePokemon, bestMove.getId());
+            changeTurn(activeBattlePokemon.getBattlePokemon());
             return new MoveActionResponse(bestMove.getId(),
                     targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                     gimmick);
         }
         List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
         ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
-        moveHistory.put(turnsForActivePokemon, bestMoves.get(0).getId());
+        changeTurn(activeBattlePokemon.getBattlePokemon());
         return new MoveActionResponse(bestMoves.get(0).getId(),
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                 gimmick);
@@ -2045,7 +2040,6 @@ public class RunBunAI implements BattleAI {
             scores.add(val);
         }
         boolean hasLowScore = scores.stream().allMatch(s -> s <=-5);
-        ModCommon.LOG.info(Boolean.toString(hasLowScore) + "  ALL SCORES ARE LOWER THAN -5");
         if(Math.ceil(getCurrentPercentHP(self)) <= 50){
             return false;
         }
@@ -2082,7 +2076,6 @@ public class RunBunAI implements BattleAI {
         if (boosts != null) {
             for (BattleContext c : boosts) {
                 String statId = statIdMap.getOrDefault(c.getId(), c.getId());
-                ModCommon.LOG.info(c.getId() + "     " + statId);
                 ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("cobblemon", statId);
                 try {
                     Stat stat = statProvider.fromIdentifierOrThrow(rl);
@@ -2097,7 +2090,6 @@ public class RunBunAI implements BattleAI {
         if (unboosts != null) {
             for (BattleContext c : unboosts) {
                 String statId = statIdMap.getOrDefault(c.getId(), c.getId());
-                ModCommon.LOG.info(c.getId() + "     " + statId);
                 ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("cobblemon", statId);
                 try {
                     Stat stat = statProvider.fromIdentifierOrThrow(rl);
@@ -2158,5 +2150,21 @@ public class RunBunAI implements BattleAI {
         attackerStages.put(Stats.SPECIAL_ATTACK,  Math.max(-6, Math.min(6, attackerStages.getOrDefault(Stats.SPECIAL_ATTACK, 0) + boostedSpAtk)));
 
         return getEffectiveSpeed(attacker, attackerStages) >= getEffectiveSpeed(defender, defenderStages) && isOHKO(attacker.getMoveSet().getMoves(), attacker, defender, attackerStages, defenderStages);
+    }
+    private static void changeTurn(BattlePokemon pokemon){
+        if(!switchedLastTurn){
+            if(currentPokemonUUID == pokemon.getUuid()){
+                turnsForActivePokemon++;
+            }
+            battleTurn++;
+            if(!moveHistory.isEmpty()){
+                for(var moves : moveHistory.entrySet()){
+                    ModCommon.LOG.info("TURN " + moves.getKey() + "  NPC USED " + moves.getValue());
+                }
+            }
+        }
+        else{
+            switchedLastTurn = false;
+        }
     }
 }
