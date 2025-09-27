@@ -129,6 +129,7 @@ public class RunBunAI implements BattleAI {
     private static final List<String> megaStones = RBMoveList.getMegaStones();
     private static final List<String> ignoreDamageMoves = RBMoveList.getIgnoreDamageMoves();
     private static final List<String> ignoreSleepAbilities = RBMoveList.getIgnoreSleepAbilities();
+    private static final List<String> statusMoves = RBMoveList.getStatusMoves();
 
 
     @NotNull
@@ -1075,6 +1076,52 @@ public class RunBunAI implements BattleAI {
                                         }
                                     }
                                 }
+                                break;
+                            case "counter":
+                                //TODO
+                                boolean hasOnlyPhys = hasPhysicalMove && !hasSpecialMove;
+                                score += 6;
+                                if(npcIsOHKO){
+                                    score += -20;
+                                }
+                                if(hasOnlyPhys){
+                                    if(currentHeldItem.equals("focussash") || currentAbility.equals("sturdy") && activePokemonPercentHP == 100){
+                                        score += 2;
+                                    }
+                                }
+                                if(!npcIsOHKO && hasOnlyPhys){
+                                    score += roll > .2 ? 2:0;
+                                }
+                                if(isFaster){
+                                    score += roll > .75 ? -1:0;
+                                }
+                                if(hasAnyMoveType(opponent, statusMoves)){
+                                    score += roll > .75 ? -1:0;
+                                }
+
+                                break;
+                            case "mirrorcoat":
+                                boolean hasOnlySpecial = !hasPhysicalMove && hasSpecialMove;
+                                score += 6;
+                                if(npcIsOHKO){
+                                    score += -20;
+                                }
+                                if(hasOnlySpecial){
+                                    if(currentHeldItem.equals("focussash") || currentAbility.equals("sturdy") && activePokemonPercentHP == 100){
+                                        score += 2;
+                                    }
+                                }
+                                if(!npcIsOHKO && hasOnlySpecial){
+                                    score += roll > .2 ? 2:0;
+                                }
+                                if(isFaster){
+                                    score += roll > .75 ? -1:0;
+                                }
+                                if(hasAnyMoveType(opponent, statusMoves)){
+                                    score += roll > .75 ? -1:0;
+                                }
+                                break;
+
                         }
                     }
                     //TODO: START OF GENERAL SETUP CODE
@@ -1826,6 +1873,16 @@ public class RunBunAI implements BattleAI {
         }
         return hasMove;
     }
+    private static boolean hasAnyMoveType(BattlePokemon pokemon, List<String> list){
+        boolean hasMove = false;
+        List<Move> pokemonMoveSet = pokemon.getMoveSet().getMoves();
+        for(Move pkmMove : pokemonMoveSet){
+            if(pokemonMoveSet.contains(pkmMove.getName())){
+                hasMove = true;
+            }
+        }
+        return hasMove;
+    }
     private static double getEffectiveSpeed(BattlePokemon pokemon, Map<Stat, Integer> stages) {
         double multiplier = 1;
         int stage = stages.getOrDefault(Stats.SPEED, 0);
@@ -1875,4 +1932,5 @@ public class RunBunAI implements BattleAI {
         }
         return percentHP <= 8;
     }
+
 }
