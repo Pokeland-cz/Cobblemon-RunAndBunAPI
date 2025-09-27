@@ -574,7 +574,7 @@ public class RunBunAI implements BattleAI {
                     }
                     //if the move is a speed reducing move.
                     if (speedReductionMoves.contains(moveID)) {
-                        if (moveScores.get(currentMove) == maxDamage) {
+                        if (moveDamages.getOrDefault(moveID, 0) == maxDamage) {
                             roll = RANDOM.nextDouble();
                             score += (roll > 0.2) ? 6 : 8;
                         }
@@ -584,7 +584,7 @@ public class RunBunAI implements BattleAI {
                         }
                     }
                     if (physicalAttackReductionMoves.contains(moveID) || specialAttackReductionMoves.contains(moveID)) {
-                        if (moveScores.get(currentMove) == maxDamage) {
+                        if (moveDamages.getOrDefault(moveID,0) == maxDamage) {
                             roll = RANDOM.nextDouble();
                             score += (roll > 0.2) ? 6 : 8;
                         } else if(!ignoreStatDropAbilities.contains(opponentAbility)){
@@ -617,8 +617,8 @@ public class RunBunAI implements BattleAI {
                                 // If in Meloetta base form
                                 score += battlePokemon.getName().equals("meloetta") ? 10 : 0;
                                 break;
-                            case "suckerpunch":
-                                if(moveUsedLastTurn.equals("suckerpunch")){
+                            case "suckerpunch", "thunderclap":
+                                if(moveUsedLastTurn.equals("suckerpunch") || moveUsedLastTurn.equals("thunderclap")){
                                     score += roll < .5 ? -20 : 0;
                                 }
                                 break;

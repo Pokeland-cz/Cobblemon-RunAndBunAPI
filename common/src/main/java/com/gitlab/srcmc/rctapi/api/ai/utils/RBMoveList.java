@@ -16,6 +16,7 @@ public class RBMoveList {
             "machpunch",
             "shadowsneak",
             "suckerpunch",
+            "thunderclap",
             "vacuumwave",
             "watershuriken"
     ));
@@ -115,6 +116,7 @@ public class RBMoveList {
             "spikyshield",
             "relicsong",
             "suckerpunch",
+            "thunderclap",
             "pursuit",
             "fellstinger",
             "rollout",
