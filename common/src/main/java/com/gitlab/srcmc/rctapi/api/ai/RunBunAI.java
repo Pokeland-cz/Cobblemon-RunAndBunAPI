@@ -271,7 +271,7 @@ public class RunBunAI implements BattleAI {
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
-                ModCommon.LOG.info("Turns Since Active: " + turn + "   ::   ENEMY used move " + moveName);
+                ModCommon.LOG.info("Turn: " + turn + "   ::   ENEMY used move " + moveName);
             }
         }
 
@@ -1211,9 +1211,6 @@ public class RunBunAI implements BattleAI {
                                         if(isOPFrozen ||isOPSleeping){
                                             score += 2;
                                         }
-                                        if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
-                                            score += 2;
-                                        }
                                     }
                                 }
                                 //Offensive setup, has at least 1 special and no physical moves
@@ -1233,9 +1230,6 @@ public class RunBunAI implements BattleAI {
                                     }
                                     if(roll > .05){
                                         if(isOPFrozen ||isOPSleeping){
-                                            score += 2;
-                                        }
-                                        if((moveID.equals("stockpile") || moveID.equals("cosmicpower")) && (npcStages.getOrDefault(Stats.SPECIAL_DEFENCE, 0) < 2 || npcStages.getOrDefault(Stats.DEFENCE, 0) < 2)){
                                             score += 2;
                                         }
                                     }
@@ -1881,5 +1875,4 @@ public class RunBunAI implements BattleAI {
         }
         return percentHP <= 8;
     }
-
 }
