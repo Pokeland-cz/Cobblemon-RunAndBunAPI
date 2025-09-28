@@ -24,18 +24,14 @@ package com.gitlab.srcmc.rctapi.api.ai;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.CobblemonItems;
-import com.cobblemon.mod.common.CobblemonNetwork;
-import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleContext;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
-import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories;
-import com.cobblemon.mod.common.api.pokemon.helditem.HeldItemManager;
 import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.StatProvider;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
@@ -44,7 +40,6 @@ import com.cobblemon.mod.common.api.types.ElementalTypes;
 import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.interpreter.ContextManager;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
-import com.cobblemon.mod.common.net.messages.client.battle.BattleEndPacket;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
@@ -56,17 +51,11 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
-import com.gitlab.srcmc.rctapi.api.trainer.TrainerNPC;
 import dev.architectury.platform.Mod;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.ambient.Bat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.cobblemon.mod.common.api.Priority;
-import com.cobblemon.mod.common.api.events.CobblemonEvents;
-import com.cobblemon.mod.common.api.events.battles.BattleStartedPreEvent;
 import kotlin.Unit;
 
 public class RunBunAI implements BattleAI {
@@ -101,6 +90,7 @@ public class RunBunAI implements BattleAI {
     private static Map<Integer,String> moveHistoryEnemy = new HashMap<>(); //move name, turn used
     private static Map<Stat,Integer> npcStages = new HashMap<>();
     private static Map<Stat,Integer> opponentStages = new HashMap<>();
+    private static Map<BattlePokemon, Boolean> isAlive = new HashMap<>();
     private static final Map<String, String> statIdMap = Map.of(
             "atk", "attack",
             "def", "defence",
@@ -147,6 +137,7 @@ public class RunBunAI implements BattleAI {
             moveHistoryEnemy = new HashMap<>();
             pb = null;
             switchedLastTurn = false;
+            isAlive = new HashMap<>();
         }
 
         ModCommon.LOG.info("started showdown response.");
@@ -174,6 +165,7 @@ public class RunBunAI implements BattleAI {
         double oppPercentHP = 0;
 
         ElementalTypes elementaltypes = ElementalTypes.INSTANCE;
+        List<BattlePokemon> NPCParty = activeBattlePokemon.getActor().getPokemonList().stream().toList();
 
         List<BattlePokemon> aliveParty = activeBattlePokemon.getActor().getPokemonList().stream()
                 .filter(BattlePokemon::canBeSentOut)
@@ -198,8 +190,17 @@ public class RunBunAI implements BattleAI {
                 ? allNPCActiveBattlePokemon.indexOf(activeBattlePokemon) : 0;
         BattlePokemon opponent = allOpponentActiveBattlePokemon.isEmpty()
                 ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
-
-
+        //saving alive NPC pokemon
+        for(BattlePokemon saveAliveNPCBattlePokemon : NPCParty){
+            if(saveAliveNPCBattlePokemon.getHealth() <= 0){
+                isAlive.put(saveAliveNPCBattlePokemon, false);
+               // ModCommon.LOG.info("NPC isAlive Status" + saveAliveNPCBattlePokemon.getEffectedPokemon().getDisplayName() + " : false");
+            }
+            else{
+                isAlive.put(saveAliveNPCBattlePokemon, true);
+               // ModCommon.LOG.info("NPC isAlive Status" + saveAliveNPCBattlePokemon.getEffectedPokemon().getDisplayName() + " : true");
+            }
+        }
         if (battlePokemon != null) {
             if(pb == null){
                 pb = opponent.getActor().getBattle();
@@ -248,12 +249,11 @@ public class RunBunAI implements BattleAI {
                 String type = msg.getId();
                 BattlePokemon mon = msg.battlePokemon(0, pb);
                 if ("-miss".equals(type) || "-immune".equals(type) || "-fail".equals(type)) {
-                    if(mon.getUuid().equals(opponent.getUuid())){
-                        moveHistoryEnemy.put(Math.max(battleTurn-1,1), type);
+                    if (mon.getUuid().equals(opponent.getUuid())) {
+                        moveHistoryEnemy.put(Math.max(battleTurn - 1, 1), type);
                     }
                 }
             }
-
             //Tracks the move history of the opponent pokemon
             for (Map.Entry<UUID, BattleMessage> entry : pb.getMajorBattleActions().entrySet()) {
                 BattleMessage msg = entry.getValue();
@@ -302,20 +302,19 @@ public class RunBunAI implements BattleAI {
 
 
         //TODO: SWITCHING SCORING LOGIC STARTS HERE ===================================================================
-        List<BattlePokemon> canSwitchTo = activeBattlePokemon.getActor().getPokemonList().stream()
-                .filter(BattlePokemon::canBeSentOut)
-                .toList();
-
+        List<BattlePokemon> canSwitchTo = new ArrayList<>();
+        for(Map.Entry<BattlePokemon, Boolean> entry : isAlive.entrySet()){
+            if(entry.getValue() == true && entry.getKey() != battlePokemon){
+                canSwitchTo.addLast(entry.getKey());
+                ModCommon.LOG.info("Can Switch To " + entry.getKey().getEffectedPokemon().getDisplayName());
+            }
+        }
         Map<BattlePokemon, Integer> switchingScores = new HashMap<>();
         int switchScore = 0;
         boolean isSwitchMonFaster = false;
         boolean doesSwitchOHKO = false;
         boolean doesOppOHKO = false;
         BattlePokemon nextPokemon = null;
-
-        for(BattlePokemon battlePokemon5 : activeBattlePokemon.getActor().getPokemonList().stream().toList()){
-            ModCommon.LOG.info("Can be sent out "+battlePokemon5.canBeSentOut() + "   name: " + battlePokemon5.getName().toString());
-        }
 
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
@@ -662,31 +661,34 @@ public class RunBunAI implements BattleAI {
                                 break;
                             case "spikes":
                                 roll = RANDOM.nextDouble();
+                                int spikesCount = getHazardCount(moveHistory, "spikes");
+                                ModCommon.LOG.info("Spikes Count = " + spikesCount);
                                 if(isFirstTurnOut){
                                     score += roll > .75 ? 8 : 9;
                                 }
                                 else{
                                     score += roll > .75 ? 6 : 7;
                                 }
-                                if(getHazardCount(moveHistory, "spikes") == 3){
+                                if(spikesCount == 3){
                                     score += -20;
                                 }
-                                else if(getHazardCount(moveHistory, "spikes") > 0){
+                                else if(spikesCount > 0){
                                     score --;
                                 }
                                 break;
                             case "toxicspikes":
                                 roll = RANDOM.nextDouble();
+                                int toxicspikesCount = getHazardCount(moveHistory, "toxicspikes");
                                 if(isFirstTurnOut){
                                     score += roll > .75 ? 8 : 9;
                                 }
                                 else{
                                     score += roll > .75 ? 6 : 7;
                                 }
-                                if(getHazardCount(moveHistory, "toxicspikes") == 3){
+                                if(toxicspikesCount == 3){
                                     score += -20;
                                 }
-                                else if(getHazardCount(moveHistory, "toxicspikes") > 0){
+                                else if(toxicspikesCount > 0){
                                     score --;
                                 }
                                 break;
