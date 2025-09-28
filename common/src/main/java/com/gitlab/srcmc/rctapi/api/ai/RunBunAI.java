@@ -200,7 +200,6 @@ public class RunBunAI implements BattleAI {
                 ? null : allOpponentActiveBattlePokemon.get(currentBattleSlot).getBattlePokemon();
 
 
-
         if (battlePokemon != null) {
             if(pb == null){
                 pb = opponent.getActor().getBattle();
@@ -250,7 +249,7 @@ public class RunBunAI implements BattleAI {
                 BattlePokemon mon = msg.battlePokemon(0, pb);
                 if ("-miss".equals(type) || "-immune".equals(type) || "-fail".equals(type)) {
                     if(mon.getUuid().equals(opponent.getUuid())){
-                        moveHistoryEnemy.put(battleTurn-1, type);
+                        moveHistoryEnemy.put(Math.max(battleTurn-1,1), type);
                     }
                 }
             }
@@ -262,11 +261,11 @@ public class RunBunAI implements BattleAI {
                 BattlePokemon mon = msg.battlePokemon(0, pb);
                 if ("move".equals(type) && mon.getUuid() == opponent.getUuid()) {
                     String moveName = msg.moveAt(1).getName() != null ? msg.moveAt(1).getName() : null;
-                    moveHistoryEnemy.put(battleTurn-1,moveName);
+                    moveHistoryEnemy.put(Math.max(battleTurn-1,1),moveName);
                 }
                 else if("move".equals(type) && mon.getUuid() == currentPokemonUUID){
                     String moveName = msg.moveAt(1).getName() != null ? msg.moveAt(1).getName() : null;
-                    moveHistory.put(turnsForActivePokemon-1,moveName);
+                    moveHistory.put(Math.max(turnsForActivePokemon-1,1),moveName);
                 }
             }
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
@@ -313,6 +312,10 @@ public class RunBunAI implements BattleAI {
         boolean doesSwitchOHKO = false;
         boolean doesOppOHKO = false;
         BattlePokemon nextPokemon = null;
+
+        for(BattlePokemon battlePokemon5 : activeBattlePokemon.getActor().getPokemonList().stream().toList()){
+            ModCommon.LOG.info("Can be sent out "+battlePokemon5.canBeSentOut() + "   name: " + battlePokemon5.getName().toString());
+        }
 
         for(BattlePokemon possibleSwitch : canSwitchTo){
             switchScore = 0;
@@ -645,14 +648,14 @@ public class RunBunAI implements BattleAI {
                                 break;
                             case "stealthrock":
                                 roll = RANDOM.nextDouble();
-                                if(isFirstTurnOut && stealthRocks(opponent) ==0){
+                                if(isFirstTurnOut && getHazardCount(moveHistory, "stealthrock") ==0){
                                     score += roll > .75 ? 8 : 9;
                                 }
                                 else{
                                     score += roll > .75 ? 6 : 7;
                                 }
                                 //if first turn out\
-                                if(stealthRocks(opponent) !=0){
+                                if(getHazardCount(moveHistory, "stealthrock") !=0){
                                     score += -20;
                                 }
                                 //else
@@ -665,10 +668,10 @@ public class RunBunAI implements BattleAI {
                                 else{
                                     score += roll > .75 ? 6 : 7;
                                 }
-                                if(spikesCount(opponent) == 3){
+                                if(getHazardCount(moveHistory, "spikes") == 3){
                                     score += -20;
                                 }
-                                else if(spikesCount(opponent) > 0){
+                                else if(getHazardCount(moveHistory, "spikes") > 0){
                                     score --;
                                 }
                                 break;
@@ -680,10 +683,10 @@ public class RunBunAI implements BattleAI {
                                 else{
                                     score += roll > .75 ? 6 : 7;
                                 }
-                                if(toxicSpikesCount(opponent) == 3){
+                                if(getHazardCount(moveHistory, "toxicspikes") == 3){
                                     score += -20;
                                 }
-                                else if(toxicSpikesCount(opponent) > 0){
+                                else if(getHazardCount(moveHistory, "toxicspikes") > 0){
                                     score --;
                                 }
                                 break;
@@ -695,7 +698,7 @@ public class RunBunAI implements BattleAI {
                                 else{
                                     score += roll > .75 ? 6:9;
                                 }
-                                if(stickyWebCount(opponent) !=0){
+                                if(getHazardCount(moveHistory, "stickyweb") !=0){
                                     score += -20;
                                 }
                                 break;
@@ -1598,18 +1601,6 @@ public class RunBunAI implements BattleAI {
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
                 gimmick);
     }
-    public static int spikesCount(BattlePokemon pkmn) {
-        return BattleEffects.Side.Hazard.spikes(pkmn);
-    }
-    public static int toxicSpikesCount(BattlePokemon pkmn) {
-        return BattleEffects.Side.Hazard.toxicspikes(pkmn);
-    }
-    public static int stealthRocks(BattlePokemon pkmn) {
-        return BattleEffects.Side.Hazard.stealthrock(pkmn);
-    }
-    public static int stickyWebCount(BattlePokemon pkmn) {
-        return BattleEffects.Side.Hazard.stickyweb(pkmn);
-    }
     public static int getSpeedStat(ActiveBattlePokemon pkmn){
         return  (int)PokeMathMax.calcSpeedWithStatChange(pkmn.getBattlePokemon(), getStageMap(pkmn.getBattlePokemon()));
     }
@@ -1932,5 +1923,13 @@ public class RunBunAI implements BattleAI {
         }
         return percentHP <= 8;
     }
-
+    public static int getHazardCount(Map<Integer, String> moveHistory, String move){
+        int count = 0;
+        for(Map.Entry<Integer, String> entry : moveHistory.entrySet()){
+            if(entry.getValue().equals(move)){
+                count++;
+            }
+        }
+        return count;
+    }
 }
