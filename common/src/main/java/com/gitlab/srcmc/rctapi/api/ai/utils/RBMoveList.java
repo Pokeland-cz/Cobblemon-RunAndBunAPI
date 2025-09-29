@@ -177,7 +177,13 @@ public class RBMoveList {
             "poisonpoder",
             "toxic",
             "mirrorcoat",
-            "counter"));
+            "counter",
+            "raindance",
+            "sunnyday",
+            "sandstorm",
+            "chillyreception",
+            "hail",
+            "snowscape"));
 
     private static final List<String> soundMoves = new ArrayList<>(List.of ("alluringvoice",
             "boomburst",

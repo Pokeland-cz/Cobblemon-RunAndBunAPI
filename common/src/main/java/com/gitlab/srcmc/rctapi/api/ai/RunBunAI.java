@@ -892,6 +892,71 @@ public class RunBunAI implements BattleAI {
                                     }
                                 }
                                 break;
+                            case "raindance":
+                                if (!BattleEffects.Field.Weather.rain(battlePokemon) && !BattleEffects.Field.Weather.heavyrainrain(battlePokemon)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("damprock")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+                                
+                            case "sunnyday":
+                                if (!BattleEffects.Field.Weather.harshsunlight(battlePokemon) && !BattleEffects.Field.Weather.extremelyharshsunlight(battlePokemon)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("heatrock")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+
+                            case "hail":
+                                if (!BattleEffects.Field.Weather.hail(battlePokemon)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("icyrock")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+
+                            case "chillyreception":
+                                if (!BattleEffects.Field.Weather.snow(battlePokemon) || (npcIsOHKO && isFaster)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("icyrock")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+
+                            case "sandstorm":
+                                if (!BattleEffects.Field.Weather.sandstorm(battlePokemon)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("smoothrock")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
+
+                            case  "snowscape":
+                                if (!BattleEffects.Field.Weather.snow(battlePokemon)) {
+                                    if(currentHeldItem != null && currentHeldItem.equals("terrainextender")){
+                                        score+=9;
+                                    }
+                                    else{
+                                        score+=8;
+                                    }
+                                }
+                                break;
 
                             case "lightscreen":
                                 roll = RANDOM.nextDouble();
