@@ -961,39 +961,43 @@ public class RunBunAI implements BattleAI {
 
                             case "lightscreen":
                                 roll = RANDOM.nextDouble();
-
                                 score += 6;
-                                if(oppHasSpecialMove){
-                                    if(currentHeldItem.equals("lightclay")){
-                                        score += 1;
-                                        if(getIsMoveUp(moveID, moveHistory, 8, battleTurn)){
-                                            score = -20;
-                                        }
+                                boolean lightclayLS = currentHeldItem.equals("lightclay");
+                                if(lightclayLS){
+                                    if(getIsMoveUp(moveID, moveHistory, 8, battleTurn)){
+                                        score = -20;
                                     }
-                                    else{
-                                        if(getIsMoveUp(moveID, moveHistory, 5, battleTurn)){
-                                            score = -20;
-                                        }
+                                }
+                                else{
+                                    if(getIsMoveUp(moveID, moveHistory, 5, battleTurn)){
+                                        score = -20;
+                                    }
+                                }
+                                if(oppHasSpecialMove){
+                                    if(lightclayLS){
+                                        score += 1;
                                     }
                                     score += roll > .5 ? 1: 0;
                                 }
-
                                 break;
 
                             case "reflect":
                                 roll = RANDOM.nextDouble();
                                 score += 6;
-                                if(oppHasPhysicalMove){
-                                    if(currentHeldItem.equals("lightclay")){
-                                        if(getIsMoveUp(moveID, moveHistory, 8, battleTurn)){
-                                            score = -20;
-                                        }
-                                        score += 1;
+                                boolean lightclayR = currentHeldItem.equals("lightclay");
+                                if(lightclayR){
+                                    if(getIsMoveUp(moveID, moveHistory, 8, battleTurn)){
+                                        score = -20;
                                     }
-                                    else{
-                                        if(getIsMoveUp(moveID, moveHistory, 5, battleTurn)){
-                                            score = -20;
-                                        }
+                                }
+                                else{
+                                    if(getIsMoveUp(moveID, moveHistory, 5, battleTurn)){
+                                        score = -20;
+                                    }
+                                }
+                                if(oppHasPhysicalMove){
+                                    if(lightclayR){
+                                        score += 1;
                                     }
                                     score += roll > .5 ? 1: 0;
                                 }
@@ -2018,11 +2022,14 @@ public class RunBunAI implements BattleAI {
         return count;
     }
     public static boolean getIsMoveUp(String moveID, Map<Integer,String> moveHistory, int turnDuration, int currentTurn){
-        int lastTurnUsed = 1;
+        int lastTurnUsed = -1;
         for(Map.Entry<Integer, String> history : moveHistory.entrySet()){
             if(history.getValue().equals(moveID)){
                 lastTurnUsed = history.getKey();
             }
+        }
+        if(lastTurnUsed == -1){
+            return false;
         }
         return currentTurn - lastTurnUsed < turnDuration;
     }
