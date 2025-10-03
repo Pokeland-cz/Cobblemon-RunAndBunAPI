@@ -127,6 +127,7 @@ public class PokemonModel implements Serializable {
     public Set<String> getAspects() { return Collections.unmodifiableSet(this.aspects); }
     public Gimmicks getGimmicks() { return this.gimmicks; }
 
+
     /**
      * Creates a new pokemon model.
      */
