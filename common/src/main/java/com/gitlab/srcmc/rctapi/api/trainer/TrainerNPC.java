@@ -17,8 +17,15 @@
  */
 package com.gitlab.srcmc.rctapi.api.trainer;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.gitlab.srcmc.rctapi.mixins.MobAccessor;
+import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
@@ -27,10 +34,13 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.models.Gimmicks;
 import com.gitlab.srcmc.rctapi.api.util.Text;
-
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
+
+
 
 /**
  * An ai trainer that is represented by an arbitrary {@link LivingEntity}.
@@ -129,6 +139,14 @@ public class TrainerNPC implements Trainer {
     public void setEntity(@NotNull LivingEntity entity) {
         this.entity = entity;
         this.entityName = Text.literal(entity.getDisplayName().getString());
+
+        entity.setDeltaMovement(Vec3.ZERO);
+        entity.setNoGravity(true);
+        if (entity instanceof Mob mob) {
+            mob.setNoAi(true);
+        }
+        entity.noPhysics = true;
+        entity.teleportTo(entity.getX(), entity.getY(), entity.getZ());
     }
 
     /**
@@ -152,7 +170,7 @@ public class TrainerNPC implements Trainer {
     }
 
     /**
-     * Retrieves {@link Gimmick}s that are mapped to {@link Pokemon} of this trainers
+     * Retrieves {@link Gimmicks} that are mapped to {@link Pokemon} of this trainers
      * team.
      * 
      * @return {@link Gimmicks} map.

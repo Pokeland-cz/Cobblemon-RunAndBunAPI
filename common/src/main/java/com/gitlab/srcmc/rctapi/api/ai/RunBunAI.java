@@ -43,6 +43,7 @@ import com.cobblemon.mod.common.battles.*;
 import com.cobblemon.mod.common.battles.interpreter.ContextManager;
 import com.cobblemon.mod.common.battles.pokemon.BattleMove;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.cobblemon.mod.common.platform.events.ServerTickEvent;
 import com.gitlab.srcmc.rctapi.ModCommon;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleEffects;
 import com.gitlab.srcmc.rctapi.api.ai.utils.BattleStates;
@@ -58,6 +59,7 @@ import com.gitlab.srcmc.rctapi.api.trainer.Trainer;
 import com.gitlab.srcmc.rctapi.api.trainer.TrainerRegistry;
 import dev.architectury.platform.Mod;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.PathfinderMob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.cobblemon.mod.common.api.Priority;
@@ -76,6 +78,7 @@ public class RunBunAI implements BattleAI {
                         return Unit.INSTANCE;  // ✅ Kotlin Unit return
                     }
             );
+
             registered = true;
         }
     }
