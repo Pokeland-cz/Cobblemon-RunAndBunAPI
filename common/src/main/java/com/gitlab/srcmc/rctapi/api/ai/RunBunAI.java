@@ -232,10 +232,6 @@ public class RunBunAI implements BattleAI {
                     gimmick = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.getId();
                     hasUsedMega = true;
                 }
-                else if(!megaStones.contains(currentHeldItem) && getCurrentPercentHP(battlePokemon) >= 50 && !hasUsedTera && battlePokemon.getEffectedPokemon().getLevel() > 35){
-                    gimmick = ShowdownMoveset.Gimmick.TERASTALLIZATION.getId();
-                    hasUsedTera = true;
-                }
                 else{
                     gimmick = null;
                 }
