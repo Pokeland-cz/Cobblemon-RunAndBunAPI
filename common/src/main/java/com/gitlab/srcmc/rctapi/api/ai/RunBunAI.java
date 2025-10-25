@@ -148,7 +148,7 @@ public class RunBunAI implements BattleAI {
             isAlive = new HashMap<>();
         }
 
-        ModCommon.LOG.info("started showdown response.");
+        // ModCommon.LOG.info("started showdown response.");
 
         //AI variables
         String currentHeldItem = "";
@@ -240,14 +240,14 @@ public class RunBunAI implements BattleAI {
                     gimmick = null;
                 }
 
-                ModCommon.LOG.info("Held item: " + currentHeldItem);
-                ModCommon.LOG.info("Pokemon Level: " + battlePokemon.getEffectedPokemon().getLevel());
+                // ModCommon.LOG.info("Held item: " + currentHeldItem);
+                // ModCommon.LOG.info("Pokemon Level: " + battlePokemon.getEffectedPokemon().getLevel());
 
             }
         }
 
-        ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
-                + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon));
+        /* ModCommon.LOG.info("Current Battle Turn: "+Integer.toString(battleTurn)
+                + "    Turns Since This mon has been on field: " + Integer.toString(RunBunAI.turnsForActivePokemon)); */
 
         if(opponent != null){
             opponentStages = getStageMap(opponent);
@@ -282,7 +282,7 @@ public class RunBunAI implements BattleAI {
             for (Map.Entry<Integer, String> entry : moveHistoryEnemy.entrySet()) {
                 String moveName = entry.getValue();
                 int turn = entry.getKey();
-                ModCommon.LOG.info("Turn: " + turn + "   ::   ENEMY used move " + moveName);
+                // ModCommon.LOG.info("Turn: " + turn + "   ::   ENEMY used move " + moveName);
             }
         }
 
@@ -332,7 +332,7 @@ public class RunBunAI implements BattleAI {
         for(Map.Entry<BattlePokemon, Boolean> entry : isAlive.entrySet()){
             if(entry.getValue() == true && entry.getKey() != battlePokemon){
                 canSwitchTo.addLast(entry.getKey());
-                ModCommon.LOG.info("Can Switch To " + entry.getKey().getEffectedPokemon().getDisplayName());
+                // ModCommon.LOG.info("Can Switch To " + entry.getKey().getEffectedPokemon().getDisplayName());
             }
         }
         Map<BattlePokemon, Integer> switchingScores = new HashMap<>();
@@ -384,7 +384,7 @@ public class RunBunAI implements BattleAI {
                 }
             }
             switchingScores.put(possibleSwitch, switchScore);
-            ModCommon.LOG.info(possibleSwitch.getOriginalPokemon().getDisplayName().toString() + "  " + Integer.toString(switchScore));
+            // ModCommon.LOG.info(possibleSwitch.getOriginalPokemon().getDisplayName().toString() + "  " + Integer.toString(switchScore));
         }
         //filter who has the best switch score
         int maxSwitchingScore = switchingScores.values()
@@ -481,7 +481,7 @@ public class RunBunAI implements BattleAI {
                 moveDamages.put(inBattleMove, dmg);
             }
 
-            ModCommon.LOG.info(inBattleMove.getId() + "     DAMAGE = " + Integer.toString(dmg));
+            // ModCommon.LOG.info(inBattleMove.getId() + "     DAMAGE = " + Integer.toString(dmg));
         });
 
         List<InBattleMove> killingMoves = new ArrayList<>();
@@ -674,7 +674,7 @@ public class RunBunAI implements BattleAI {
                             case "spikes":
                                 roll = RANDOM.nextDouble();
                                 int spikesCount = getHazardCount(moveHistory, "spikes");
-                                ModCommon.LOG.info("Spikes Count = " + spikesCount);
+                                // ModCommon.LOG.info("Spikes Count = " + spikesCount);
                                 if(isFirstTurnOut){
                                     score += roll > .75 ? 8 : 9;
                                 }
@@ -1650,17 +1650,17 @@ public class RunBunAI implements BattleAI {
             }
 
             moveScores.put(currentMove, score);
-            ModCommon.LOG.info(currentMove.getId() + "  " + Integer.toString(score));
+            // ModCommon.LOG.info(currentMove.getId() + "  " + Integer.toString(score));
         }
         // END OF SCORING LOGIC::START OF SWITCH AI LOGIC
         if(isSwitching(moveScores, aliveParty, battlePokemon, opponent)){
             double flip = RANDOM.nextDouble();
             boolean result = (flip > .5);
-            ModCommon.LOG.info(Boolean.toString(result) + "    coin toss result");
+            // ModCommon.LOG.info(Boolean.toString(result) + "    coin toss result");
             if(result){
                 nextPokemon.setWillBeSwitchedIn(true);
                 moveHistory = new HashMap<>();
-                ModCommon.LOG.info("SWITCHING INTO NEXT MON");
+                // ModCommon.LOG.info("SWITCHING INTO NEXT MON");
                 switchedLastTurn = true;
                 return new SwitchActionResponse(nextPokemon.getUuid());
                 //start switching logic
@@ -1679,7 +1679,7 @@ public class RunBunAI implements BattleAI {
         if(bestMoves.size() > 1){
             int randomInt = RANDOM.nextInt(bestMoves.size());
             var bestMove = bestMoves.get(randomInt);
-            ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
+            // ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMove.getId());
             List<Targetable> targets = bestMove.mustBeUsed() ? null : bestMove.getTarget().getTargetList().invoke(activeBattlePokemon);
             changeTurn(battlePokemon);
             return new MoveActionResponse(bestMove.getId(),
@@ -1687,7 +1687,7 @@ public class RunBunAI implements BattleAI {
                     gimmick);
         }
         List<Targetable> targets = bestMoves.get(0).mustBeUsed() ? null : bestMoves.get(0).getTarget().getTargetList().invoke(activeBattlePokemon);
-        ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
+        // ModCommon.LOG.info("CHOOSEN BEST MOVE  " + bestMoves.get(0).getId());
         changeTurn(battlePokemon);
         return new MoveActionResponse(bestMoves.get(0).getId(),
                 targets == null ? null : opponentActiveBattlePokemon.get().getPNX(),
@@ -1995,7 +1995,7 @@ public class RunBunAI implements BattleAI {
             battleTurn++;
             if(!moveHistory.isEmpty()){
                 for(var moves : moveHistory.entrySet()){
-                    ModCommon.LOG.info("TURN " + moves.getKey() + "  NPC USED " + moves.getValue());
+                    // ModCommon.LOG.info("TURN " + moves.getKey() + "  NPC USED " + moves.getValue());
                 }
             }
         }
