@@ -18,12 +18,11 @@
 package com.gitlab.srcmc.rctapi.api.models;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,14 +31,16 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.gitlab.srcmc.rctapi.api.util.Text;
 
 /**
- * A pojo class for parsing {@link Pokemon}.
+ * A POJO class for parsing {@link Pokemon}.
+ * Now supports old string, new object, and list formats for heldItem.
  */
+@JsonAdapter(PokemonModel.Deserializer.class)
 public class PokemonModel implements Serializable {
     private static final long serialVersionUID = 0L;
 
     public static class StatsModel implements Serializable {
         private static final long serialVersionUID = 0L;
-        
+
         private int hp;
         private int atk;
         private int def;
@@ -54,48 +55,22 @@ public class PokemonModel implements Serializable {
         public int getSpD() { return this.spd; }
         public int getSpe() { return this.spe; }
 
-        /**
-         * Creates a new StatsModel.
-         */
-        public StatsModel() {
-        }
+        public StatsModel() {}
 
-        /**
-         * Creates a new Stats model with the given properties.
-         * 
-         * @param hp HP stat.
-         * @param atk Attack stat.
-         * @param def Defense stat.
-         * @param spa Special attack stat.
-         * @param spd Special defense stat.
-         * @param spe Speed stat.
-         */
         public StatsModel(int hp, int atk, int def, int spa, int spd, int spe) {
-            this.hp = hp;
-            this.atk = atk;
-            this.def = def;
-            this.spa = spa;
-            this.spd = spd;
-            this.spe = spe;
+            this.hp = hp; this.atk = atk; this.def = def;
+            this.spa = spa; this.spd = spd; this.spe = spe;
         }
 
-        @Override
-        public boolean equals(Object obj) {
+        @Override public boolean equals(Object obj) {
             return (obj instanceof StatsModel other)
-                && this.hp == other.hp
-                && this.atk == other.atk
-                && this.def == other.def
-                && this.spa == other.spa
-                && this.spd == other.spd
-                && this.spe == other.spe;
+                    && this.hp == other.hp && this.atk == other.atk
+                    && this.def == other.def && this.spa == other.spa
+                    && this.spd == other.spd && this.spe == other.spe;
         }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(
-                this.hp, this.atk,
-                this.def, this.spa,
-                this.spd, this.spe);
+        @Override public int hashCode() {
+            return Objects.hash(hp, atk, def, spa, spd, spe);
         }
     }
 
@@ -112,7 +87,8 @@ public class PokemonModel implements Serializable {
     private HeldItemsModel heldItem;
     private Set<String> aspects;
     private Gimmicks gimmicks;
-    
+
+    // --- Getters ---
     public String getSpecies() { return this.species; }
     public Text getNickname() { return this.nickname; }
     public String getGender() { return this.gender; }
@@ -127,119 +103,36 @@ public class PokemonModel implements Serializable {
     public Set<String> getAspects() { return Collections.unmodifiableSet(this.aspects); }
     public Gimmicks getGimmicks() { return this.gimmicks; }
 
-
-    /**
-     * Creates a new pokemon model.
-     */
+    // --- Constructors (kept for compatibility) ---
     public PokemonModel() {
         this("", "GENDERLESS", 1, "", "", Set.of(), new StatsModel(), new StatsModel(), false, "", Set.of());
     }
 
-    /**
-     * Creates a new pokemon model with the given properties.
-     * 
-     * @param species Pokemon species.
-     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
-     * @param level Pokemon level.
-     * @param nature Pokemon nature.
-     * @param ability Pokemon ability.
-     * @param moveset Set of moves.
-     * @param ivs Pokemon ivs.
-     * @param evs Pokemon evs.
-     * @param shiny If the pokemon is shiny or not.
-     * @param heldItem Possible item held by the pokemon.
-     * @param aspects Set of pokemon aspects.
-     */
-    public PokemonModel(
-        @NotNull String species, @NotNull String gender,
-        int level, @NotNull String nature,
-        @NotNull String ability, @NotNull Set<String> moveset,
-        @NotNull StatsModel ivs, @NotNull StatsModel evs,
-        boolean shiny, @NotNull String heldItem,
-        @NotNull Set<String> aspects)
-    {
+    public PokemonModel(@NotNull String species, @NotNull String gender, int level, @NotNull String nature,
+                        @NotNull String ability, @NotNull Set<String> moveset, @NotNull StatsModel ivs,
+                        @NotNull StatsModel evs, boolean shiny, @NotNull String heldItem,
+                        @NotNull Set<String> aspects) {
         this(species, Text.empty(), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
     }
 
-    /**
-     * Creates a new pokemon model with the given properties.
-     * 
-     * @param species Pokemon species.
-     * @param nickname Pokemon nickname.
-     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
-     * @param level Pokemon level.
-     * @param nature Pokemon nature.
-     * @param ability Pokemon ability.
-     * @param moveset Set of moves.
-     * @param ivs Pokemon ivs.
-     * @param evs Pokemon evs.
-     * @param shiny If the pokemon is shiny or not.
-     * @param heldItem Item held by the pokemon.
-     * @param aspects Set of pokemon aspects.
-     */
-    public PokemonModel(
-        @NotNull String species, @NotNull String nickname,
-        @NotNull String gender, int level, @NotNull String nature,
-        @NotNull String ability, @NotNull Set<String> moveset,
-        @NotNull StatsModel ivs, @NotNull StatsModel evs,
-        boolean shiny, @NotNull String heldItem,
-        @NotNull Set<String> aspects)
-    {
+    public PokemonModel(@NotNull String species, @NotNull String nickname, @NotNull String gender, int level,
+                        @NotNull String nature, @NotNull String ability, @NotNull Set<String> moveset,
+                        @NotNull StatsModel ivs, @NotNull StatsModel evs, boolean shiny,
+                        @NotNull String heldItem, @NotNull Set<String> aspects) {
         this(species, Text.literal(nickname), gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects);
     }
 
-    /**
-     * Creates a new pokemon model with the given properties.
-     * 
-     * @param species Pokemon species.
-     * @param nickname Pokemon nickname.
-     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
-     * @param level Pokemon level.
-     * @param nature Pokemon nature.
-     * @param ability Pokemon ability.
-     * @param moveset Set of moves.
-     * @param ivs Pokemon ivs.
-     * @param evs Pokemon evs.
-     * @param shiny If the pokemon is shiny or not.
-     * @param heldItem Possible item held by the pokemon.
-     * @param aspects Set of pokemon aspects.
-     */
-    public PokemonModel(
-        @NotNull String species, @NotNull Text nickname,
-        @NotNull String gender, int level, @NotNull String nature,
-        @NotNull String ability, @NotNull Set<String> moveset,
-        @NotNull StatsModel ivs, @NotNull StatsModel evs,
-        boolean shiny, @NotNull String heldItem,
-        @NotNull Set<String> aspects)
-    {
+    public PokemonModel(@NotNull String species, @NotNull Text nickname, @NotNull String gender, int level,
+                        @NotNull String nature, @NotNull String ability, @NotNull Set<String> moveset,
+                        @NotNull StatsModel ivs, @NotNull StatsModel evs, boolean shiny,
+                        @NotNull String heldItem, @NotNull Set<String> aspects) {
         this(species, nickname, gender, level, nature, ability, moveset, ivs, evs, shiny, List.of(heldItem), aspects, new Gimmicks());
     }
 
-    /**
-     * Creates a new pokemon model with the given properties.
-     * 
-     * @param species Pokemon species.
-     * @param nickname Pokemon nickname.
-     * @param gender Pokemon gender ("GENDERLESS", "MALE" or "FEMALE").
-     * @param level Pokemon level.
-     * @param nature Pokemon nature.
-     * @param ability Pokemon ability.
-     * @param moveset Set of moves.
-     * @param ivs Pokemon ivs.
-     * @param evs Pokemon evs.
-     * @param shiny If the pokemon is shiny or not.
-     * @param heldItems Possible items held by the pokemon.
-     * @param aspects Set of pokemon aspects.
-     * @param gimmicks Set of pokemon gimmicks.
-     */
-    public PokemonModel(
-        @NotNull String species, @NotNull Text nickname,
-        @NotNull String gender, int level, @NotNull String nature,
-        @NotNull String ability, @NotNull Set<String> moveset,
-        @NotNull StatsModel ivs, @NotNull StatsModel evs,
-        boolean shiny, @NotNull List<String> heldItems,
-        @NotNull Set<String> aspects, @NotNull Gimmicks gimmicks)
-    {
+    public PokemonModel(@NotNull String species, @NotNull Text nickname, @NotNull String gender, int level,
+                        @NotNull String nature, @NotNull String ability, @NotNull Set<String> moveset,
+                        @NotNull StatsModel ivs, @NotNull StatsModel evs, boolean shiny,
+                        @NotNull List<String> heldItems, @NotNull Set<String> aspects, @NotNull Gimmicks gimmicks) {
         this.species = species;
         this.nickname = nickname;
         this.gender = gender;
@@ -255,11 +148,6 @@ public class PokemonModel implements Serializable {
         this.gimmicks = gimmicks;
     }
 
-    /**
-     * Creates a new pokemon model with its properties copied from the given pokemon.
-     * 
-     * @param pokemon Pokemon to copy.
-     */
     public PokemonModel(Pokemon pokemon) {
         this.species = pokemon.getSpecies().getName();
         this.nickname = pokemon.getNickname() != null ? Text.literal(pokemon.getNickname().getString()) : Text.empty();
@@ -285,35 +173,106 @@ public class PokemonModel implements Serializable {
         this.shiny = pokemon.getShiny();
         this.heldItem = new HeldItemsModel(BuiltInRegistries.ITEM.getKey(pokemon.heldItem().getItem()).toString());
         this.aspects = pokemon.getAspects();
-        this.gimmicks = new Gimmicks(); // TODO: possible to derive gimmick from current pokemon state?
+        this.gimmicks = new Gimmicks();
     }
 
     @Override
     public boolean equals(Object obj) {
         return (obj instanceof PokemonModel other)
-            && this.species.equals(other.species)
-            && this.nickname.equals(other.nickname)
-            && this.gender.equals(other.gender)
-            && this.level == other.level
-            && this.nature.equals(other.nature)
-            && this.ability.equals(other.ability)
-            && this.moveset.equals(other.moveset)
-            && this.ivs.equals(other.ivs)
-            && this.evs.equals(other.evs)
-            && this.shiny == other.shiny
-            && this.heldItem.equals(other.heldItem)
-            && this.aspects.equals(other.aspects)
-            && this.gimmicks.equals(other.gimmicks);
+                && Objects.equals(this.species, other.species)
+                && Objects.equals(this.nickname, other.nickname)
+                && Objects.equals(this.gender, other.gender)
+                && this.level == other.level
+                && Objects.equals(this.nature, other.nature)
+                && Objects.equals(this.ability, other.ability)
+                && Objects.equals(this.moveset, other.moveset)
+                && Objects.equals(this.ivs, other.ivs)
+                && Objects.equals(this.evs, other.evs)
+                && this.shiny == other.shiny
+                && Objects.equals(this.heldItem, other.heldItem)
+                && Objects.equals(this.aspects, other.aspects)
+                && Objects.equals(this.gimmicks, other.gimmicks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-            this.species, this.nickname,
-            this.gender, this.level,
-            this.nature, this.ability,
-            this.moveset, this.ivs, this.evs,
-            this.shiny, this.heldItem,
-            this.aspects, this.gimmicks);
+        return Objects.hash(species, nickname, gender, level, nature, ability, moveset, ivs, evs, shiny, heldItem, aspects, gimmicks);
+    }
+
+    // ===================================================================
+    // CUSTOM GSON DESERIALIZER – SUPPORTS ALL HELDITEM FORMATS
+    // ===================================================================
+    public static class Deserializer implements JsonDeserializer<PokemonModel> {
+        @Override
+        public PokemonModel deserialize(JsonElement json, java.lang.reflect.Type type, JsonDeserializationContext ctx)
+                throws JsonParseException {
+            JsonObject obj = json.getAsJsonObject();
+            PokemonModel model = new PokemonModel();
+
+            model.species = getString(obj, "species", "");
+            model.nickname = obj.has("nickname") ? Text.literal(getString(obj, "nickname", "")) : Text.empty();
+            model.gender = getString(obj, "gender", "GENDERLESS");
+            model.level = getInt(obj, "level", 1);
+            model.nature = getString(obj, "nature", "");
+            model.ability = getString(obj, "ability", "");
+            model.moveset = ctx.deserialize(obj.get("moveset"), new com.google.gson.reflect.TypeToken<Set<String>>(){}.getType());
+            if (model.moveset == null) model.moveset = Set.of();
+
+            model.ivs = ctx.deserialize(obj.get("ivs"), StatsModel.class);
+            if (model.ivs == null) model.ivs = new StatsModel();
+
+            model.evs = ctx.deserialize(obj.get("evs"), StatsModel.class);
+            if (model.evs == null) model.evs = new StatsModel();
+
+            model.shiny = getBoolean(obj, "shiny", false);
+            model.aspects = ctx.deserialize(obj.get("aspects"), new com.google.gson.reflect.TypeToken<Set<String>>(){}.getType());
+            if (model.aspects == null) model.aspects = Set.of();
+
+            model.gimmicks = ctx.deserialize(obj.get("gimmicks"), Gimmicks.class);
+            if (model.gimmicks == null) model.gimmicks = new Gimmicks();
+
+            // === HELDITEM: STRING, OBJECT, OR LIST ===
+            JsonElement heldEl = obj.get("heldItem");
+            List<String> heldItems = new ArrayList<>();
+
+            if (heldEl != null) {
+                if (heldEl.isJsonPrimitive() && heldEl.getAsJsonPrimitive().isString()) {
+                    // "heldItem": "potion"
+                    heldItems.add(heldEl.getAsString());
+                } else if (heldEl.isJsonObject()) {
+                    // "heldItem": { "item": "potion", "count": 1 }
+                    JsonObject itemObj = heldEl.getAsJsonObject();
+                    String item = getString(itemObj, "item", null);
+                    if (item != null) {
+                        int count = getInt(itemObj, "count", 1);
+                        for (int i = 0; i < count; i++) heldItems.add(item);
+                    }
+                } else if (heldEl.isJsonArray()) {
+                    // "heldItem": ["potion", "berry"]
+                    for (JsonElement e : heldEl.getAsJsonArray()) {
+                        if (e.isJsonPrimitive()) heldItems.add(e.getAsString());
+                    }
+                }
+            }
+
+            model.heldItem = new HeldItemsModel(heldItems);
+
+            return model;
+        }
+
+        private String getString(JsonObject obj, String key, String def) {
+            JsonElement el = obj.get(key);
+            return el != null && el.isJsonPrimitive() ? el.getAsString() : def;
+        }
+
+        private int getInt(JsonObject obj, String key, int def) {
+            JsonElement el = obj.get(key);
+            return el != null && el.isJsonPrimitive() ? el.getAsInt() : def;
+        }
+
+        private boolean getBoolean(JsonObject obj, String key, boolean def) {
+            JsonElement el = obj.get(key);
+            return el != null && el.isJsonPrimitive() ? el.getAsBoolean() : def;
+        }
     }
 }
